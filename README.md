@@ -97,5 +97,5 @@ The current version of the Python PM model is robust and well represents the cur
 T:\WaterResources\PlanningOperations\D8500\apps\pythonApps\bortsc\docs\PythonETApplications.pdf
 
 # References
-Allen, Richard G., Pereira, Luis S., Raes, Dirk, Smith, Martin, 1998, FAO Irrigation and Drainage Paper No. 56 – Crop Evapotranspiration (guidelines for computing crop water requirements), 333pp.  As of this writing, available at: http://www.kimberly.uidaho.edu/water/fao56/fao56.pdf
+Allen, Richard G., Pereira, Luis S., Raes, Dirk, Smith, Martin, 1998, [FAO Irrigation and Drainage Paper No. 56 – Crop Evapotranspiration] (https://github.com/usbr/et-demands/blob/master/references/Allen%20et%20al%20(2006)%20FAO%20Irrigation%20and%20Drainage%20Paper%20No.%2056%20-%20Crop%20Evapotranspiration.pdf) (guidelines for computing crop water requirements), 333pp.
 
