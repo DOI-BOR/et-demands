@@ -9,16 +9,5 @@ __pycache__/
 # PyCharm
 .idea
 
-# Docs
-docs
-docs/_build
-
 # Common Data
 common
-
-# Example
-example/*_plots*
-example/*_stats
-example/static
-example
-example/debug.txt
