@@ -8,7 +8,6 @@ import os
 import sys
 from time import clock
 
-import numpy as np
 import pandas as pd
 
 import crop_et_data
@@ -17,8 +16,8 @@ import et_cell
 import util
 
 def main(ini_path, log_level = logging.WARNING, 
-        etcid_to_run = 'ALL',debug_flag = False, 
-        cal_flag = False, mp_procs = 1):
+        etcid_to_run ='ALL', debug_flag=False,
+        cal_flag=False, mp_procs=1):
     """ Main function for running crop ET model
 
     Args:
@@ -36,7 +35,7 @@ def main(ini_path, log_level = logging.WARNING,
 
     # Start console logging immediately
 
-    logger = util.console_logger(log_level = log_level)
+    logger = util.console_logger(log_level=log_level)
     logging.warning('\nPython Crop ET')
     if debug_flag and mp_procs > 1:
         logging.warning('  Debug mode, disabling multiprocessing')
@@ -58,7 +57,7 @@ def main(ini_path, log_level = logging.WARNING,
 
     if debug_flag:
         logger = util.file_logger(
-            logger, log_level = logging.DEBUG, output_ws = data.project_ws)
+            logger, log_level=logging.DEBUG, output_ws=data.project_ws)
 
     # Growing season summary CSV files must be written
 
@@ -73,10 +72,10 @@ def main(ini_path, log_level = logging.WARNING,
 
     data.set_crop_params()
     data.set_crop_coeffs()
-    if data.co2_flag: data.set_crop_co2()
+    if data.co2_flag:
+        data.set_crop_co2()
 
     # Read cell properties, crop flags and cuttings
-
     cells = et_cell.ETCellData()
     cells.set_cell_properties(data)
     cells.set_cell_crops(data)
@@ -86,12 +85,10 @@ def main(ini_path, log_level = logging.WARNING,
 
     # First apply static crop parameters to all cells
     # Could "cell" just inherit "data" values instead ????
-
     cells.set_static_crop_params(data.crop_params)
     cells.set_static_crop_coeffs(data.crop_coeffs)
 
     # Read spatially varying crop parameters
-    
     if data.spatial_cal_flag:
         cells.set_spatial_crop_params(data.spatial_cal_ws)
 
@@ -115,7 +112,11 @@ def main(ini_path, log_level = logging.WARNING,
                 # 0.5 multiplier is to prefer multiprocessing by cell
                 # because of 1 CPU time spent loading/processing weather data
                 # when multiprocessing by crop
-        
+
+                # # Force cell_mp__flag to True for testing
+                # logging.warning("  Multiprocessing by cell")
+                # cell_mp_flag = True
+
                 if (0.5 * cells_count) > crops_count:
                     logging.warning("  Multiprocessing by cell")
                     cell_mp_flag = True
@@ -132,34 +133,33 @@ def main(ini_path, log_level = logging.WARNING,
     cell_count = 0
     for cell_id, cell in sorted(cells.et_cells_dict.items()):
         if etcid_to_run == 'ALL' or etcid_to_run == cell_id:
-            logging.info('  Processing node id' + cell_id + ' with name ' + cell.cell_name)
+            logging.info('  Processing node id' + cell_id + ' with name ' +
+                         cell.cell_name)
             cell_count += 1
             if cell_mp_flag:
                 # Multiprocessing by cell
-
                 cell_mp_list.append([cell_count, data, cell, mp_procs])
             elif crop_mp_flag:
                 # Multiprocessing by crop
                 logging.warning('CellID: {}'.format(cell_id))
                 if not cell.set_input_timeseries(cell_count, data, cells):
                     sys.exit()
-                crop_cycle.crop_cycle_mp(data, cell, mp_procs = mp_procs)
+                crop_cycle.crop_cycle_mp(data, cell, mp_procs=mp_procs)
             else:
                 logging.warning('CellID: {}'.format(cell_id))
                 if not cell.set_input_timeseries(cell_count, data, cells):
                     sys.exit()
-                crop_cycle.crop_cycle(data, cell, debug_flag = debug_flag)
+                crop_cycle.crop_cycle(data, cell, debug_flag=debug_flag)
 
     # Multiprocess all cells
-    
     results = []
     if cell_mp_list:
-        print(cell_mp_list)
         pool = mp.Pool(mp_procs)
-        results = pool.imap(cell_mp, cell_mp_list, chunksize = 1)
+        results = pool.imap(cell_mp, cell_mp_list, chunksize=1)
         pool.close()
         pool.join()
         del pool, results
+
     logging.warning('\nCROPET Run Completed')
     logging.info('\n{} seconds'.format(clock()-clock_start))
 
@@ -205,9 +205,11 @@ def cell_sp(cell_count, data, cell, mp_procs = 1):
         cell (): ETCell instance
         mp_procs: number of processors
     """
-    if not cell.set_input_timeseries(cell_count, data, cells, debug_flag = False): 
+    if not cell.set_input_timeseries(cell_count, data, cell):
         sys.exit()
-    crop_cycle.crop_cycle(data, cell, debug_flag = False, mp_procs = mp_procs)
+
+    print('CellID: {}'.format(cell.cell_id))
+    crop_cycle.crop_cycle(data, cell, debug_flag=False, mp_procs=mp_procs)
 
 def is_valid_file(parser, arg):
     if not os.path.isfile(arg):
