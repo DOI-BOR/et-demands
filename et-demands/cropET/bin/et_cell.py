@@ -570,6 +570,7 @@ class ETCell():
 
     def set_input_timeseries(self, cell_count, data, cells):
         """Wrapper for setting all refet/weather/climate data
+
         Args:
             cell_count: count of et cell being processed
             data: configuration data from INI file
@@ -578,15 +579,18 @@ class ETCell():
         Returns:
             success: True or False
         """
-        if not self.set_refet_data(data, cells): return False
+        if not self.set_refet_data(data, cells):
+            return False
         if data.refet_ratios_path:
+
             self.set_refet_ratio_data(data)
-        if not self.set_weather_data(cell_count, data, cells): return False
+        if not self.set_weather_data(cell_count, data, cells):
+            return False
         if data.phenology_option > 0:
-            if not self.set_historic_temps(cell_count, data, cells): return False
+            if not self.set_historic_temps(cell_count, data, cells):
+                return False
 
         # Process climate arrays
-
         self.process_climate(data)
         return True
 
