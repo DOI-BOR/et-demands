@@ -41,10 +41,16 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
         logging.error(
             'et_cells_path parameter must be set in the INI file, exiting')
         return False
+#    try:
+#        calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
+#    except:
+#        calibration_ws = os.path.join(project_ws, 'calibration')
     try:
-        calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
+        etref_field = config.get('REFET', 'etref_field')
     except:
-        calibration_ws = os.path.join(project_ws, 'calibration')
+        logging.error(
+            'etref_field parameter must be set in the INI file, exiting')
+        return False
 
     # Sub folder names
     annual_ws = os.path.join(project_ws, 'annual_stats')
@@ -123,11 +129,21 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
     #Loop through each crop and station list to build summary dataframes for
     #variables to include in output (if not in .csv skip)
     #Should PMETo/ETr come from the .ini?
-    var_list = ['PMETr_ASCE','PMETo','PMETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                'Kcb', 'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
+                'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    PMET_field =  'PM{}'.format(etref_field)
+    var_list.insert(0, PMET_field)
+    
     # Arc fieldnames can only be 10 characters. Shorten names to include _stat
-    var_fieldname_list = ['ETr','ETo','ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    if 'ETr' in etref_field:
+        var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    elif 'ETr' in etref_field:
+        var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    else:
+        var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']   
 
     # Testing (should this be an input option?)
     # unique_crop_nums = [3]
