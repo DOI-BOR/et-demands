@@ -138,7 +138,7 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
     if 'ETr' in etref_field:
         var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
                     'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-    elif 'ETr' in etref_field:
+    elif 'ETo' in etref_field:
         var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
                     'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
     else:
