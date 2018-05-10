@@ -9,7 +9,7 @@ import arcpy
 import util as util
 import datetime as dt
 
-def main(ini_path, overwrite_flag=True, cleanup_flag=True):
+def main(ini_path, overwrite_flag=True, cleanup_flag=True , year_filter=''):
     """Create Median NIWR Shapefiles from annual_stat files
 
     Args:
@@ -72,8 +72,21 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
         sys.exit()
     logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
 
+    #Year Filter
+    year_list = None
+    if year_filter:
+        try:
+            year_list= sorted(list(util.parse_int_set(year_filter)))
+            logging.info('\nyear_list = {0}'.format(year_list))
+        except:
+            pass
+
     #output folder
-    output_folder_path = os.path.join(annual_ws, 'Summary_Shapefiles')
+    output_folder_path = os.path.join(annual_ws, 'summary_shapefiles')
+    if year_list:
+        output_folder_path = os.path.join(annual_ws,
+                            'summary_shapefiles_{}to{}'.format(min(year_list),
+                                                              max(year_list)))
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
@@ -167,14 +180,19 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
                     continue
                 #Read file into df
                 annual_df = pd.read_csv(file_path, skiprows=1)
+
+                #Filter to only include years specified by user
+                if year_list:
+                    annual_df = annual_df[annual_df['Year'].isin(year_list)]
+
                 #Check to see if variable is in .csv (ETr vs ETo)
                 #SHOULD THIS Come FROM THE .ini?)
                 if var not in annual_df.columns:
                     continue
                 #Create Dataframe if it doesn't exist
                 if df is None:
-                   year_list = list(map(str,annual_df['Year']))
-                   year_fieldnames =  ['Year_' + y for y in year_list]
+                   years = list(map(str, annual_df['Year']))
+                   year_fieldnames =  ['Year_' + y for y in years]
                    df = pd.DataFrame(index=unique_stations,
                                      columns=year_fieldnames)
                 #Write data to each station row
@@ -194,7 +212,7 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
             output_df[mean_fieldname] = df.mean(axis=1)
 
         #Create station ID column from index
-        output_df['Station'] =df.index
+        output_df['Station'] =output_df.index
         #Remove rows with Na (Is this the best option???)
         #Write all stations to index and then remove empty
         output_df = output_df.dropna()
@@ -217,6 +235,16 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True):
         field_names.remove('ELEV_M')
         field_names.remove('ELEV_FT')
         field_names.remove('Shape')
+        field_names.remove('COUNTYNAME')
+        field_names.remove('STATENAME')
+        field_names.remove('STPO')
+        field_names.remove('HUC8')
+        field_names.remove('AG_ACRES')
+
+        #Keep crop specific areas in output shapefiles
+        area_field ='CROP_{:02d}'.format(crop)
+        field_names.remove(area_field)
+
 
         #Delete All but Desired Fields Above
         arcpy.DeleteField_management(temp_name, field_names)
@@ -283,6 +311,9 @@ def arg_parse():
         '--clean', default=False, action='store_true',
         help='Remove temporary datasets')
     parser.add_argument(
+        '-y', '--year', default='', type=str,
+        help='Years, comma separate list and/or range')
+    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -300,7 +331,7 @@ if __name__ == '__main__':
         'Script:', os.path.basename(sys.argv[0])))
 
     main(ini_path=args.ini, overwrite_flag=args.overwrite,
-         cleanup_flag=args.clean)
+         cleanup_flag=args.clean, year_filter=args.year)
 
 
 
