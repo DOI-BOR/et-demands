@@ -165,16 +165,13 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
 
     # Testing (should this be an input option?)
-    unique_crop_nums = [3]
-    unique_stations = [377392]
+    # unique_crop_nums = [3]
+    # unique_stations = [377392, 378777]
     print('\n Creating Summary Shapefiles')
     if year_list:
         logging.info('\nOnly including years: {0}'.format(year_list))
     for crop in unique_crop_nums:
         print('\n Processing Crop: {:02d}').format(crop)
-        #create output dataframe
-        output_df = pd.DataFrame(index=unique_stations)
-
 
         #Initialize df variable to check if pandas df needs to be created
         df = None
@@ -208,54 +205,37 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
             'Kc':'mean',
             'Kcb':'mean'}
             #add etref_field to dictionary
-            a[PMET_field]= 'sum'
+            a[PMET_field] = 'sum'
             
             #GroupStats by Year of each column follow agg assignment above
             yearlygroup_df = monthly_df.groupby('Year',
                                                 as_index=True).agg(a)
             #Take Mean of Yearly GroupStats
-            mean_df = yearlygroup_df.mean(axis=0).to_frame()
+            mean_df = yearlygroup_df.mean(axis=0)
             mean_fieldnames = [v + '_mn' for v in var_fieldname_list]
-            print(mean_df.columns)
-            print(mean_df.loc[:, var_list])
-            print(var_list)
-            # print(mean_df['ETact'])
-            # print(mean_df[var_list])
-            sys.exit()
-            # print(mean_fieldnames)
-            # mean_df[var_list].columns =mean_fieldnames
-            # print(mean_df)
-            # sys.exit()
-            # mean_df.columns = mean_df[var_list].tolist() + mean_fieldnames;
-            # # output_df[mean_fieldnames] = mean_df.mean(axis=1)
 
             #Take Median of Yearly GroupStats
-            median_df = yearlygroup_df.median(axis=0).to_frame()
+            median_df = yearlygroup_df.median(axis=0)
             median_fieldnames =[v + '_mdn' for v in var_fieldname_list]
-            # median_df.columns = mean_df[var_list].tolist() + median_fieldnames
-            # output_df[median_fieldnames] = df.median(axis=1)
 
             #Create Dataframe if it doesn't exist
             if df is None:
                df = pd.DataFrame(index=unique_stations,
-                                 columns=[mean_fieldnames + median_fieldnames])
+                                 columns=mean_fieldnames + median_fieldnames)
 
             #Write data to each station row
-
-            df.loc[station] = list(mean_df[var_list])+ \
+            df.loc[station] = list(mean_df[var_list]) + \
                               list(median_df[var_list])
-            #output_df name format follows annual_summary_shapefiles.py
-            output_df = df
 
         #Create station ID column from index
-        output_df['Station'] =df.index
+        df['Station'] = df.index
+
         #Remove rows with Na (Is this the best option???)
         #Write all stations to index and then remove empty
-        output_df = output_df.dropna()
+        df = df.dropna()
 
         #Output file name
-        # out_name = "Crop_{:02d}_gs_stats.shp".format(crop)
-        out_name = "test"
+        out_name = "Crop_{:02d}_gs_stats.shp".format(crop)
         temp_name = "temp_annual.shp"
 
         #Copy ETCell.shp
@@ -272,25 +252,34 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
         field_names.remove('ELEV_M')
         field_names.remove('ELEV_FT')
         field_names.remove('Shape')
+        field_names.remove('COUNTYNAME')
+        field_names.remove('STATENAME')
+        field_names.remove('STPO')
+        field_names.remove('HUC8')
+        field_names.remove('AG_ACRES')
+
+        #Keep crop specific areas in output shapefiles
+        area_field ='CROP_{:02d}'.format(crop)
+        field_names.remove(area_field)
 
         #Delete All but Desired Fields Above
         arcpy.DeleteField_management(temp_name, field_names)
 
         #Delete and Create data.dbf
-        if arcpy.Exists(os.path.join(output_folder_path,'data.dbf')):
+        if arcpy.Exists(os.path.join(output_folder_path, 'data.dbf')):
             arcpy.Delete_management(os.path.join(output_folder_path,
                                                  'data.dbf'))
         arcpy.CreateTable_management(output_folder_path, "data.dbf")
 
         #Add Fields to data.dbf
-        for field in map(str,output_df.columns):
+        for field in df.columns.values:
             arcpy.AddField_management(os.path.join(output_folder_path,
                                                    "data.dbf"), field, "DOUBLE")
 
         #write dataframe data to .dbf
-        rows_to_write = [tuple(r[1:]) for r in output_df.itertuples()]
+        rows_to_write = [tuple(r[1:]) for r in df.itertuples()]
         with arcpy.da.InsertCursor(os.path.join(output_folder_path, 'data.dbf'),
-                                   map(str, output_df.columns)) as ins_cur:
+                                   df.columns.values) as ins_cur:
             for row in rows_to_write:
                 ins_cur.insertRow(row)
         del ins_cur
@@ -310,7 +299,7 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
         arcpy.DeleteField_management(out_name, ['OID_', 'Station', 'Field1'])
         
         #Remove rows with no ET data (leftover from ETCells join)
-        with arcpy.da.UpdateCursor(out_name, "Season") as cursor:
+        with arcpy.da.UpdateCursor(out_name, "Season_mn") as cursor:
             for row in cursor:
                 if row[0] == 0:
                     cursor.deleteRow()
