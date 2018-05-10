@@ -153,20 +153,20 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
     var_list.insert(0, PMET_field)
     
     # Arc fieldnames can only be 10 characters. Shorten names to include _stat
-    #field name list will be based on etref_field ETr, ETo, or ET (not ETo/ETr)
-#    if 'ETr' in etref_field:
-#        var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
-#                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-#    elif 'ETr' in etref_field:
-#        var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
-#                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-#    else:
-#        var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
-#                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']    
+    # field name list will be based on etref_field ETr, ETo, or ET (not ETo/ETr)
+    if 'ETr' in etref_field:
+        var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    elif 'ETo' in etref_field:
+        var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+    else:
+        var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
 
     # Testing (should this be an input option?)
-    # unique_crop_nums = [3]
-    # unique_stations = [377392]
+    unique_crop_nums = [3]
+    unique_stations = [377392]
     print('\n Creating Summary Shapefiles')
     if year_list:
         logging.info('\nOnly including years: {0}'.format(year_list))
@@ -212,17 +212,39 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
             
             #GroupStats by Year of each column follow agg assignment above
             yearlygroup_df = monthly_df.groupby('Year',
-                                                as_index=False).agg(a)
-            #Take Mean of Yearl GroupStats
-            mean_df = yearlygroup_df.mean(axis=0)
+                                                as_index=True).agg(a)
+            #Take Mean of Yearly GroupStats
+            mean_df = yearlygroup_df.mean(axis=0).to_frame()
+            mean_fieldnames = [v + '_mn' for v in var_fieldname_list]
+            print(mean_df.columns)
+            print(mean_df.loc[:, var_list])
+            print(var_list)
+            # print(mean_df['ETact'])
+            # print(mean_df[var_list])
+            sys.exit()
+            # print(mean_fieldnames)
+            # mean_df[var_list].columns =mean_fieldnames
+            # print(mean_df)
+            # sys.exit()
+            # mean_df.columns = mean_df[var_list].tolist() + mean_fieldnames;
+            # # output_df[mean_fieldnames] = mean_df.mean(axis=1)
+
+            #Take Median of Yearly GroupStats
+            median_df = yearlygroup_df.median(axis=0).to_frame()
+            median_fieldnames =[v + '_mdn' for v in var_fieldname_list]
+            # median_df.columns = mean_df[var_list].tolist() + median_fieldnames
+            # output_df[median_fieldnames] = df.median(axis=1)
 
             #Create Dataframe if it doesn't exist
             if df is None:
                df = pd.DataFrame(index=unique_stations,
-                                 columns=var_list)
+                                 columns=[mean_fieldnames + median_fieldnames])
+
             #Write data to each station row
-            df.loc[station] = list(mean_df[var_list])
-            #output_df name format follows annual_summary_shapefiles.py 
+
+            df.loc[station] = list(mean_df[var_list])+ \
+                              list(median_df[var_list])
+            #output_df name format follows annual_summary_shapefiles.py
             output_df = df
 
         #Create station ID column from index
@@ -232,7 +254,8 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
         output_df = output_df.dropna()
 
         #Output file name
-        out_name = "Crop_{:02d}_gs_stats.shp".format(crop)
+        # out_name = "Crop_{:02d}_gs_stats.shp".format(crop)
+        out_name = "test"
         temp_name = "temp_annual.shp"
 
         #Copy ETCell.shp
