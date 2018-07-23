@@ -41,10 +41,23 @@ def main(cdl_ws, cdl_year='', overwrite_flag=False):
         zip_path = os.path.join(cdl_ws, zip_name)
 
         cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year, 'img'))
+
+        zip_url_size = remote_size(zip_url)
+        if os.path.isfile(zip_path):
+            zip_path_size = local_size(zip_path)
+        if not os.path.isfile(zip_path):
+            zip_path_size = 0
+
+        if zip_url_size == zip_path_size:
+            size_flag = False
+        if zip_url_size != zip_path_size:
+            size_flag = True
+
         if not os.path.isdir(cdl_ws):
             os.makedirs(cdl_ws)
 
-        if os.path.isfile(zip_path) and overwrite_flag:
+        if os.path.isfile(zip_path) and overwrite_flag or \
+            os.path.isfile(zip_path) and size_flag:
             os.remove(zip_path)
         if not os.path.isfile(zip_path):
             logging.info('  Download CDL files')
@@ -102,6 +115,19 @@ def reporthook(count, block_size, total_size):
     sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
                     (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
+
+def remote_size(link):
+    site = urllib.urlopen(link)
+    meta = site.info()
+    size = meta.getheaders("Content-Length")[0]
+    return size
+
+
+def local_size(path):
+    file = open(path, "rb")
+    size = len(file.read())
+    file.close()
+    return size
 
 
 if __name__ == '__main__':
