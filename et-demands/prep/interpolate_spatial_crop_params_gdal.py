@@ -1,14 +1,22 @@
+# --------------------------------
+# Name:         interpolate_spatial_crop_params_gdal.py
+# Purpose:      Interpolate spatial parameter files for ET-Demands
+# --------------------------------
+
 import argparse
 import datetime as dt
 import logging
 import os
-import sys
-import arcpy
-import _util as util
 import re
+import sys
+
+from osgeo import gdal, ogr, osr
+
+import _util as util
 
 
-def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True):
+def main(ini_path, zone_type='gridmet', overwrite_flag=False,
+         cleanup_flag=True):
     """Interpolate Preliminary Calibration Zones to All Zones
 
     Args:
@@ -19,24 +27,28 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
 
     Returns:
         None
+
     """
     logging.info('\nInterpolating Calibration Data from Subset Point Data')
+
     #  INI path
-    config = util.read_ini(ini_path, section='CROP_ET')
+    crop_et_sec = 'CROP_ET'
+    config = util.read_ini(ini_path, section=crop_et_sec)
+
     try:
-        project_ws = config.get('CROP_ET', 'project_folder')
+        project_ws = config.get(crop_et_sec, 'project_folder')
     except:
         logging.error(
             'project_folder parameter must be set in the INI file, exiting')
         return False
     try:
-        gis_ws = config.get('CROP_ET', 'gis_folder')
+        gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
         logging.error(
             'gis_folder parameter must be set in the INI file, exiting')
         return False
     try:
-        et_cells_path = config.get('CROP_ET', 'cells_path')
+        et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
         logging.error(
             'et_cells_path parameter must be set in the INI file, exiting')
@@ -49,41 +61,41 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
     crop_params_path = os.path.join(static_ws, 'CropParams.txt')
-    crop_et_sec = 'CROP_ET'
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
     # Check input folders
     if not os.path.exists(calibration_ws):
-        logging.critical('ERROR: The calibration folder does not exist. Run build_spatial_crop_params_arcpy.py, exiting')
+        logging.critical(
+            '\nERROR: The calibration folder does not exist. '
+            '\n  Run build_spatial_crop_params_arcpy.py\n  Exiting')
         sys.exit()
 
     # Check input folders
     if not os.path.isdir(project_ws):
-        logging.critical(('ERROR: The project folder ' +
-                          'does not exist\n  {}').format(project_ws))
+        logging.critical(
+            '\nERROR: The project folder does not exist'
+            '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.critical(('ERROR: The GIS folder ' +
-                          'does not exist\n  {}').format(gis_ws))
+        logging.critical(
+            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
         sys.exit()
-    logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
 
+    logging.info('\nGIS Workspace:      {}'.format(gis_ws))
 
     # Check input zone type (GRIDMET ONLY FOR NOW!!!!)
     if zone_type == 'gridmet':
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
-    else: 
+    else:
         print('FUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
         sys.exit()
 
-    arcpy.env.overwriteOutput = overwrite_flag
-    arcpy.CheckOutExtension('Spatial')
-    
     cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
     cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    arcpy.Project_management(et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
+    arcpy.Project_management(
+        et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
 
     temp_path = os.path.join(calibration_ws, 'temp')
     if not os.path.exists(temp_path):
@@ -125,24 +137,34 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     # Set arcpy environmental parameters
     arcpy.env.extent = cells_dd_path
     arcpy.env.outputCoordinateSystem = cells_dd_path
-    
-    # Convert cells_dd to cells_ras (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
-    arcpy.FeatureToRaster_conversion(cells_dd_path, station_id_field, cells_ras_path, 0.041666667)
+
+    # Convert cells_dd to cells_ras
+    # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
+    arcpy.FeatureToRaster_conversion(cells_dd_path, station_id_field,
+                                     cells_ras_path, 0.041666667)
 
     # Location of preliminary calibration .shp files (ADD AS INPUT ARG?)
-    prelim_calibration_ws = os.path.join(calibration_ws, 'preliminary_calibration')
+    prelim_calibration_ws = os.path.join(calibration_ws,
+                                         'preliminary_calibration')
 
     for crop_num, crop_name in zip(crop_number_list, crop_name_list):
         # Preliminary calibration .shp
-        subset_cal_file = os.path.join(prelim_calibration_ws, 'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
-        final_cal_file = os.path.join(calibration_ws, 'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
+        subset_cal_file = os.path.join(
+            prelim_calibration_ws,
+            'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
+        final_cal_file = os.path.join(
+            calibration_ws,
+            'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
 
-        if not arcpy.Exists(subset_cal_file):
-            print('\nCrop No: {} Preliminary Calibration File Not Found. Skipping.').format(crop_num)
+        if not util.exists(subset_cal_file):
+            logging.info(
+                '\nCrop No: {} Preliminary Calibration File Not Found. '
+                'Skipping.'.format(crop_num))
             continue
         print('\nInterpolating Crop: {0:02d}').format(crop_num)
         # Polygon to Point
-        arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file, "CENTROID")
+        arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
+                                        "CENTROID")
 
         # Change Processing Extent to match final calibration file
         # arcpy.env.extent = cells_dd_path
@@ -167,7 +189,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
         ras_list = []
         for param in param_list:
             outIDW_ras = arcpy.sa.Idw(temp_pt_file, param, cell_size)
-            outIDW_ras_path = os.path.join(temp_path, '{}{}').format(param, '.img')
+            outIDW_ras_path = os.path.join(temp_path, '{}{}').format(param,
+                                                                     '.img')
             outIDW_ras.save(outIDW_ras_path)
             ras_list.append(outIDW_ras_path)
 
@@ -179,13 +202,16 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
         def make_attribute_dict(fc, key_field, attr_list=['*']):
             attdict = {}
             fc_field_objects = arcpy.ListFields(fc)
-            fc_fields = [field.name for field in fc_field_objects if field.type != 'Geometry']
+            fc_fields = [field.name for field in fc_field_objects if
+                         field.type != 'Geometry']
             if attr_list == ['*']:
                 valid_fields = fc_fields
             else:
-                valid_fields = [field for field in attr_list if field in fc_fields]
+                valid_fields = [field for field in attr_list if
+                                field in fc_fields]
             # Ensure that key_field is always the first field in the field list
-            cursor_fields = [key_field] + list(set(valid_fields) - set([key_field]))
+            cursor_fields = [key_field] + list(
+                set(valid_fields) - set([key_field]))
             with arcpy.da.SearchCursor(fc, cursor_fields) as cursor:
                 for row in cursor:
                     attdict[row[0]] = dict(zip(cursor.fields, row))
@@ -198,8 +224,10 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
         with arcpy.da.UpdateCursor(final_cal_file, fields) as cursor:
             for row in cursor:
                 for param_i, param in enumerate(param_list):
-                    row[param_i+1] = round(cal_dict[int(row[0])][fields[param_i+1]], 1)
+                    row[param_i + 1] = round(
+                        cal_dict[int(row[0])][fields[param_i + 1]], 1)
                 cursor.updateRow(row)
+
 
 def arg_parse():
     """"""
@@ -212,7 +240,8 @@ def arg_parse():
     parser.add_argument(
         '--zone', default='county', metavar='', type=str,
         choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
+        help='Zone type [{}]'.format(
+            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
     parser.add_argument(
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
@@ -224,6 +253,7 @@ def arg_parse():
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
     return args
+
 
 if __name__ == '__main__':
     args = arg_parse()

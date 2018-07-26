@@ -1,10 +1,7 @@
-#--------------------------------
-# Name:         build_spatial_crop_params_arcpy.py
+# --------------------------------
+# Name:         build_spatial_crop_params_gdal.py
 # Purpose:      Build spatial parameter files for ET-Demands from zonal stats ETCells
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
-#--------------------------------
+# --------------------------------
 
 import argparse
 from collections import defaultdict
@@ -14,7 +11,7 @@ import os
 import re
 import sys
 
-import arcpy
+from osgeo import gdal, ogr, osr
 
 import _util as util
 
@@ -38,6 +35,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     Returns:
         None
+
     """
     logging.info('\nCalculating ET-Demands Spatial Crop Parameters')
 
@@ -46,14 +44,35 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Input paths
     # DEADBEEF - For now, get cropET folder from INI file
     # This function may eventually be moved into the main cropET code
-    config = util.read_ini(ini_path, section='CROP_ET')
     crop_et_sec = 'CROP_ET'
-    project_ws = config.get(crop_et_sec, 'project_folder')
-    gis_ws = config.get(crop_et_sec, 'gis_folder')
-    cells_path = config.get(crop_et_sec, 'cells_path')
-    # try: cells_path = config.get(crop_et_sec, 'cells_path')
-    # except: cells_path = os.path.join(gis_ws, 'ETCells.shp')
-    stations_path = config.get(crop_et_sec, 'stations_path')
+    config = util.read_ini(ini_path, section=crop_et_sec)
+
+    try:
+        project_ws = config.get(crop_et_sec, 'project_folder')
+    except:
+        logging.error(
+            'project_folder parameter must be set in the INI file, exiting')
+        return False
+    try:
+        gis_ws = config.get(crop_et_sec, 'gis_folder')
+    except:
+        logging.error(
+            'gis_folder parameter must be set in the INI file, exiting')
+        return False
+    try:
+        cells_path = config.get(crop_et_sec, 'cells_path')
+    except:
+        # cells_path = os.path.join(gis_ws, 'ETCells.shp')
+        logging.error(
+            'et_cells_path parameter must be set in the INI file, exiting')
+        return False
+    try:
+        stations_path = config.get(crop_et_sec, 'stations_path')
+    except:
+        logging.error(
+            'stations_path parameter must be set in the INI file, exiting')
+        return False
+
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
@@ -92,52 +111,53 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
-        logging.error(('ERROR: The INI cropET folder ' +
-                       'does not exist\n  {}').format(crop_et_ws))
+        logging.error(
+            '\nERROR: The INI cropET folder does not exist'
+            '\n  {}'.format(crop_et_ws))
         sys.exit()
     elif not os.path.isdir(bin_ws):
-        logging.error('\nERROR: The Bin workspace {0} ' +
-                      'does not exist\n'.format(bin_ws))
+        logging.error(
+            '\nERROR: The bin workspace does not exist\n  {}'.format(bin_ws))
         sys.exit()
     elif not os.path.isdir(project_ws):
-        logging.error(('ERROR: The project folder ' +
-                       'does not exist\n  {}').format(project_ws))
+        logging.error(
+            '\nERROR: The project folder does not exist'
+            '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.error(('ERROR: The GIS folder ' +
-                       'does not exist\n  {}').format(gis_ws))
+        logging.error(
+            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
         sys.exit()
     if '.gdb' not in calibration_ws and not os.path.isdir(calibration_ws):
         os.makedirs(calibration_ws)
-    logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
-    logging.info('Project Workspace:  {0}'.format(project_ws))
-    logging.info('CropET Workspace:   {0}'.format(crop_et_ws))
-    logging.info('Bin Workspace:      {0}'.format(bin_ws))
-    logging.info('Calib. Workspace:   {0}'.format(calibration_ws))
+    logging.info('\nGIS Workspace:      {}'.format(gis_ws))
+    logging.info('Project Workspace:  {}'.format(project_ws))
+    logging.info('CropET Workspace:   {}'.format(crop_et_ws))
+    logging.info('Bin Workspace:      {}'.format(bin_ws))
+    logging.info('Calib. Workspace:   {}'.format(calibration_ws))
 
     # Check input files
     if not os.path.isfile(crop_params_path):
-        logging.error('\nERROR: The crop parameters file {} ' +
-                      'does not exist\n'.format(crop_params_path))
+        logging.error('\nERROR: The crop parameters file does not exist'
+                      '\n  {}'.format(crop_params_path))
         sys.exit()
-    elif not arcpy.Exists(cells_path):
-        logging.error(('\nERROR: The ET Cell shapefile {} ' +
-                       'does not exist\n').format(cells_path))
+    elif not not os.path.isfile(cells_path):
+        logging.error('\nERROR: The ET Cell shapefile does not exist'
+                      '\n  {}'.format(cells_path))
         sys.exit()
-    elif not os.path.isfile(stations_path) or not arcpy.Exists(stations_path):
-        logging.error(('ERROR: The NLDAS station shapefile ' +
-                       'does not exist\n  %s').format(stations_path))
+    elif not os.path.isfile(stations_path):
+        logging.error('\nERROR: The NLDAS station shapefile does not exist'
+                      '\n  {}'.format(stations_path))
         sys.exit()
-    logging.debug('Crop Params Path:   {0}'.format(crop_params_path))
-    logging.debug('ET Cells Path:      {0}'.format(cells_path))
-    logging.debug('Stations Path:      {0}'.format(stations_path))
-
+    logging.debug('Crop Params Path:   {}'.format(crop_params_path))
+    logging.debug('ET Cells Path:      {}'.format(cells_path))
+    logging.debug('Stations Path:      {}'.format(stations_path))
 
     # For now, only allow calibration parameters in separate shapefiles
     ext = '.shp'
     # # Build output geodatabase if necessary
     # if calibration_ws.endswith('.gdb'):
-    #     .debug('GDB Path:           {0}'.format(calibration_ws))
+    #     .debug('GDB Path:           {}'.format(calibration_ws))
     #      = ''
     #      arcpy.Exists(calibration_ws) and overwrite_flag:
     #        try: arcpy.Delete_management(calibration_ws)
@@ -237,19 +257,13 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     crop_skip_list = sorted(list(set([44, 45, 46, 55, 56, 57])))
 
     # crop_test_list = sorted(list(set(crop_test_list + [46])))
-    logging.info('\ncrop_add_list = {0}'.format(crop_add_list))
+    logging.info('\ncrop_add_list = {}'.format(crop_add_list))
 
     # Read crop parameters using ET Demands functions/methods
     logging.info('\nReading Default Crop Parameters')
     sys.path.append(bin_ws)
     import crop_parameters
     crop_param_dict = crop_parameters.read_crop_parameters(crop_params_path)
-
-    # arcpy.CheckOutExtension('Spatial')
-    # arcpy.env.pyramid = 'NONE 0'
-    arcpy.env.overwriteOutput = overwrite_flag
-    arcpy.env.parallelProcessingFactor = 8
-
 
     # Get list of crops specified in ET cells
     # Currently this may only be crops with CDL acreage
@@ -259,7 +273,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
     crop_number_list = [
         int(f_name.split('_')[1]) for f_name in crop_field_list]
-    
+
     crop_number_list = [
         crop_num for crop_num in crop_number_list
         if not (crop_skip_list and crop_num in crop_skip_list)]
@@ -276,20 +290,19 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 print(crop_num, i)
                 if crop_num in crop_add_list:
                     crop_acreage_dict[crop_num][row[0]] = 0
-                else:    
+                else:
                     crop_acreage_dict[crop_num][row[0]] = row[i + 1]
 
-    crop_number_list = sorted(list(set(crop_number_list) | set(crop_add_list)))  
-
+    crop_number_list = sorted(list(set(crop_number_list) | set(crop_add_list)))
 
     # Make an empty template crop feature class
     logging.info('')
     crop_template_path = os.path.join(
         calibration_ws, 'crop_00_template' + ext)
-    if overwrite_flag and arcpy.Exists(crop_template_path):
+    if overwrite_flag and util.exists(crop_template_path):
         logging.debug('Overwriting template crop feature class')
         arcpy.Delete_management(crop_template_path)
-    if arcpy.Exists(crop_template_path):
+    if util.exists(crop_template_path):
         logging.info('Template crop feature class already exists, skipping')
     else:
         logging.info('Building template crop feature class')
@@ -298,14 +311,14 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         # Remove unneeded et cell fields
         for field in arcpy.ListFields(crop_template_path):
             if (field.name not in keep_field_list and
-                field.editable and not field.required):
-                logging.debug('  Delete field: {0}'.format(field.name))
+                    field.editable and not field.required):
+                logging.debug('  Delete field: {}'.format(field.name))
                 arcpy.DeleteField_management(crop_template_path, field.name)
         field_list = [f.name for f in arcpy.ListFields(crop_template_path)]
 
         # Add crop acreage field
         if crop_acres_field not in field_list:
-            logging.debug('  Add field: {0}'.format(crop_acres_field))
+            logging.debug('  Add field: {}'.format(crop_acres_field))
             arcpy.AddField_management(
                 crop_template_path, crop_acres_field, 'Float')
             arcpy.CalculateField_management(
@@ -313,17 +326,17 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
         # Add crop parameter fields if necessary
         for param_field, param_method, param_type in param_list:
-            logging.debug('  Add field: {0}'.format(param_field))
+            logging.debug('  Add field: {}'.format(param_field))
             if param_field not in field_list:
                 arcpy.AddField_management(
                     crop_template_path, param_field, param_type)
         # if dairy_cutting_field not in field_list:
-        #     .debug('  Add field: {0}'.format(dairy_cutting_field))
+        #     .debug('  Add field: {}'.format(dairy_cutting_field))
         #     .AddField_management(crop_template_path, dairy_cutting_field, 'Short')
         #     .CalculateField_management(
         #        crop_template_path, dairy_cutting_field, dairy_cuttings, 'PYTHON')
         # if beef_cutting_field not in field_list:
-        #     .debug('  Add field: {0}'.format(beef_cutting_field))
+        #     .debug('  Add field: {}'.format(beef_cutting_field))
         #     .AddField_management(crop_template_path, beef_cutting_field, 'Short')
         #     .CalculateField_management(
         #        crop_template_path, beef_cutting_field, beef_cuttings, 'PYTHON')
@@ -333,7 +346,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     #     .AddField_management(cells_path, 'CROP_EMPTY', 'Float')
     #     .CalculateField_management(
     #        cells_path, 'CROP_EMPTY', '0', 'PYTHON_9.3')
-
 
     # Process each crop
     logging.info('\nBuild crop feature classes')
@@ -354,12 +366,13 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         if crop_num in crop_add_list:
             pass
         # Skip if all zone crop areas are below threshold
-        elif all([v < area_threshold for v in crop_acreage_dict[crop_num].values()]):
+        elif all([v < area_threshold for v in
+                  crop_acreage_dict[crop_num].values()]):
             logging.info('  All crop acreaeges below threshold, skipping crop')
             continue
 
         # Remove existing shapefiles if necessary
-        if overwrite_flag and arcpy.Exists(crop_path):
+        if overwrite_flag and util.exists(crop_path):
             logging.debug('  Overwriting: {}'.format(
                 os.path.basename(crop_path)))
             arcpy.Delete_management(crop_path)
@@ -371,35 +384,36 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         #
 
         # Copy ET cells for each crop if needed
-        if arcpy.Exists(crop_path):
+        if util.exists(crop_path):
             logging.debug('  Shapefile already exists, skipping')
             continue
         else:
-            # logging.debug('    {0}'.format(crop_path))
+            # logging.debug('    {}'.format(crop_path))
             arcpy.Copy_management(crop_template_path, crop_path)
             # Remove extra fields
             # for field in arcpy.ListFields(crop_path):
             #      field.name not in keep_field_list:
-            #        # logging.debug('    {0}'.format(field.name))
+            #        # logging.debug('    {}'.format(field.name))
             #        arcpy.DeleteField_management(crop_path, field.name)
 
         # Add alfalfa cutting field
         if crop_num in [1, 2, 3, 4]:
             if len(arcpy.ListFields(crop_path, dairy_cutting_field)) == 0:
-                logging.debug('  Add field: {0}'.format(dairy_cutting_field))
+                logging.debug('  Add field: {}'.format(dairy_cutting_field))
                 arcpy.AddField_management(
                     crop_path, dairy_cutting_field, 'Short')
                 arcpy.CalculateField_management(
                     crop_path, dairy_cutting_field, dairy_cuttings, 'PYTHON')
             if len(arcpy.ListFields(crop_path, beef_cutting_field)) == 0:
-                logging.debug('  Add field: {0}'.format(beef_cutting_field))
+                logging.debug('  Add field: {}'.format(beef_cutting_field))
                 arcpy.AddField_management(
                     crop_path, beef_cutting_field, 'Short')
                 arcpy.CalculateField_management(
                     crop_path, beef_cutting_field, beef_cuttings, 'PYTHON')
 
         # Write default crop parameters to file
-        field_list = [p[0] for p in param_list] + [cell_id_field, crop_acres_field]
+        field_list = [p[0] for p in param_list] + [cell_id_field,
+                                                   crop_acres_field]
         with arcpy.da.UpdateCursor(crop_path, field_list) as cursor:
             for row in cursor:
                 # Don't remove zero acreage crops if in add list
@@ -411,7 +425,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                         cursor.deleteRow()
                     continue
                 # Write parameter values
-                for i, (param_field, param_method, param_type) in enumerate(param_list):
+                for i, (param_field, param_method, param_type) in enumerate(
+                        param_list):
                     row[i] = getattr(crop_param, param_method)
                 # Write crop acreage
                 if crop_num not in crop_add_list:
@@ -436,7 +451,8 @@ def arg_parse():
     parser.add_argument(
         '--zone', default='county', metavar='', type=str,
         choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
+        help='Zone type [{}]'.format(
+            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
     parser.add_argument(
         '--area', default=10, type=float,
         help='Crop area threshold [acres]')

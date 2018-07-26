@@ -1,7 +1,6 @@
 #--------------------------------
-# Name:         build_static_files.py
+# Name:         build_static_files_gdal.py
 # Purpose:      Build static files for ET-Demands from zonal stats ETCells
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -13,7 +12,7 @@ import re
 import shutil
 import sys
 
-import arcpy
+from osgeo import gdal, ogr, osr
 
 import _util as util
 
@@ -34,6 +33,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     Returns:
         None
+
     """
     logging.info('\nBuilding ET-Demands Static Files')
 
@@ -50,44 +50,46 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Input paths
     # DEADBEEF - For now, get cropET folder from INI file
     # This function may eventually be moved into the main cropET code
-    config = util.read_ini(ini_path, section='CROP_ET')
+    crop_et_sec = 'CROP_ET'
+    config = util.read_ini(ini_path, section=crop_et_sec)
+
     try:
-        project_ws = config.get('CROP_ET', 'project_folder')
+        project_ws = config.get(crop_et_sec, 'project_folder')
     except:
         logging.error(
             'project_folder parameter must be set in the INI file, exiting')
         return False
     try:
-        gis_ws = config.get('CROP_ET', 'gis_folder')
+        gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
         logging.error(
             'gis_folder parameter must be set in the INI file, exiting')
         return False
     try:
-        et_cells_path = config.get('CROP_ET', 'cells_path')
+        et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
         logging.error(
             'cells_path parameter must be set in the INI file, exiting')
         return False
     try:
-        stations_path = config.get('CROP_ET', 'stations_path')
+        stations_path = config.get(crop_et_sec, 'stations_path')
     except:
         logging.error(
             'stations_path parameter must be set in the INI file, exiting')
         return False
     try:
-        crop_et_ws = config.get('CROP_ET', 'crop_et_folder')
+        crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     except:
         logging.error(
             'crop_et_ws parameter must be set in the INI file, exiting')
         return False
     try:
-        template_ws = config.get('CROP_ET', 'template_folder')
+        template_ws = config.get(crop_et_sec, 'template_folder')
     except:
         template_ws = os.path.join(os.path.dirname(crop_et_ws), 'static')
         logging.info(
-            ('\nStatic text file "template_folder" parameter was not set ' +
-             'in the INI\n  Defaulting to: {}').format(template_ws))
+            '\nStatic text file "template_folder" parameter was not set '
+            'in the INI\n  Defaulting to: {}'.format(template_ws))
 
     # Read data from geodatabase or shapefile
     # if '.gdb' in et_cells_path and not et_cells_path.endswith('.shp'):
@@ -110,7 +112,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         station_zone_field = 'COUNTYNAME'
     elif zone_type == 'gridmet':
         station_zone_field = 'GRIDMET_ID'
-        station_id_field = 'GRIDMET_ID'    
+        station_id_field = 'GRIDMET_ID'
         # station_zone_field = 'FIPS_C'
     station_lat_field = 'LAT'
     station_lon_field = 'LON'
@@ -155,45 +157,47 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
-        logging.critical(('ERROR: The INI cropET folder ' +
-                          'does not exist\n  {}').format(crop_et_ws))
+        logging.critical(
+            '\nERROR: The INI cropET folder does not exist'
+            '\n  {}'.format(crop_et_ws))
         sys.exit()
     elif not os.path.isdir(project_ws):
-        logging.critical(('ERROR: The project folder ' +
-                          'does not exist\n  {}').format(project_ws))
+        logging.critical(
+            '\nERROR: The project folder does not exist'
+            '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.critical(('ERROR: The GIS folder ' +
-                          'does not exist\n  {}').format(gis_ws))
+        logging.critical(
+            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
         sys.exit()
-    logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
-    logging.info('Project Workspace:  {0}'.format(project_ws))
-    logging.info('CropET Workspace:   {0}'.format(crop_et_ws))
-    logging.info('Template Workspace: {0}'.format(template_ws))
+    logging.info('\nGIS Workspace:      {}'.format(gis_ws))
+    logging.info('Project Workspace:  {}'.format(project_ws))
+    logging.info('CropET Workspace:   {}'.format(crop_et_ws))
+    logging.info('Template Workspace: {}'.format(template_ws))
 
     # Check input files
     if not arcpy.Exists(et_cells_path):
-        logging.error(('\nERROR: The ET Cell shapefile {} ' +
-                       'does not exist\n').format(et_cells_path))
+        logging.error('\nERROR: The ET Cell shapefile does not exist'
+                      '\n  {}'.format(et_cells_path))
         sys.exit()
     elif not os.path.isfile(stations_path) or not arcpy.Exists(stations_path):
-        logging.critical(('ERROR: The NLDAS station shapefile does ' +
-                          'not exist\n  %s').format(stations_path))
+        logging.critical('\nERROR: The NLDAS station shapefile does not exist'
+                         '\n  {}'.format(stations_path))
         sys.exit()
     for static_name in static_list:
         if not os.path.isfile(os.path.join(template_ws, static_name)):
             logging.error(
-                ('\nERROR: The static template {} does not ' +
-                 'exist\n').format(os.path.join(template_ws, static_name)))
+                '\nERROR: The static template does not exist'
+                '\n  {}'.format(os.path.join(template_ws, static_name)))
             sys.exit()
-    logging.debug('ET Cells Path: {0}'.format(et_cells_path))
-    logging.debug('Stations Path: {0}'.format(stations_path))
+    logging.debug('ET Cells Path: {}'.format(et_cells_path))
+    logging.debug('Stations Path: {}'.format(stations_path))
 
     # Check units
     if station_elev_units.upper() not in ['FEET', 'FT', 'METERS', 'M']:
         logging.error(
-            ('\nERROR: Station elevation units {} are invalid\n' +
-             '  Units must be METERS or FEET').format(station_elev_units))
+            '\nERROR: Station elevation units {} are invalid'
+            '\n  Units must be METERS or FEET'.format(station_elev_units))
         sys.exit()
 
     # Build output table folder if necessary
@@ -213,7 +217,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 # Key/match on strings even if ID is an integer
                 station_data_dict[str(row[0])][field] = row[fields.index(field)]
     for k, v in station_data_dict.iteritems():
-        logging.debug('  {0}: {1}'.format(k, v))
+        logging.debug('  {}: {}'.format(k, v))
 
     # Read ET Cell zonal stats
     logging.info('\nReading ET Cell Zonal Stats')
@@ -279,8 +283,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 station_elev = '{:.2f}'.format(station_data[station_elev_field])
             else:
                 logging.debug(
-                    ('    Cell_ID {} was not found in the ' +
-                     'station data').format(cell_id))
+                    '    Cell_ID {} was not found in the '
+                    'station data'.format(cell_id))
                 station_id, station_lat, station_lon, station_elev = '', '', '', ''
             # There is an extra/unused column in the template and excel files
             output_list = [
@@ -302,8 +306,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 station_id = station_data_dict[cell_id][station_id_field]
             else:
                 logging.debug(
-                    ('    Cell_ID {} was not found in the ' +
-                     'station data').format(cell_id))
+                    '    Cell_ID {} was not found in the '
+                    'station data'.format(cell_id))
                 station_id = ''
             output_list = [
                 cell_id, cell_data[cell_name_field], station_id, irrigation]
@@ -340,8 +344,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 # station_elev = '{:.2f}'.format(station_data[station_elev_field])
             else:
                 logging.debug(
-                    ('    Cell_ID {} was not found in the ' +
-                     'station data').format(cell_id))
+                    '    Cell_ID {} was not found in the '
+                    'station data'.format(cell_id))
                 # station_id, station_lat, station_lon, station_elev = '', '', '', ''
                 continue
             output_list = [station_id, ''] + [1.0] * 12
