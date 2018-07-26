@@ -14,6 +14,7 @@ import sys
 
 from osgeo import gdal, ogr, osr
 
+import _arcpy
 import _util as util
 
 
@@ -56,32 +57,32 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error(
-            'project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error(
-            'gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
-        logging.error(
-            'cells_path parameter must be set in the INI file, exiting')
+        logging.error('cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         stations_path = config.get(crop_et_sec, 'stations_path')
     except:
-        logging.error(
-            'stations_path parameter must be set in the INI file, exiting')
+        logging.error('stations_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     except:
-        logging.error(
-            'crop_et_ws parameter must be set in the INI file, exiting')
+        logging.error('crop_et_ws parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         template_ws = config.get(crop_et_sec, 'template_folder')
@@ -223,8 +224,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.info('\nReading ET Cell Zonal Stats')
     logging.debug('  {}'.format(et_cells_path))
     crop_field_list = sorted([
-        f.name for f in arcpy.ListFields(et_cells_path)
-        if re.match('CROP_\d{2}', f.name)])
+        f for f in _arcpy.list_fields(et_cells_path)
+        if re.match('CROP_\d{2}', f)])
     fields = [cell_id_field, cell_name_field, cell_lat_field,
               awc_in_ft_field, clay_field, sand_field,
               hydgrp_num_field, hydgrp_field]

@@ -12,6 +12,7 @@ import sys
 
 from osgeo import gdal, ogr, osr
 
+import _arcpy
 import _util as util
 
 
@@ -38,20 +39,20 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error(
-            'project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error(
-            'gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
-        logging.error(
-            'et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
@@ -66,20 +67,18 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
 
     # Check input folders
     if not os.path.exists(calibration_ws):
-        logging.critical(
-            '\nERROR: The calibration folder does not exist. '
-            '\n  Run build_spatial_crop_params_arcpy.py\n  Exiting')
+        logging.critical('\nERROR: The calibration folder does not exist. '
+                         '\n  Run build_spatial_crop_params_arcpy.py')
         sys.exit()
 
     # Check input folders
     if not os.path.isdir(project_ws):
-        logging.critical(
-            '\nERROR: The project folder does not exist'
-            '\n  {}'.format(project_ws))
+        logging.critical('\nERROR: The project folder does not exist'
+                         '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.critical(
-            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
+        logging.critical('\nERROR: The GIS folder does not exist'
+                         '\n  {}'.format(gis_ws))
         sys.exit()
 
     logging.info('\nGIS Workspace:      {}'.format(gis_ws))
@@ -110,7 +109,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
 
     # Get list of crops specified in ET cells
     crop_field_list = [
-        field.name for field in arcpy.ListFields(et_cells_path)
+        field.name for field in _arcpy.list_fields(et_cells_path)
         if re.match('CROP_\d{2}', field.name)]
     logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
     crop_number_list = [
@@ -134,9 +133,10 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
         crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
         crop_name_list.append(crop_name)
 
-    # Set arcpy environmental parameters
-    arcpy.env.extent = cells_dd_path
-    arcpy.env.outputCoordinateSystem = cells_dd_path
+
+
+
+
 
     # Convert cells_dd to cells_ras
     # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
@@ -165,12 +165,6 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
         # Polygon to Point
         arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
                                         "CENTROID")
-
-        # Change Processing Extent to match final calibration file
-        # arcpy.env.extent = cells_dd_path
-        # arcpy.env.outputCoordinateSystem = cells_dd_path
-        arcpy.env.snapRaster = cells_ras_path
-        cell_size = arcpy.Raster(cells_ras_path).meanCellHeight
 
         # Params to Interpolate
         # Full list
@@ -201,7 +195,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
         # https://gist.github.com/tonjadwyer/0e4162b1423c404dc2a50188c3b3c2f5
         def make_attribute_dict(fc, key_field, attr_list=['*']):
             attdict = {}
-            fc_field_objects = arcpy.ListFields(fc)
+            fc_field_objects = _arcpy.list_fields(fc)
             fc_fields = [field.name for field in fc_field_objects if
                          field.type != 'Geometry']
             if attr_list == ['*']:

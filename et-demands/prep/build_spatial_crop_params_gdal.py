@@ -13,6 +13,7 @@ import sys
 
 from osgeo import gdal, ogr, osr
 
+import _arcpy
 import _util as util
 
 
@@ -50,27 +51,23 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error(
-            'project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error(
-            'gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, exiting')
         return False
     try:
         cells_path = config.get(crop_et_sec, 'cells_path')
     except:
         # cells_path = os.path.join(gis_ws, 'ETCells.shp')
-        logging.error(
-            'et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, exiting')
         return False
     try:
         stations_path = config.get(crop_et_sec, 'stations_path')
     except:
-        logging.error(
-            'stations_path parameter must be set in the INI file, exiting')
+        logging.error('stations_path parameter must be set in the INI file, exiting')
         return False
 
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
@@ -111,22 +108,20 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
-        logging.error(
-            '\nERROR: The INI cropET folder does not exist'
-            '\n  {}'.format(crop_et_ws))
+        logging.error('\nERROR: The INI cropET folder does not exist'
+                      '\n  {}'.format(crop_et_ws))
         sys.exit()
     elif not os.path.isdir(bin_ws):
-        logging.error(
-            '\nERROR: The bin workspace does not exist\n  {}'.format(bin_ws))
+        logging.error('\nERROR: The bin workspace does not exist'
+                      '\n  {}'.format(bin_ws))
         sys.exit()
     elif not os.path.isdir(project_ws):
-        logging.error(
-            '\nERROR: The project folder does not exist'
-            '\n  {}'.format(project_ws))
+        logging.error('\nERROR: The project folder does not exist'
+                      '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.error(
-            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
+        logging.error('\nERROR: The GIS folder does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     if '.gdb' not in calibration_ws and not os.path.isdir(calibration_ws):
         os.makedirs(calibration_ws)
@@ -160,7 +155,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     #     .debug('GDB Path:           {}'.format(calibration_ws))
     #      = ''
     #      util.exists(calibration_ws) and overwrite_flag:
-    #        try: arcpy.Delete_management(calibration_ws)
+    #        try: _arcpy.delete(calibration_ws)
     #        except: pass
     #      calibration_ws is not None and not util.exists(calibration_ws):
     #        arcpy.CreateFileGDB_management(
@@ -268,7 +263,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Get list of crops specified in ET cells
     # Currently this may only be crops with CDL acreage
     crop_field_list = [
-        field.name for field in arcpy.ListFields(cells_path)
+        field.name for field in _arcpy.list_fields(cells_path)
         if re.match('CROP_\d{2}', field.name)]
     logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
     crop_number_list = [
@@ -301,51 +296,50 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         calibration_ws, 'crop_00_template' + ext)
     if overwrite_flag and util.exists(crop_template_path):
         logging.debug('Overwriting template crop feature class')
-        arcpy.Delete_management(crop_template_path)
+        _arcpy.delete(crop_template_path)
     if util.exists(crop_template_path):
         logging.info('Template crop feature class already exists, skipping')
     else:
         logging.info('Building template crop feature class')
-        arcpy.CopyFeatures_management(cells_path, crop_template_path)
+        _arcpy.copy(cells_path, crop_template_path)
 
         # Remove unneeded et cell fields
-        for field in arcpy.ListFields(crop_template_path):
-            if (field.name not in keep_field_list and
-                    field.editable and not field.required):
+        for field in _arcpy.list_fields(crop_template_path):
+            # if (field not in keep_field_list and
+            #         field.editable and not field.required):
+            if field not in keep_field_list:
                 logging.debug('  Delete field: {}'.format(field.name))
-                arcpy.DeleteField_management(crop_template_path, field.name)
-        field_list = [f.name for f in arcpy.ListFields(crop_template_path)]
+                _arcpy.delete_field(crop_template_path, field.name)
+        field_list = _arcpy.list_fields(crop_template_path)
 
         # Add crop acreage field
         if crop_acres_field not in field_list:
             logging.debug('  Add field: {}'.format(crop_acres_field))
-            arcpy.AddField_management(
-                crop_template_path, crop_acres_field, 'Float')
-            arcpy.CalculateField_management(
-                crop_template_path, crop_acres_field, '0', 'PYTHON_9.3')
+            _arcpy.add_field(crop_template_path, crop_acres_field, ogr.OFTReal)
+            _arcpy.calculate_field(crop_template_path, crop_acres_field, 0)
 
         # Add crop parameter fields if necessary
         for param_field, param_method, param_type in param_list:
             logging.debug('  Add field: {}'.format(param_field))
             if param_field not in field_list:
-                arcpy.AddField_management(
-                    crop_template_path, param_field, param_type)
+                _arcpy.add_field(crop_template_path, param_field, param_type)
         # if dairy_cutting_field not in field_list:
-        #     .debug('  Add field: {}'.format(dairy_cutting_field))
-        #     .AddField_management(crop_template_path, dairy_cutting_field, 'Short')
-        #     .CalculateField_management(
-        #        crop_template_path, dairy_cutting_field, dairy_cuttings, 'PYTHON')
+        #     logging.debug('  Add field: {}'.format(dairy_cutting_field))
+        #     _arcpy.add_field(crop_template_path, dairy_cutting_field,
+        #                      ogr.OFTInteger)
+        #     _arcpy.calculate_field(crop_template_path, dairy_cutting_field,
+        #                            dairy_cuttings)
         # if beef_cutting_field not in field_list:
-        #     .debug('  Add field: {}'.format(beef_cutting_field))
-        #     .AddField_management(crop_template_path, beef_cutting_field, 'Short')
-        #     .CalculateField_management(
-        #        crop_template_path, beef_cutting_field, beef_cuttings, 'PYTHON')
+        #     logging.debug('  Add field: {}'.format(beef_cutting_field))
+        #     _arcpy.add_field(crop_template_path, beef_cutting_field,
+        #                      ogr.OFTInteger)
+        #     _arcpy.calculate_field(crop_template_path, beef_cutting_field,
+        #                            beef_cuttings)
 
     # Add an empty/zero crop field for the field mappings below
-    # if len(arcpy.ListFields(cells_path, 'CROP_EMPTY')) == 0:
-    #     .AddField_management(cells_path, 'CROP_EMPTY', 'Float')
-    #     .CalculateField_management(
-    #        cells_path, 'CROP_EMPTY', '0', 'PYTHON_9.3')
+    # if len(_arcpy.list_fields(cells_path, 'CROP_EMPTY')) == 0:
+    #     arcpy.add_field(cells_path, 'CROP_EMPTY', 'Float')
+    #     arcpy.calculate_field(cells_path, 'CROP_EMPTY', '0')
 
     # Process each crop
     logging.info('\nBuild crop feature classes')
@@ -375,7 +369,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         if overwrite_flag and util.exists(crop_path):
             logging.debug('  Overwriting: {}'.format(
                 os.path.basename(crop_path)))
-            arcpy.Delete_management(crop_path)
+            _arcpy.delete(crop_path)
 
         # Don't check skip list until after existing files are removed
         # if ((crop_test_list and crop_num not in crop_test_list) or
@@ -389,27 +383,25 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             continue
         else:
             # logging.debug('    {}'.format(crop_path))
-            arcpy.Copy_management(crop_template_path, crop_path)
+            _arcpy.copy(crop_template_path, crop_path)
             # Remove extra fields
-            # for field in arcpy.ListFields(crop_path):
+            # for field in _arcpy.list_fields(crop_path):
             #      field.name not in keep_field_list:
             #        # logging.debug('    {}'.format(field.name))
-            #        arcpy.DeleteField_management(crop_path, field.name)
+            #        _arcpy.delete_field(crop_path, field.name)
 
         # Add alfalfa cutting field
         if crop_num in [1, 2, 3, 4]:
-            if len(arcpy.ListFields(crop_path, dairy_cutting_field)) == 0:
+            if len(_arcpy.list_fields(crop_path, dairy_cutting_field)) == 0:
                 logging.debug('  Add field: {}'.format(dairy_cutting_field))
-                arcpy.AddField_management(
-                    crop_path, dairy_cutting_field, 'Short')
-                arcpy.CalculateField_management(
-                    crop_path, dairy_cutting_field, dairy_cuttings, 'PYTHON')
-            if len(arcpy.ListFields(crop_path, beef_cutting_field)) == 0:
+                _arcpy.add_field(crop_path, dairy_cutting_field, ogr.OFTInteger)
+                _arcpy.calculate_field(crop_path, dairy_cutting_field,
+                                       dairy_cuttings)
+            if len(_arcpy.list_fields(crop_path, beef_cutting_field)) == 0:
                 logging.debug('  Add field: {}'.format(beef_cutting_field))
-                arcpy.AddField_management(
-                    crop_path, beef_cutting_field, 'Short')
-                arcpy.CalculateField_management(
-                    crop_path, beef_cutting_field, beef_cuttings, 'PYTHON')
+                _arcpy.add_field(crop_path, beef_cutting_field, ogr.OFTInteger)
+                _arcpy.calculate_field(crop_path, beef_cutting_field,
+                                       beef_cuttings)
 
         # Write default crop parameters to file
         field_list = [p[0] for p in param_list] + [cell_id_field,
@@ -433,11 +425,11 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                     row[-1] = crop_acreage_dict[crop_num][row[-2]]
                 cursor.updateRow(row)
 
-    # Cleanup
-    # Remove the empty/zero crop field
-    # arcpy.DeleteField_management(cells_path, 'CROP_EMPTY')
-    # Remove template feature class
-    # arcpy.Delete_management(crop_template_path)
+    # # Cleanup
+    # # Remove the empty/zero crop field
+    # _arcpy.delete_field(cells_path, 'CROP_EMPTY')
+    # # Remove template feature class
+    # _arcpy.delete(crop_template_path)
 
 
 def arg_parse():
