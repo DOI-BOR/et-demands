@@ -1,8 +1,6 @@
 #--------------------------------
 # Name:         util.py
 # Purpose:      Utilitiy functions for ET-Demands prep scripts
-# Author:       Charles Morton
-# Created       2016-09-14
 # Python:       2.7
 #--------------------------------
 
@@ -49,7 +47,7 @@ def parse_int_set(nputstr=""):
     """
     selection = set()
     invalid = set()
-    # tokens are comma seperated values
+    # tokens are comma separated values
     tokens = [x.strip() for x in nputstr.split(',')]
     for i in tokens:
         try:
@@ -82,12 +80,12 @@ def read_ini(ini_path, section='CROP_ET'):
     try:
         ini = config.readfp(open(ini_path))
     except:
-        logging.error('\nERROR: Config file could not be read, ' +
+        logging.error('\nERROR: Config file could not be read, '
                       'is not an input file, or does not exist\n')
         sys.exit()
     if section not in config.sections():
-        logging.error(('\nERROR: The input file must have ' +
-                       'a section: [{}]\n').format(section))
+        logging.error('\nERROR: The input file must have '
+                      'a section: [{}]\n'.format(section))
         sys.exit()
     return config
 
@@ -101,3 +99,25 @@ def ranges(i):
         else:
             yield '{0}-{1}'.format(b[0][1], b[-1][1])
         # yield b[0][1], b[-1][1]
+
+
+def exists(dataset):
+    """Mimic ArcPy Exists function
+
+    Parameters
+    ----------
+    dataset : str
+        File path of a dataset, shapefile, or file to be checked for existence.
+
+    Returns
+    -------
+
+    Notes
+    -----
+    Need to add functionality to attempt to open the file.
+
+    """
+    if os.path.isfile(dataset):
+        return True
+    else:
+        return False

@@ -310,11 +310,11 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Remove existing data if overwrite
     # if overwrite_flag and util.exists(et_cells_path):
     #     arcpy.Delete_management(et_cells_path)
-    # if overwrite_flag and gdb_flag and arcpy.Exists(gdb_path):
+    # if overwrite_flag and gdb_flag and util.exists(gdb_path):
     #     shutil.rmtree(gdb_path)
 
     # # Build output geodatabase if necessary
-    # if gdb_flag and not arcpy.Exists(gdb_path):
+    # if gdb_flag and not util.exists(gdb_path):
     #     arcpy.CreateFileGDB_management(
     #         os.path.dirname(gdb_path), os.path.basename(gdb_path))
 

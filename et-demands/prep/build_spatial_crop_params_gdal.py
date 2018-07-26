@@ -159,10 +159,10 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # if calibration_ws.endswith('.gdb'):
     #     .debug('GDB Path:           {}'.format(calibration_ws))
     #      = ''
-    #      arcpy.Exists(calibration_ws) and overwrite_flag:
+    #      util.exists(calibration_ws) and overwrite_flag:
     #        try: arcpy.Delete_management(calibration_ws)
     #        except: pass
-    #      calibration_ws is not None and not arcpy.Exists(calibration_ws):
+    #      calibration_ws is not None and not util.exists(calibration_ws):
     #        arcpy.CreateFileGDB_management(
     #            os.path.dirname(calibration_ws),
     #            os.path.basename(calibration_ws))
