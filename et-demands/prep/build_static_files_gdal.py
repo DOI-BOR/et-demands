@@ -177,11 +177,11 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.info('Template Workspace: {}'.format(template_ws))
 
     # Check input files
-    if not util.exists(et_cells_path):
+    if not _arcpy.exists(et_cells_path):
         logging.error('\nERROR: The ET Cell shapefile does not exist'
                       '\n  {}'.format(et_cells_path))
         sys.exit()
-    elif not os.path.isfile(stations_path) or not util.exists(stations_path):
+    elif not os.path.isfile(stations_path) or not _arcpy.exists(stations_path):
         logging.critical('\nERROR: The NLDAS station shapefile does not exist'
                          '\n  {}'.format(stations_path))
         sys.exit()

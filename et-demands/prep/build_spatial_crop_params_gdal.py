@@ -152,15 +152,15 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     ext = '.shp'
     # # Build output geodatabase if necessary
     # if calibration_ws.endswith('.gdb'):
-    #     .debug('GDB Path:           {}'.format(calibration_ws))
+    #     logging.debug('GDB Path:           {}'.format(calibration_ws))
     #      = ''
-    #      util.exists(calibration_ws) and overwrite_flag:
-    #        try: _arcpy.delete(calibration_ws)
-    #        except: pass
-    #      calibration_ws is not None and not util.exists(calibration_ws):
-    #        arcpy.CreateFileGDB_management(
-    #            os.path.dirname(calibration_ws),
-    #            os.path.basename(calibration_ws))
+    #     _arcpy.exists(calibration_ws) and overwrite_flag:
+    #         try: _arcpy.delete(calibration_ws)
+    #         except: pass
+    #     if calibration_ws is not None and not _arcpy.exists(calibration_ws):
+    #         arcpy.CreateFileGDB_management(
+    #             os.path.dirname(calibration_ws),
+    #             os.path.basename(calibration_ws))
     # else:
     #      = '.shp'
 
@@ -294,10 +294,10 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.info('')
     crop_template_path = os.path.join(
         calibration_ws, 'crop_00_template' + ext)
-    if overwrite_flag and util.exists(crop_template_path):
+    if overwrite_flag and _arcpy.exists(crop_template_path):
         logging.debug('Overwriting template crop feature class')
         _arcpy.delete(crop_template_path)
-    if util.exists(crop_template_path):
+    if _arcpy.exists(crop_template_path):
         logging.info('Template crop feature class already exists, skipping')
     else:
         logging.info('Building template crop feature class')
@@ -366,7 +366,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             continue
 
         # Remove existing shapefiles if necessary
-        if overwrite_flag and util.exists(crop_path):
+        if overwrite_flag and _arcpy.exists(crop_path):
             logging.debug('  Overwriting: {}'.format(
                 os.path.basename(crop_path)))
             _arcpy.delete(crop_path)
@@ -378,7 +378,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         #
 
         # Copy ET cells for each crop if needed
-        if util.exists(crop_path):
+        if _arcpy.exists(crop_path):
             logging.debug('  Shapefile already exists, skipping')
             continue
         else:

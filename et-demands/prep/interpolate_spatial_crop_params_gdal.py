@@ -156,7 +156,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
             calibration_ws,
             'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
 
-        if not util.exists(subset_cal_file):
+        if not _arcpy.exists(subset_cal_file):
             logging.info(
                 '\nCrop No: {} Preliminary Calibration File Not Found. '
                 'Skipping.'.format(crop_num))
