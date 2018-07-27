@@ -11,3 +11,7 @@ __pycache__/
 
 # Common Data
 common
+
+example/gis/cdl
+example/gis/scratch
+example/gis/soils

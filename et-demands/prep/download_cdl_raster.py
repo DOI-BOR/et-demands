@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         download_cdl_raster.py
-# Purpose:      Download national CDL zips
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
+# Purpose:      Download and extract national CDL
 #--------------------------------
 
 import argparse
@@ -11,56 +8,54 @@ import datetime as dt
 import logging
 import os
 import sys
-import urllib
 import zipfile
 
 import _util as util
 
 
 def main(cdl_ws, cdl_year='', overwrite_flag=False):
-    """Download CONUS CDL zips
+    """Download and extract CONUS CDL
 
     Args:
         cdl_ws (str): Folder/workspace path of the GIS data for the project
         cdl_year (str): Comma separated list and/or range of years
         overwrite_flag (bool): If True, overwrite existing files
 
-    Returns:
-        None
     """
     logging.info('\nDownload and extract CONUS CDL rasters')
-    site_url = 'ftp://ftp.nass.usda.gov/download/res'
+    site_url = 'ftp.nass.usda.gov'
+    site_folder = 'download/res'
 
     cdl_format = '{}_30m_cdls.{}'
 
     for cdl_year in list(util.parse_int_set(cdl_year)):
         logging.info('Year: {}'.format(cdl_year))
         zip_name = cdl_format.format(cdl_year, 'zip')
-        zip_url = site_url + '/' + zip_name
+        zip_url = '/'.join([site_url, site_folder, zip_name])
         zip_path = os.path.join(cdl_ws, zip_name)
 
         cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year, 'img'))
         if not os.path.isdir(cdl_ws):
             os.makedirs(cdl_ws)
 
-        if os.path.isfile(zip_path) and overwrite_flag:
-            os.remove(zip_path)
-        if not os.path.isfile(zip_path):
-            logging.info('  Download CDL files')
-            logging.debug('    {}'.format(zip_url))
-            logging.debug('    {}'.format(zip_path))
-            try:
-                urllib.urlretrieve(zip_url, zip_path)
-            except IOError as e:
-                logging.error('    IOError, skipping')
-                logging.error(e)
+        if os.path.isfile(cdl_path) and not overwrite_flag:
+            logging.info('\nCDL raster already exists, skipping')
+            continue
 
-        if os.path.isfile(cdl_path) and overwrite_flag:
-            util.remove_file(cdl_path)
-        if os.path.isfile(zip_path) and not os.path.isfile(cdl_path):
-            logging.info('  Extracting CDL files')
+        if not os.path.isfile(zip_path) or overwrite_flag:
+            logging.info('\nDownload CDL files')
+            logging.debug('  {}'.format(zip_url))
+            logging.debug('  {}'.format(zip_path))
+            util.ftp_download(site_url, site_folder, zip_name, zip_path)
+        else:
+            logging.info('\nCDL raster already downloaded')
+
+        if os.path.isfile(zip_path):
+            logging.info('\nExtracting CDL files')
             with zipfile.ZipFile(zip_path) as zf:
                 zf.extractall(cdl_ws)
+        else:
+            logging.info('\nCDL zip does not exist')
 
 
 def arg_parse():
