@@ -629,7 +629,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         field_name_list = [f.name for f in arcpy.ListFields(temp_table_path)]
         value_list = [f.split('_')[-1] for f in field_name_list]
         value_list.remove('OID')
-        value_list = map(int, value_list)
+        value_list = list(map(int, value_list))
 
         # if not set((range(i, i+step_size))) & set(value_list):
         if len(set(range(i, np.clip(i+step_size, 1, zone_count+1))).difference(set(value_list))) > 0:

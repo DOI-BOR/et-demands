@@ -93,7 +93,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
 
     cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
     cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    arcpy.Project_management(
+    _arcpy.project(
         et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
 
     temp_path = os.path.join(calibration_ws, 'temp')
@@ -134,14 +134,10 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
         crop_name_list.append(crop_name)
 
 
-
-
-
-
     # Convert cells_dd to cells_ras
     # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
-    arcpy.FeatureToRaster_conversion(cells_dd_path, station_id_field,
-                                     cells_ras_path, 0.041666667)
+    _arcpy.feature_to_raster(cells_dd_path, station_id_field, cells_ras_path,
+                             0.041666667)
 
     # Location of preliminary calibration .shp files (ADD AS INPUT ARG?)
     prelim_calibration_ws = os.path.join(calibration_ws,
@@ -161,7 +157,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
                 '\nCrop No: {} Preliminary Calibration File Not Found. '
                 'Skipping.'.format(crop_num))
             continue
-        print('\nInterpolating Crop: {0:02d}').format(crop_num)
+        logging.info('\nInterpolating Crop: {:02d}').format(crop_num)
         # Polygon to Point
         arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
                                         "CENTROID")
@@ -246,6 +242,7 @@ def arg_parse():
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
+
     return args
 
 

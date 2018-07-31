@@ -1,8 +1,6 @@
 #--------------------------------
 # Name:         build_static_files.py
 # Purpose:      Build static files for ET-Demands from zonal stats ETCells
-# Author:       Charles Morton
-# Created       2017-01-11
 # Python:       2.7
 #--------------------------------
 
@@ -214,7 +212,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             for field in fields[1:]:
                 # Key/match on strings even if ID is an integer
                 station_data_dict[str(row[0])][field] = row[fields.index(field)]
-    for k, v in station_data_dict.iteritems():
+    for k, v in station_data_dict.items():
         logging.debug('  {0}: {1}'.format(k, v))
 
     # Read ET Cell zonal stats
@@ -248,7 +246,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Covert elevation units if necessary
     if station_elev_units.upper() in ['METERS', 'M']:
         logging.debug('  Convert station elevation from meters to feet')
-        for k in station_data_dict.iterkeys():
+        for k in station_data_dict.keys():
             station_data_dict[k][station_elev_field] /= 0.3048
 
     logging.info('\nCopying template static files')
@@ -272,7 +270,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell properties
     logging.debug('  {}'.format(cell_props_path))
     with open(cell_props_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_data = station_data_dict[cell_id]
                 station_id = station_data[station_id_field]
@@ -299,7 +297,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell crops
     logging.debug('  {}'.format(cell_crops_path))
     with open(cell_crops_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_id = station_data_dict[cell_id][station_id_field]
             else:
@@ -322,7 +320,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell cuttings
     logging.debug('  {}'.format(cell_cuttings_path))
     with open(cell_cuttings_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             output_list = [
                 cell_id, cell_data[cell_name_field],
                 '{:>9.4f}'.format(cell_data[cell_lat_field]),
@@ -333,7 +331,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write monthly ETo ratios
     logging.debug('  {}'.format(eto_ratio_path))
     with open(eto_ratio_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_data = station_data_dict[cell_id]
                 station_id = station_data[station_id_field]

@@ -264,7 +264,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Covert elevation units if necessary
     if station_elev_units.upper() in ['METERS', 'M']:
         logging.debug('  Convert station elevation from meters to feet')
-        for k in station_data_dict.iterkeys():
+        for k in station_data_dict.keys():
             station_data_dict[k][station_elev_field] /= 0.3048
 
     logging.info('\nCopying template static files')
