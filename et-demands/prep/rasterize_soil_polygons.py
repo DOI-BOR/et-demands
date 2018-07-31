@@ -10,7 +10,6 @@ import os
 import subprocess
 import sys
 
-import numpy as np
 from osgeo import gdal
 
 import _gdal_common as gdc
@@ -38,7 +37,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
     """
     logging.info('\nRasterizing Soil Polygons')
 
-    folder_fmt = 'statsgo_{}'
+    # folder_fmt = 'statsgo_{}'
     polygon_fmt = '{}_WTA_0to152cm_statsgo.shp'
     output_soil_ws = os.path.join(gis_ws, 'soils')
 
@@ -117,10 +116,10 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
     # Process each soil property
     for prop_str in prop_list:
         input_polygon_path = os.path.join(
-            input_soil_ws,
-            folder_fmt.format(prop_str), polygon_fmt.format(prop_str))
+            input_soil_ws, polygon_fmt.format(prop_str))
+            # folder_fmt.format(prop_str), polygon_fmt.format(prop_str))
         output_raster_path = os.path.join(
-            output_soil_ws, raster_fmt.format(prop_str))
+            output_soil_ws, raster_fmt.format(prop_str.lower()))
 
         if not os.path.isfile(input_polygon_path):
             logging.info('The soil polygon {} does not exist'.format(
@@ -128,7 +127,8 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
             continue
         elif os.path.isfile(output_raster_path) and overwrite_flag:
             subprocess.check_output(
-                ['gdalmanage', 'delete', output_raster_path], shell=shell_flag)
+                ['gdalmanage', 'delete', output_raster_path],
+                shell=shell_flag)
 
         if not os.path.isfile(output_raster_path):
             soil_field = field_fmt.format(prop_str.upper())
@@ -212,6 +212,7 @@ def arg_parse():
         args.gis = os.path.abspath(args.gis)
     if args.soil and os.path.isdir(os.path.abspath(args.soil)):
         args.soil = os.path.abspath(args.soil)
+
     return args
 
 

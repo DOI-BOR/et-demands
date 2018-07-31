@@ -20,7 +20,7 @@ import _util as util
 def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
          block_size=16384, mask_flag=False,
          overwrite_flag=False, pyramids_flag=False, stats_flag=False):
-    """Mask DEM values for non-agricultural pixels
+    """Mask soil values for non-agricultural pixels
 
     Use CDL derived agmask (in CDL workspace) to define agricultural pixels
 
@@ -39,10 +39,12 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
 
     Returns:
         None
+
     """
     logging.info('\nExtracting Agriculatural Soil Values')
 
     input_soil_fmt = '{}_30m_albers.img'
+
     # cdl_format = '{0}_30m_cdls.img'
     cdl_ws = os.path.join(gis_ws, 'cdl')
     # input_soil_ws = os.path.join(gis_ws, 'statsgo')
@@ -231,6 +233,7 @@ def arg_parse():
         args.gis = os.path.abspath(args.gis)
     if args.soil and os.path.isdir(os.path.abspath(args.soil)):
         args.soil = os.path.abspath(args.soil)
+
     return args
 
 

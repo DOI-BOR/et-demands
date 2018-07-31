@@ -138,7 +138,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     arcpy.env.extent = cells_dd_path
     arcpy.env.outputCoordinateSystem = cells_dd_path
     
-    # Convert cells_dd to cells_ras (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
+    # Convert cells_dd to cells_ras
+    # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
     arcpy.FeatureToRaster_conversion(
         cells_dd_path, station_id_field, cells_ras_path, 0.041666667)
 
@@ -156,7 +157,9 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
             'crop_{0:02d}_{1}{2}'.format(crop_num, crop_name, '.shp'))
 
         if not arcpy.Exists(subset_cal_file):
-            logging.info('\nCrop No: {} Preliminary Calibration File Not Found. Skipping.').format(crop_num)
+            logging.info(
+                '\nCrop No: {} preliminary calibration file not found. '
+                'Skipping.').format(crop_num)
             continue
             logging.info('\nInterpolating Crop: {0:02d}').format(crop_num)
         # Polygon to Point

@@ -31,8 +31,10 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         pyramids_flag (bool): If True, build pyramids/overviews
             for the output rasters
         stats_flag (bool): If True, compute statistics for the output rasters
+
     Returns:
         None
+
     """
     logging.info('\nExtracting Agriculatural DEM Values')
 
@@ -190,6 +192,7 @@ def arg_parse():
     # Convert input file to an absolute path
     if args.gis and os.path.isdir(os.path.abspath(args.gis)):
         args.gis = os.path.abspath(args.gis)
+
     return args
 
 

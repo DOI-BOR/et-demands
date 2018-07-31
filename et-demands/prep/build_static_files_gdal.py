@@ -100,9 +100,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Output sub-folder names
     static_ws = os.path.join(project_ws, 'static')
 
-    # Weather station shapefile
-    # Generate by selecting the target NLDAS 4km cell intersecting each HUC
-    station_id_field = 'NLDAS_ID'
+    # Weather station shapefile fields
+    station_id_field = 'STATION_ID'
     if zone_type == 'huc8':
         station_zone_field = 'HUC8'
     elif zone_type == 'huc10':
@@ -112,7 +111,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     elif zone_type == 'gridmet':
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
-        # station_zone_field = 'FIPS_C'
     station_lat_field = 'LAT'
     station_lon_field = 'LON'
     if station_elev_units.upper() in ['FT', 'FEET']:
@@ -121,12 +119,12 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         station_elev_field = 'ELEV_M'
     # station_elev_field = 'ELEV_FT'
 
-    # Field names
+    # ET Cell field names
     cell_lat_field = 'LAT'
-    # cell_lon_field = 'LON'
+    cell_lon_field = 'LON'
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
-    met_id_field = 'STATION_ID'
+    cell_station_id_field = 'STATION_ID'
     # awc_field = 'AWC'
     clay_field = 'CLAY'
     sand_field = 'SAND'
@@ -156,18 +154,16 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
-        logging.critical(
-            '\nERROR: The INI cropET folder does not exist'
-            '\n  {}'.format(crop_et_ws))
+        logging.critical('\nERROR: The INI cropET folder does not exist'
+                         '\n  {}'.format(crop_et_ws))
         sys.exit()
     elif not os.path.isdir(project_ws):
-        logging.critical(
-            '\nERROR: The project folder does not exist'
-            '\n  {}'.format(project_ws))
+        logging.critical('\nERROR: The project folder does not exist'
+                         '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.critical(
-            '\nERROR: The GIS folder does not exist\n  {}'.format(gis_ws))
+        logging.critical('\nERROR: The GIS folder does not exist'
+                         '\n  {}'.format(gis_ws))
         sys.exit()
     logging.info('\nGIS Workspace:      {}'.format(gis_ws))
     logging.info('Project Workspace:  {}'.format(project_ws))
@@ -176,11 +172,11 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Check input files
     if not _arcpy.exists(et_cells_path):
-        logging.error('\nERROR: The ET Cell shapefile does not exist'
-                      '\n  {}'.format(et_cells_path))
+        logging.critical('\nERROR: The ET Cell shapefile does not exist'
+                         '\n  {}'.format(et_cells_path))
         sys.exit()
-    elif not os.path.isfile(stations_path) or not _arcpy.exists(stations_path):
-        logging.critical('\nERROR: The NLDAS station shapefile does not exist'
+    elif not _arcpy.exists(stations_path):
+        logging.critical('\nERROR: The weather station shapefile does not exist'
                          '\n  {}'.format(stations_path))
         sys.exit()
     for static_name in static_list:
@@ -243,7 +239,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     for input_ftr in input_lyr:
         input_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
         input_ftr.SetField(
-            input_ftr.GetFieldIndex(met_id_field),
+            input_ftr.GetFieldIndex(cell_station_id_field),
             station_data_dict[input_id][station_id_field])
         input_lyr.SetFeature(input_ftr)
     input_ds = None
@@ -366,7 +362,7 @@ def arg_parse():
         '--zone', default='huc8', metavar='STR', type=str,
         choices=('huc8', 'huc10', 'county', 'gridmet'),
         help='Zone type [{}]'.format(
-            ', '.join(['huc8', 'huc10', 'county','gridmet'])))
+            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
     parser.add_argument(
         '--acres', default=10, type=float,
         help='Crop area threshold')
@@ -386,6 +382,7 @@ def arg_parse():
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
+
     return args
 
 

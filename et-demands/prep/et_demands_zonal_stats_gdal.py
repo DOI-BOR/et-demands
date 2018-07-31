@@ -52,7 +52,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         zone_path = os.path.join(
             gis_ws, 'counties', 'county_nrcs_a_mbr_albers.shp')
         zone_id_field = 'COUNTYNAME'
-        # zone_id_field = 'FIPSCO'
         zone_name_field = 'COUNTYNAME'
         zone_name_str = ''
     elif zone_type == 'gridmet':
@@ -67,8 +66,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     #     zone_id_field = 'NLDAS_ID'
     #     zone_name_field = 'NLDAS_ID'
     #     zone_name_str = 'NLDAS_4km_'
-
-    # station_id_field = 'NLDAS_ID'
 
     et_cells_path = os.path.join(gis_ws, 'ETCells.shp')
     # if gdb_flag:
@@ -87,12 +84,12 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     agmask_path = os.path.join(
         cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
 
-    # Field names
+    # ET cell field names
     cell_lat_field = 'LAT'
     cell_lon_field = 'LON'
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
-    met_id_field = 'STATION_ID'
+    station_id_field = 'STATION_ID'
     awc_field = 'AWC'
     clay_field = 'CLAY'
     sand_field = 'SAND'
@@ -360,7 +357,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Join the stations to the zones and read in the matches
     # if not _arcpy.exists(et_cells_path):
     #     zone_field_list = _arcpy.list_fields(zone_path)
-    #     zone_field_list.append(met_id_field)
+    #     zone_field_list.append(station_id_field)
     #     zone_field_list.append('OBJECTID_1')
     #     arcpy.SpatialJoin_analysis(zone_path, station_path, et_cells_path)
     #     # arcpy.SpatialJoin_analysis(station_path, zone_path, et_cells_path)
@@ -400,9 +397,9 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     if cell_name_field not in field_list:
         logging.debug('  {}'.format(cell_name_field))
         _arcpy.add_field(et_cells_path, cell_name_field, ogr.OFTString, width=48)
-    if met_id_field not in field_list:
-        logging.debug('  {}'.format(met_id_field))
-        _arcpy.add_field(et_cells_path, met_id_field, ogr.OFTString, width=24)
+    if station_id_field not in field_list:
+        logging.debug('  {}'.format(station_id_field))
+        _arcpy.add_field(et_cells_path, station_id_field, ogr.OFTString, width=24)
     if zone_id_field not in field_list:
         logging.debug('  {}'.format(zone_id_field))
         _arcpy.add_field(et_cells_path, zone_id_field, ogr.OFTString, width=8)
@@ -467,9 +464,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     _arcpy.calculate_field(
         et_cells_path, cell_name_field,
         '"{}" + str(!{}!)'.format(zone_name_str, zone_name_field))
-    # # Set MET_ID (STATION_ID) to NLDAS_ID
-    # _arcpy.calculate_field(
-    #     et_cells_path, met_id_field, 'str(!{}!)'.format(station_id_field))
 
     # Remove existing (could use overwrite instead)
     zone_proj_path = os.path.join(table_ws, zone_proj_name)

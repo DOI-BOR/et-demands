@@ -412,8 +412,8 @@ def search_cursor(input_path, fields):
     dict : values[fid][field]
 
     """
-    driver = get_ogr_driver(input_path)
-    input_ds = driver.Open(input_path, 0)
+    input_driver = get_ogr_driver(input_path)
+    input_ds = input_driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     values = defaultdict(dict)
     for input_ftr in input_lyr:
@@ -436,8 +436,8 @@ def update_cursor(input_path, values):
         values[fid][field]
 
     """
-    driver = get_ogr_driver(input_path)
-    input_ds = driver.Open(input_path, 1)
+    input_driver = get_ogr_driver(input_path)
+    input_ds = input_driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
         input_fid = input_ftr.GetFID()

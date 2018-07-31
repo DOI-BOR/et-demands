@@ -92,8 +92,9 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Only keep the following ET Cell fields
     keep_field_list = [cell_id_field, cell_name_field, 'AG_ACRES']
-    # keep_field_list = ['NLDAS_ID', 'CELL_ID', 'HUC8', 'COUNTY', 'AG_ACRES']
-    # keep_field_list = ['FIPS', 'COUNTY']
+    # keep_field_list = ['CELL_ID', 'STATION_ID', 'HUC8', 'HUC10', 'GRIDMET_ID',
+    #                    'COUNTYNAME', 'AG_ACRES']
+    # keep_field_list = ['FIPS', 'COUNTYNAME']
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
@@ -130,7 +131,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                       '\n  {}'.format(cells_path))
         sys.exit()
     elif not os.path.isfile(stations_path):
-        logging.error('\nERROR: The NLDAS station shapefile does not exist'
+        logging.error('\nERROR: The weather station shapefile does not exist'
                       '\n  {}'.format(stations_path))
         sys.exit()
     logging.debug('Crop Params Path:   {}'.format(crop_params_path))

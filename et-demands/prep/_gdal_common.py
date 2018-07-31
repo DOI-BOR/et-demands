@@ -816,7 +816,7 @@ def raster_ds_shape(raster_ds):
     return raster_ds.RasterYSize, raster_ds.RasterXSize
 
 
-def project_extent(input_extent, input_osr, output_osr, cellsize):
+def project_extent(input_extent, input_osr, output_osr, cellsize=None):
     """Project extent to different spatial reference / coordinate system
 
     Args:
@@ -824,8 +824,8 @@ def project_extent(input_extent, input_osr, output_osr, cellsize):
         input_osr (): OSR spatial reference of the input extent
         output_osr (): OSR spatial reference of the desired output
         cellsize (): the cellsize used to calculate the new extent.
-            If None, will attempt to use gdal_common.environmente
-            This cellsize is in the input spatial reference
+            If None, function will place 1000 points between corners.
+            This cellsize is in the input spatial reference.
 
     Returns:
         tuple: :class:`gdal_common.extent` in the desired projection

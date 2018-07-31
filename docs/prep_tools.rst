@@ -131,6 +131,6 @@ Along with the parameters listed above, there are other hardcoded parameters in 
 
 Unused scripts
 --------------
-The gdal_common.py and util.py python scripts are not run by the user.  These scripts are called by the other scripts.
+The _arcpy.py, _gdal_common.py, and _util.py python scripts are not run by the user.  These scripts are called by the other scripts.
 
 The download_dem_rasters.py, build_ag_dem_rasters.py, and merge_dem_rasters.py are not used anymore since the cell elevation is not needed.  These will eventually be moved or removed.
