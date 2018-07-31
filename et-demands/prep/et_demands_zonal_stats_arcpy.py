@@ -1,8 +1,6 @@
 #--------------------------------
 # Name:         et_demands_zonal_stats_arcpy.py
 # Purpose:      Calculate zonal stats for all rasters
-# Author:       Charles Morton
-# Created       2017-01-11
 # Python:       2.7
 #--------------------------------
 
@@ -34,6 +32,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     Returns:
         None
+
     """
     logging.info('\nCalculating ET-Demands Zonal Stats')
 
@@ -47,7 +46,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         zone_path = os.path.join(gis_ws, 'huc8', 'wbdhu8_albers.shp')
         zone_id_field = 'HUC8'
         zone_name_field = 'HUC8'
-        zone_name_str = 'HUC8 '    
+        zone_name_str = 'HUC8 '
     elif zone_type == 'county':
         zone_path = os.path.join(
             gis_ws, 'counties', 'county_nrcs_a_mbr_albers.shp')
@@ -56,16 +55,17 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         zone_name_field = 'COUNTYNAME'
         zone_name_str = ''
     elif zone_type == 'gridmet':
-        zone_path = os.path.join(gis_ws, 'gridmet', 'gridmet_4km_cells_albers.shp')
+        zone_path = os.path.join(
+            gis_ws, 'gridmet', 'gridmet_4km_cells_albers.shp')
         zone_id_field = 'GRIDMET_ID'
         zone_name_field = 'GRIDMET_ID'
-        zone_name_str = 'GRIDMET_ID '    
+        zone_name_str = 'GRIDMET_ID '
     # elif zone_type == 'nldas':
-    #     _path = os.path.join(
-    #        gis_ws, 'counties', 'county_nrcs_a_mbr_albers.shp')
-    #     _id_field = 'NLDAS_ID'
-    #     _name_field = 'NLDAS_ID'
-    #     _name_str = 'NLDAS_4km_'
+    #     zone_path = os.path.join(
+    #         gis_ws, 'counties', 'county_nrcs_a_mbr_albers.shp')
+    #     zone_id_field = 'NLDAS_ID'
+    #     zone_name_field = 'NLDAS_ID'
+    #     zone_name_str = 'NLDAS_4km_'
 
     # station_id_field = 'NLDAS_ID'
 
@@ -131,13 +131,15 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Crosswalk values are coming from cdl_crosswalk.csv and being upacked into a dictionary
     # Allows user to modify crosswalk in excel
     # Pass in crosswalk file as an input argument
-    crosswalk_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cdl_crosswalk_usbrmod.csv')
+    crosswalk_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'cdl_crosswalk_usbrmod.csv')
     cross = pd.read_csv(crosswalk_file)
 
     # Add Try and Except for header names, unique crop numbers, etc.
     crop_num_dict = dict()
     for index, row in cross.iterrows():
-        crop_num_dict[int(row.cdl_no)] = map(int, str(row.etd_no).split(','))
+        crop_num_dict[int(row.cdl_no)] = list(
+            map(int, str(row.etd_no).split(',')))
     logging.debug(crop_num_dict)
 
     # REMOVE LATER AFTER TESTING ABOVE
@@ -366,18 +368,18 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         arcpy.Copy_management(zone_path, et_cells_path)
     # Join the stations to the zones and read in the matches
     # if not arcpy.Exists(et_cells_path):
-    #     _field_list = [f.name for f in arcpy.ListFields(zone_path)]
-    #     _field_list.append(met_id_field)
-    #      zone_field_list.append('OBJECTID_1')
-    #     .SpatialJoin_analysis(zone_path, station_path, et_cells_path)
-    #      arcpy.SpatialJoin_analysis(station_path, zone_path, et_cells_path)
-    #     _field_list = [f.name for f in arcpy.ListFields(et_cells_path)
-    #                         if f.name not in zone_field_list]
-    #     .info('Deleting Fields')
-    #      field_name in delete_field_list:
-    #        logging.debug('  {0}'.format(field_name))
-    #        try: arcpy.DeleteField_management(et_cells_path, field_name)
-    #        except: pass
+    #     zone_field_list = [f.name for f in arcpy.ListFields(zone_path)]
+    #     zone_field_list.append(met_id_field)
+    #     zone_field_list.append('OBJECTID_1')
+    #     arcpy.SpatialJoin_analysis(zone_path, station_path, et_cells_path)
+    #     # arcpy.SpatialJoin_analysis(station_path, zone_path, et_cells_path)
+    #     delete_field_list = [f.name for f in arcpy.ListFields(et_cells_path)
+    #                          if f.name not in zone_field_list]
+    #     logging.info('Deleting Fields')
+    #     if field_name in delete_field_list:
+    #         logging.debug('  {}'.format(field_name))
+    #         try: arcpy.DeleteField_management(et_cells_path, field_name)
+    #         except: pass
 
 
     # Get spatial reference
@@ -419,10 +421,10 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # Status flags
     # if active_flag_field not in field_list:
-    #     logging.debug('  {0}'.format(active_flag_field))
+    #     logging.debug('  {}'.format(active_flag_field))
     #     arcpy.AddField_management(et_cells_path, active_flag_field, 'SHORT')
     # if irrig_flag_field not in field_list:
-    #     logging.debug('  {0}'.format(irrig_flag_field))
+    #     logging.debug('  {}'.format(irrig_flag_field))
     #     arcpy.AddField_management(et_cells_path, irrig_flag_field, 'SHORT')
     # Add zonal stats fields
     for field_name, stat, raster_path in raster_list:
@@ -433,7 +435,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Other soil fields
     if awc_in_ft_field not in field_list:
         logging.debug('  {}'.format(awc_in_ft_field))
-        arcpy.AddField_management(et_cells_path, awc_in_ft_field, 'FLOAT', 8, 4)
+        arcpy.AddField_management(et_cells_path, awc_in_ft_field, 'FLOAT', 
+                                  8, 4)
     if hydgrp_num_field not in field_list:
         logging.debug('  {}'.format(hydgrp_num_field))
         arcpy.AddField_management(et_cells_path, hydgrp_num_field, 'SHORT')
@@ -515,7 +518,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Calculate zonal stats
     logging.info('\nProcessing soil rasters')
     for field_name, stat, raster_path in raster_list:
-        logging.info('  {0} {1}'.format(field_name, stat))
+        logging.info('{} {}'.format(field_name, stat))
         table_path = os.path.join(
             table_ws, table_fmt.format(field_name.lower()))
         if overwrite_flag and os.path.isfile(table_path):
@@ -571,14 +574,16 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # # Calculate default values
     # logging.info('\nCalculating default values')
-    # logging.info('  {:10s}: {}'.format(active_flag_field, active_flag_default))
+    # logging.info('  {:10s}: {}'.format(
+    #     active_flag_field, active_flag_default))
     # arcpy.CalculateField_management(
     #     _cells_path, active_flag_field, active_flag_default, 'PYTHON')
     # logging.info('  {:10s}: {}'.format(irrig_flag_field, irrig_flag_default))
     # arcpy.CalculateField_management(
     #     _cells_path, irrig_flag_field, irrig_flag_default, 'PYTHON')
     #
-    # logging.info('  {:10s}: {}'.format(permeability_field, permeability_default))
+    # logging.info('  {:10s}: {}'.format(
+    #     permeability_field, permeability_default))
     # arcpy.CalculateField_management(
     #     _cells_path, permeability_field, permeability_default, 'PYTHON')
     # logging.info('  {:10s}: {}'.format(soil_depth_field, soil_depth_default))
@@ -588,10 +593,12 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # arcpy.CalculateField_management(
     #     _cells_path, aridity_field, aridity_default, 'PYTHON')
     #
-    # logging.info('  {:10s}: {}'.format(dairy_cutting_field, dairy_cutting_default))
+    # logging.info('  {:10s}: {}'.format(
+    #     dairy_cutting_field, dairy_cutting_default))
     # arcpy.CalculateField_management(
     #     _cells_path, dairy_cutting_field, dairy_cutting_default, 'PYTHON')
-    # logging.info('  {:10s}: {}'.format(beef_cutting_field, beef_cutting_default))
+    # logging.info('  {:10s}: {}'.format(
+    #     beef_cutting_field, beef_cutting_default))
     # arcpy.CalculateField_management(
     #     _cells_path, beef_cutting_field, beef_cutting_default, 'PYTHON')
 

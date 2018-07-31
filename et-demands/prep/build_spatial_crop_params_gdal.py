@@ -1,7 +1,7 @@
-# --------------------------------
+#--------------------------------
 # Name:         build_spatial_crop_params_gdal.py
 # Purpose:      Build spatial parameter files for ET-Demands from zonal stats ETCells
-# --------------------------------
+#--------------------------------
 
 import argparse
 from collections import defaultdict
@@ -153,7 +153,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # # Build output geodatabase if necessary
     # if calibration_ws.endswith('.gdb'):
     #     logging.debug('GDB Path:           {}'.format(calibration_ws))
-    #      = ''
+    #     ext = ''
     #     _arcpy.exists(calibration_ws) and overwrite_flag:
     #         try: _arcpy.delete(calibration_ws)
     #         except: pass
@@ -162,7 +162,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     #             os.path.dirname(calibration_ws),
     #             os.path.basename(calibration_ws))
     # else:
-    #      = '.shp'
+    #     ext = '.shp'
 
     # Field Name, Property, Field Type
     # Property is the string of the CropParameter class property value
@@ -203,9 +203,9 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         # ['CN_Fine', 'cn_fine_soil', 'LONG']
     ]
     # if calibration_ws.endswith('.gdb'):
-    #     _cutting_field = 'Dairy_Cuttings'
-    #     _cutting_field = 'Beef_Cuttings'
-    #     _list = [
+    #     dairy_cutting_field = 'Dairy_Cuttings'
+    #     beef_cutting_field = 'Beef_Cuttings'
+    #     param_list  = [
     #        # ['Name', 'name', 'STRING'],
     #        # ['Class_Number', 'class_number', 'LONG'],
     #        # ['Is_Annual', 'is_annual', 'SHORT'],
@@ -263,11 +263,11 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Get list of crops specified in ET cells
     # Currently this may only be crops with CDL acreage
     crop_field_list = [
-        field.name for field in _arcpy.list_fields(cells_path)
-        if re.match('CROP_\d{2}', field.name)]
+        field for field in _arcpy.list_fields(cells_path)
+        if re.match('CROP_\d{2}', field)]
     logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
     crop_number_list = [
-        int(f_name.split('_')[1]) for f_name in crop_field_list]
+        int(f_name.split('_')[-1]) for f_name in crop_field_list]
 
     crop_number_list = [
         crop_num for crop_num in crop_number_list
@@ -338,8 +338,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Add an empty/zero crop field for the field mappings below
     # if len(_arcpy.list_fields(cells_path, 'CROP_EMPTY')) == 0:
-    #     arcpy.add_field(cells_path, 'CROP_EMPTY', 'Float')
-    #     arcpy.calculate_field(cells_path, 'CROP_EMPTY', '0')
+    #     _arcpy.add_field(cells_path, 'CROP_EMPTY', 'Float')
+    #     _arcpy.calculate_field(cells_path, 'CROP_EMPTY', '0')
 
     # Process each crop
     logging.info('\nBuild crop feature classes')
@@ -386,9 +386,9 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             _arcpy.copy(crop_template_path, crop_path)
             # Remove extra fields
             # for field in _arcpy.list_fields(crop_path):
-            #      field.name not in keep_field_list:
-            #        # logging.debug('    {}'.format(field.name))
-            #        _arcpy.delete_field(crop_path, field.name)
+            #     if field not in keep_field_list:
+            #         # logging.debug('    {}'.format(field))
+            #         _arcpy.delete_field(crop_path, field)
 
         # Add alfalfa cutting field
         if crop_num in [1, 2, 3, 4]:
@@ -404,8 +404,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                                        beef_cuttings)
 
         # Write default crop parameters to file
-        field_list = [p[0] for p in param_list] + [cell_id_field,
-                                                   crop_acres_field]
+        field_list = [p[0] for p in param_list] + [cell_id_field, crop_acres_field]
         with arcpy.da.UpdateCursor(crop_path, field_list) as cursor:
             for row in cursor:
                 # Don't remove zero acreage crops if in add list
@@ -417,8 +416,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                         cursor.deleteRow()
                     continue
                 # Write parameter values
-                for i, (param_field, param_method, param_type) in enumerate(
-                        param_list):
+                for i, (param_field, param_method, param_type) in enumerate(param_list):
                     row[i] = getattr(crop_param, param_method)
                 # Write crop acreage
                 if crop_num not in crop_add_list:

@@ -58,14 +58,14 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         zone_name_field = 'COUNTYNAME'
         zone_name_str = ''
     elif zone_type == 'gridmet':
-        zone_path = os.path.join(gis_ws, 'gridmet',
-                                 'gridmet_4km_cells_albers.shp')
+        zone_path = os.path.join(
+            gis_ws, 'gridmet', 'gridmet_4km_cells_albers.shp')
         zone_id_field = 'GRIDMET_ID'
         zone_name_field = 'GRIDMET_ID'
         zone_name_str = 'GRIDMET_ID '
     # elif zone_type == 'nldas':
-    #     zone_path = os.path.join(gis_ws, 'counties',
-    #                              'county_nrcs_a_mbr_albers.shp')
+    #     zone_path = os.path.join(
+    #         gis_ws, 'counties', 'county_nrcs_a_mbr_albers.shp')
     #     zone_id_field = 'NLDAS_ID'
     #     zone_name_field = 'NLDAS_ID'
     #     zone_name_str = 'NLDAS_4km_'
@@ -84,9 +84,10 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     soil_ws = os.path.join(gis_ws, 'soils')
     zone_ws = os.path.dirname(zone_path)
 
-    agland_path = os.path.join(cdl_ws, 'agland_{}_30m_cdls.img'.format(cdl_year))
-    agmask_path = os.path.join(cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
-    table_fmt = 'zone_{}.dbf'
+    agland_path = os.path.join(
+        cdl_ws, 'agland_{}_30m_cdls.img'.format(cdl_year))
+    agmask_path = os.path.join(
+        cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
 
     # Field names
     cell_lat_field = 'LAT'
@@ -139,8 +140,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Add Try and Except for header names, unique crop numbers, etc.
     crop_num_dict = dict()
     for index, row in cross.iterrows():
-        crop_num_dict[int(row.cdl_no)] = list(map(
-            int, str(row.etd_no).split(',')))
+        crop_num_dict[int(row.cdl_no)] = list(
+            map(int, str(row.etd_no).split(',')))
     logging.debug(crop_num_dict)
 
     # REMOVE LATER AFTER TESTING ABOVE
@@ -277,8 +278,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
                       '\n  {}'.format(input_soil_ws))
         sys.exit()
     elif not os.path.isdir(zone_ws):
-        logging.error(
-            '\nERROR: The zone workspace does not exist\n  {}'.format(zone_ws))
+        logging.error('\nERROR: The zone workspace does not exist'
+                      '\n  {}'.format(zone_ws))
         sys.exit()
     logging.info('\nGIS Workspace:   {}'.format(gis_ws))
     logging.info('CDL Workspace:   {}'.format(cdl_ws))
@@ -302,7 +303,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         sys.exit()
     elif not os.path.isfile(zone_path):
         logging.error('\nERROR: The zone shapefile does not exist'
-                      '\n {}'.format(zone_path))
+                      '\n  {}'.format(zone_path))
         sys.exit()
 
     # Build output table folder if necessary
@@ -368,7 +369,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     #     delete_field_list = [f for f in _arcpy.list_fields(et_cells_path)
     #                          if f not in zone_field_list]
     #     logging.info('Deleting Fields')
-    #     field_name in delete_field_list:
+    #     if field_name in delete_field_list:
     #         logging.debug('  {}'.format(field_name))
     #         try: _arcpy.delete_field(et_cells_path, field_name)
     #         except: pass
@@ -487,8 +488,9 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     logging.info('\nProcessing soil rasters')
     zs_dict = defaultdict(dict)
     for field_name, stat, raster_path in raster_list:
-        logging.info('{}'.format(raster_path))
-        logging.debug('{}'.format(zone_proj_path))
+        logging.info('{} {}'.format(field_name, stat))
+        logging.debug('  {}'.format(raster_path))
+        logging.debug('  {}'.format(zone_proj_path))
         zs = rasterstats.zonal_stats(zone_proj_path, raster_path, stats=[stat])
 
         # Save by FID/feature for easier writing to shapefile
@@ -527,22 +529,30 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # # Calculate default values
     # logging.info('\nCalculating default values')
-    # logging.info('  {:10s}: {}'.format(active_flag_field, active_flag_default))
-    # _arcpy.calculate_field(_cells_path, active_flag_field, active_flag_default)
+    # logging.info('  {:10s}: {}'.format(
+    #     active_flag_field, active_flag_default))
+    # _arcpy.calculate_field(
+    #     _cells_path, active_flag_field, active_flag_default)
     # logging.info('  {:10s}: {}'.format(irrig_flag_field, irrig_flag_default))
     # _arcpy.calculate_field(_cells_path, irrig_flag_field, irrig_flag_default)
     #
-    # logging.info('  {:10s}: {}'.format(permeability_field, permeability_default))
-    # _arcpy.calculate_field(_cells_path, permeability_field, permeability_default)
+    # logging.info('  {:10s}: {}'.format(
+    #     permeability_field, permeability_default))
+    # _arcpy.calculate_field(
+    #     _cells_path, permeability_field, permeability_default)
     # logging.info('  {:10s}: {}'.format(soil_depth_field, soil_depth_default))
     # _arcpy.calculate_field(_cells_path, soil_depth_field, soil_depth_default)
     # logging.info('  {:10s}: {}'.format(aridity_field, aridity_default))
     # _arcpy.calculate_field(_cells_path, aridity_field, aridity_default)
     #
-    # logging.info('  {:10s}: {}'.format(dairy_cutting_field, dairy_cutting_default))
-    # _arcpy.calculate_field(_cells_path, dairy_cutting_field, dairy_cutting_default)
-    # logging.info('  {:10s}: {}'.format(beef_cutting_field, beef_cutting_default))
-    # _arcpy.calculate_field(_cells_path, beef_cutting_field, beef_cutting_default)
+    # logging.info('  {:10s}: {}'.format(
+    #     dairy_cutting_field, dairy_cutting_default))
+    # _arcpy.calculate_field(
+    #     _cells_path, dairy_cutting_field, dairy_cutting_default)
+    # logging.info('  {:10s}: {}'.format(
+    #     beef_cutting_field, beef_cutting_default))
+    # _arcpy.calculate_field(
+    #     _cells_path, beef_cutting_field, beef_cutting_default)
 
     # Calculate zonal stats
     # Use "rasterstats" package for computing zonal statistics
