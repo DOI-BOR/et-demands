@@ -97,9 +97,9 @@ The average soil conditions for the agricultural areas can then be extracted fro
 --type
   Soil property types: 'all', 'awc', 'clay', 'sand' (default is 'all')
 
-et_demands_zonal_stats_arcpy.py
+et_demands_zonal_stats_gdal.py
 -------------------------------
-The zonal stats tool is used to average the crop and soil data to the ET cells/units.  The current implementation of the zonal stats script uses the ArcGIS ArcPy module, but this will eventually be modified to GDAL.  The output field names and sub-folder paths are all hardcoded in the script.  The cellsize of the CDL raster is assumed to be 30m.
+The zonal stats tool is used to average the crop and soil data to the ET cells/units.  The current implementation of the zonal stats script uses GDAL and the rasterstats module.  The output field names and sub-folder paths are all hardcoded in the script.  The cellsize of the CDL raster is assumed to be 30m.
 
 --gis
   Project GIS workspace/folder (default is ".\\gis")
@@ -112,7 +112,7 @@ The zonal stats tool is used to average the crop and soil data to the ET cells/u
 
 The zone type parameter
 
-build_static_files_arcpy.py
+build_static_files_gdal.py
 ---------------------------
 The static text files for each project can be built from the templates in "et-demands\\static".  A year parameter is not set since the ET cell/unit zonal stats values were only computed for a single year.
 
