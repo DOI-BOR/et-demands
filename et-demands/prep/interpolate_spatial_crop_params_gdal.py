@@ -86,13 +86,15 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
     else:
-        logging.error('\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME\n')
+        logging.error(
+            '\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME\n')
         sys.exit()
 
     cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
     cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    _arcpy.project(et_cells_path, cells_dd_path,
-                   arcpy.SpatialReference('WGS 1984'))
+    output_osr = osr.SpatialReference()
+    output_osr.ImportFromEPSG(4326)
+    _arcpy.project(et_cells_path, cells_dd_path, output_osr)
 
     temp_path = os.path.join(calibration_ws, 'temp')
     if not os.path.exists(temp_path):
@@ -107,15 +109,12 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
 
     # Get list of crops specified in ET cells
     crop_field_list = [
-        field.name for field in _arcpy.list_fields(et_cells_path)
+        field for field in _arcpy.list_fields(et_cells_path)
         if re.match('CROP_\d{2}', field.name)]
-    logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
-    crop_number_list = [
-        int(f_name.split('_')[1]) for f_name in crop_field_list]
-
-    crop_number_list = [crop_num for crop_num in crop_number_list]
+    crop_number_list = [int(f.split('_')[1]) for f in crop_field_list]
     logging.info('Cell crop numbers: {}'.format(
         ', '.join(list(util.ranges(crop_number_list)))))
+    logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
 
     # Get Crop Names for each Crop in crop_number_list
     crop_name_list = []

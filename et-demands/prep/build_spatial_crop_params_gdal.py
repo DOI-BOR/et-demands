@@ -255,9 +255,9 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         field for field in _arcpy.list_fields(cells_path)
         if re.match('CROP_\d{2}', field)])
     crop_number_list = [int(f.split('_')[-1]) for f in crop_field_list]
-    logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
     logging.info('Cell crop numbers: {}'.format(
         ', '.join(list(util.ranges(crop_number_list)))))
+    logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
 
     # Get crop acreages for each cell
     # DEADBEEF - Does this dict need to be keyed by crop then cell_id?
