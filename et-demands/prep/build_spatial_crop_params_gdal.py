@@ -19,7 +19,7 @@ import _util as util
 
 def main(ini_path, zone_type='huc8', area_threshold=10,
          dairy_cuttings=5, beef_cuttings=4, crop_str='',
-         remove_empty_flag=True, overwrite_flag=False, cleanup_flag=False):
+         remove_empty_flag=True, overwrite_flag=False):
     """Build a feature class for each crop and set default crop parameters
 
     Apply the values in the CropParams.txt as defaults to every cell
@@ -32,7 +32,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         beef_cuttings (int): Initial number of beef hay cuttings
         crop_str (str): comma separated list or range of crops to compare
         overwrite_flag (bool): If True, overwrite existing output rasters
-        cleanup_flag (bool): If True, remove temporary files
 
     Returns:
         None
@@ -51,32 +50,32 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error('project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error('gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         cells_path = config.get(crop_et_sec, 'cells_path')
     except:
         # cells_path = os.path.join(gis_ws, 'ETCells.shp')
-        logging.error('et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         stations_path = config.get(crop_et_sec, 'stations_path')
     except:
-        logging.error('stations_path parameter must be set in the INI file, exiting')
+        logging.error('stations_path parameter must be set in the INI file, '
+                      'exiting')
         return False
 
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
-    try:
-        template_ws = config.get(crop_et_sec, 'template_folder')
-    except:
-        template_ws = os.path.join(os.path.dirname(crop_et_ws), 'static')
     try:
         calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
     except:
@@ -84,27 +83,17 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
-    pmdata_ws = os.path.join(project_ws, 'pmdata')
     crop_params_path = os.path.join(static_ws, 'CropParams.txt')
-
-    # Input units
-    cell_elev_units = 'FEET'
-    station_elev_units = 'FEET'
 
     # Field names
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
     crop_acres_field = 'CROP_ACRES'
-    dairy_cutting_field = 'Dairy_Cut'
-    beef_cutting_field = 'Beef_Cut'
 
     # Only keep the following ET Cell fields
     keep_field_list = [cell_id_field, cell_name_field, 'AG_ACRES']
     # keep_field_list = ['NLDAS_ID', 'CELL_ID', 'HUC8', 'COUNTY', 'AG_ACRES']
     # keep_field_list = ['FIPS', 'COUNTY']
-
-    # The maximum crop name was ~50 characters
-    string_field_len = 50
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
@@ -136,7 +125,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         logging.error('\nERROR: The crop parameters file does not exist'
                       '\n  {}'.format(crop_params_path))
         sys.exit()
-    elif not not os.path.isfile(cells_path):
+    elif not os.path.isfile(cells_path):
         logging.error('\nERROR: The ET Cell shapefile does not exist'
                       '\n  {}'.format(cells_path))
         sys.exit()
@@ -170,73 +159,73 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     dairy_cutting_field = 'Dairy_Cut'
     beef_cutting_field = 'Beef_Cut'
     param_list = [
-        # ['Name', 'name', 'STRING'],
-        # ['ClassNum', 'class_number', 'LONG'],
+        # ['Name', 'name', ogr.OFTString],
+        # ['ClassNum', 'class_number', ogr.OFTInteger],
         # ['IsAnnual', 'is_annual', 'SHORT'],
         # ['IrrigFlag', 'irrigation_flag', 'SHORT'],
-        # ['IrrigDays', 'days_after_planting_irrigation', 'LONG'],
-        # ['Crop_FW', 'crop_fw', 'LONG'],
+        # ['IrrigDays', 'days_after_planting_irrigation', ogr.OFTInteger],
+        # ['Crop_FW', 'crop_fw', ogr.OFTInteger],
         # ['WinterCov', 'winter_surface_cover_class', 'SHORT'],
-        # ['CropKcMax', 'kc_max', 'FLOAT'],
-        ['MAD_Init', 'mad_initial', 'LONG'],
-        ['MAD_Mid', 'mad_midseason', 'LONG'],
-        # ['RootDepIni', 'rooting_depth_initial', 'FLOAT'],
-        # ['RootDepMax', 'rooting_depth_max', 'FLOAT'],
-        # ['EndRootGrw', 'end_of_root_growth_fraction_time', 'FLOAT'],
-        # ['HeightInit', 'height_initial', 'FLOAT'],
-        # ['HeightMax', 'height_max', 'FLOAT'],
-        # ['CurveNum', 'curve_number', 'LONG'],
-        # ['CurveName', 'curve_name', 'STRING'],
+        # ['CropKcMax', 'kc_max', ogr.OFTReal],
+        ['MAD_Init', 'mad_initial', ogr.OFTInteger],
+        ['MAD_Mid', 'mad_midseason', ogr.OFTInteger],
+        # ['RootDepIni', 'rooting_depth_initial', ogr.OFTReal],
+        # ['RootDepMax', 'rooting_depth_max', ogr.OFTReal],
+        # ['EndRootGrw', 'end_of_root_growth_fraction_time', ogr.OFTReal],
+        # ['HeightInit', 'height_initial', ogr.OFTReal],
+        # ['HeightMax', 'height_max', ogr.OFTReal],
+        # ['CurveNum', 'curve_number', ogr.OFTInteger],
+        # ['CurveName', 'curve_name', ogr.OFTString],
         # ['CurveType', 'curve_type', 'SHORT'],
         # ['PL_GU_Flag', 'flag_for_means_to_estimate_pl_or_gu', 'SHORT'],
-        ['T30_CGDD', 't30_for_pl_or_gu_or_cgdd', 'FLOAT'],
-        ['PL_GU_Date', 'date_of_pl_or_gu', 'FLOAT'],
-        ['CGDD_Tbase', 'tbase', 'FLOAT'],
-        ['CGDD_EFC', 'cgdd_for_efc', 'LONG'],
-        ['CGDD_Term', 'cgdd_for_termination', 'LONG'],
-        ['Time_EFC', 'time_for_efc', 'LONG'],
-        ['Time_Harv', 'time_for_harvest', 'LONG'],
-        ['KillFrostC', 'killing_frost_temperature', 'Float'],
+        ['T30_CGDD', 't30_for_pl_or_gu_or_cgdd', ogr.OFTReal],
+        ['PL_GU_Date', 'date_of_pl_or_gu', ogr.OFTReal],
+        ['CGDD_Tbase', 'tbase', ogr.OFTReal],
+        ['CGDD_EFC', 'cgdd_for_efc', ogr.OFTInteger],
+        ['CGDD_Term', 'cgdd_for_termination', ogr.OFTInteger],
+        ['Time_EFC', 'time_for_efc', ogr.OFTInteger],
+        ['Time_Harv', 'time_for_harvest', ogr.OFTInteger],
+        ['KillFrostC', 'killing_frost_temperature', ogr.OFTReal],
         # ['InvokeStrs', 'invoke_stress', 'SHORT'],
-        # ['CN_Coarse', 'cn_coarse_soil', 'LONG'],
-        # ['CN_Medium', 'cn_medium_soil', 'LONG'],
-        # ['CN_Fine', 'cn_fine_soil', 'LONG']
+        # ['CN_Coarse', 'cn_coarse_soil', ogr.OFTInteger],
+        # ['CN_Medium', 'cn_medium_soil', ogr.OFTInteger],
+        # ['CN_Fine', 'cn_fine_soil', ogr.OFTInteger]
     ]
     # if calibration_ws.endswith('.gdb'):
     #     dairy_cutting_field = 'Dairy_Cuttings'
     #     beef_cutting_field = 'Beef_Cuttings'
     #     param_list  = [
     #        # ['Name', 'name', 'STRING'],
-    #        # ['Class_Number', 'class_number', 'LONG'],
+    #        # ['Class_Number', 'class_number', ogr.OFTInteger],
     #        # ['Is_Annual', 'is_annual', 'SHORT'],
     #        # ['Irrigation_Flag', 'irrigation_flag', 'SHORT'],
-    #        # ['Irrigation_Days', 'days_after_planting_irrigation', 'LONG'],
-    #        # ['Crop_FW', 'crop_fw', 'LONG'],
+    #        # ['Irrigation_Days', 'days_after_planting_irrigation', ogr.OFTInteger],
+    #        # ['Crop_FW', 'crop_fw', ogr.OFTInteger],
     #        # ['Winter_Cover_Class', 'winter_surface_cover_class', 'SHORT'],
-    #        # ['Crop_Kc_Max', 'kc_max', 'FLOAT'],
-    #        # ['MAD_Initial', 'mad_initial', 'LONG'],
-    #        # ['MAD_Midseason', 'mad_midseason', 'LONG'],
-    #        # ['Root_Depth_Ini', 'rooting_depth_initial', 'FLOAT'],
-    #        # ['Root_Depth_Max', 'rooting_depth_max', 'FLOAT'],
-    #        # ['End_Root_Growth', 'end_of_root_growth_fraction_time', 'FLOAT'],
-    #        # ['Height_Initial', 'height_initial', 'FLOAT'],
-    #        # ['Height_Maximum', 'height_max', 'FLOAT'],
-    #        # ['Curve_Number', 'curve_number', 'LONG'],
-    #        # ['Curve_Name', 'curve_name', 'STRING'],
+    #        # ['Crop_Kc_Max', 'kc_max', ogr.OFTReal],
+    #        # ['MAD_Initial', 'mad_initial', ogr.OFTInteger],
+    #        # ['MAD_Midseason', 'mad_midseason', ogr.OFTInteger],
+    #        # ['Root_Depth_Ini', 'rooting_depth_initial', ogr.OFTReal],
+    #        # ['Root_Depth_Max', 'rooting_depth_max', ogr.OFTReal],
+    #        # ['End_Root_Growth', 'end_of_root_growth_fraction_time', ogr.OFTReal],
+    #        # ['Height_Initial', 'height_initial', ogr.OFTReal],
+    #        # ['Height_Maximum', 'height_max', ogr.OFTReal],
+    #        # ['Curve_Number', 'curve_number', ogr.OFTInteger],
+    #        # ['Curve_Name', 'curve_name', ogr.OFTString],
     #        # ['Curve_Type', 'curve_type', 'SHORT'],
     #        # ['PL_GU_Flag', 'flag_for_means_to_estimate_pl_or_gu', 'SHORT'],
-    #        ['T30_CGDD', 't30_for_pl_or_gu_or_cgdd', 'FLOAT'],
-    #        ['PL_GU_Date', 'date_of_pl_or_gu', 'FLOAT'],
-    #        ['CGDD_Tbase', 'tbase', 'FLOAT'],
-    #        ['CGDD_EFC', 'cgdd_for_efc', 'LONG'],
-    #        ['CGDD_Termination', 'cgdd_for_termination', 'LONG'],
-    #        ['Time_EFC', 'time_for_efc', 'LONG'],
-    #        ['Time_Harvest', 'time_for_harvest', 'LONG'],
-    #        ['Killing_Crost_C', 'killing_frost_temperature', 'Float'],
+    #        ['T30_CGDD', 't30_for_pl_or_gu_or_cgdd', ogr.OFTReal],
+    #        ['PL_GU_Date', 'date_of_pl_or_gu', ogr.OFTReal],
+    #        ['CGDD_Tbase', 'tbase', ogr.OFTReal],
+    #        ['CGDD_EFC', 'cgdd_for_efc', ogr.OFTInteger],
+    #        ['CGDD_Termination', 'cgdd_for_termination', ogr.OFTInteger],
+    #        ['Time_EFC', 'time_for_efc', ogr.OFTInteger],
+    #        ['Time_Harvest', 'time_for_harvest', ogr.OFTInteger],
+    #        ['Killing_Crost_C', 'killing_frost_temperature', ogr.OFTReal],
     #        # ['Invoke_Stress', 'invoke_stress', 'SHORT'],
-    #        # ['CN_Coarse_Soil', 'cn_coarse_soil', 'LONG'],
-    #        # ['CN_Medium_Soil', 'cn_medium_soil', 'LONG'],
-    #        # ['CN_Fine_Soil', 'cn_fine_soil', 'LONG']
+    #        # ['CN_Coarse_Soil', 'cn_coarse_soil', ogr.OFTInteger],
+    #        # ['CN_Medium_Soil', 'cn_medium_soil', ogr.OFTInteger],
+    #        # ['CN_Fine_Soil', 'cn_fine_soil', ogr.OFTInteger]
     #    ]
 
     crop_add_list = []
@@ -262,31 +251,28 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Get list of crops specified in ET cells
     # Currently this may only be crops with CDL acreage
-    crop_field_list = [
+    crop_field_list = sorted([
         field for field in _arcpy.list_fields(cells_path)
-        if re.match('CROP_\d{2}', field)]
+        if re.match('CROP_\d{2}', field)])
+    crop_number_list = [int(f.split('_')[-1]) for f in crop_field_list]
     logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
-    crop_number_list = [
-        int(f_name.split('_')[-1]) for f_name in crop_field_list]
-
-    crop_number_list = [
-        crop_num for crop_num in crop_number_list
-        if not (crop_skip_list and crop_num in crop_skip_list)]
     logging.info('Cell crop numbers: {}'.format(
         ', '.join(list(util.ranges(crop_number_list)))))
 
     # Get crop acreages for each cell
+    # DEADBEEF - Does this dict need to be keyed by crop then cell_id?
+    #   Could it be changed to cell_id, crop or fid, crop to make it easier to
+    #   write to the shapefile using update_cursor()?
     crop_acreage_dict = defaultdict(dict)
-
     field_list = [cell_id_field] + crop_field_list
-    with arcpy.da.SearchCursor(cells_path, field_list) as cursor:
-        for row in cursor:
-            for i, crop_num in enumerate(crop_number_list):
-                print(crop_num, i)
-                if crop_num in crop_add_list:
-                    crop_acreage_dict[crop_num][row[0]] = 0
-                else:
-                    crop_acreage_dict[crop_num][row[0]] = row[i + 1]
+    for fid, row in _arcpy.search_cursor(cells_path, field_list).items():
+        for crop_field, crop_num in zip(crop_field_list, crop_number_list):
+            if crop_skip_list and crop_num in crop_skip_list:
+                continue
+            elif crop_num in crop_add_list:
+                crop_acreage_dict[crop_num][row[cell_id_field]] = 0
+            else:
+                crop_acreage_dict[crop_num][row[cell_id_field]] = row[crop_field]
 
     crop_number_list = sorted(list(set(crop_number_list) | set(crop_add_list)))
 
@@ -308,15 +294,15 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             # if (field not in keep_field_list and
             #         field.editable and not field.required):
             if field not in keep_field_list:
-                logging.debug('  Delete field: {}'.format(field.name))
-                _arcpy.delete_field(crop_template_path, field.name)
+                logging.debug('  Delete field: {}'.format(field))
+                _arcpy.delete_field(crop_template_path, field)
         field_list = _arcpy.list_fields(crop_template_path)
 
         # Add crop acreage field
         if crop_acres_field not in field_list:
             logging.debug('  Add field: {}'.format(crop_acres_field))
             _arcpy.add_field(crop_template_path, crop_acres_field, ogr.OFTReal)
-            _arcpy.calculate_field(crop_template_path, crop_acres_field, 0)
+            _arcpy.calculate_field(crop_template_path, crop_acres_field, '0')
 
         # Add crop parameter fields if necessary
         for param_field, param_method, param_type in param_list:
@@ -337,8 +323,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         #                            beef_cuttings)
 
     # Add an empty/zero crop field for the field mappings below
-    # if len(_arcpy.list_fields(cells_path, 'CROP_EMPTY')) == 0:
-    #     _arcpy.add_field(cells_path, 'CROP_EMPTY', 'Float')
+    # if 'CROP_EMPTY' not in _arcpy.list_fields(cells_path):
+    #     _arcpy.add_field(cells_path, 'CROP_EMPTY', ogr.OFTReal)
     #     _arcpy.calculate_field(cells_path, 'CROP_EMPTY', '0')
 
     # Process each crop
@@ -392,36 +378,49 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
         # Add alfalfa cutting field
         if crop_num in [1, 2, 3, 4]:
-            if len(_arcpy.list_fields(crop_path, dairy_cutting_field)) == 0:
+            if dairy_cutting_field not in _arcpy.list_fields(crop_path):
                 logging.debug('  Add field: {}'.format(dairy_cutting_field))
                 _arcpy.add_field(crop_path, dairy_cutting_field, ogr.OFTInteger)
                 _arcpy.calculate_field(crop_path, dairy_cutting_field,
-                                       dairy_cuttings)
-            if len(_arcpy.list_fields(crop_path, beef_cutting_field)) == 0:
+                                       str(dairy_cuttings))
+            if beef_cutting_field not in _arcpy.list_fields(crop_path):
                 logging.debug('  Add field: {}'.format(beef_cutting_field))
                 _arcpy.add_field(crop_path, beef_cutting_field, ogr.OFTInteger)
                 _arcpy.calculate_field(crop_path, beef_cutting_field,
-                                       beef_cuttings)
+                                       str(beef_cuttings))
 
         # Write default crop parameters to file
-        field_list = [p[0] for p in param_list] + [cell_id_field, crop_acres_field]
-        with arcpy.da.UpdateCursor(crop_path, field_list) as cursor:
-            for row in cursor:
-                # Don't remove zero acreage crops if in add list
-                if crop_num in crop_add_list:
-                    pass
-                # Skip and/or remove zones without crop acreage    
-                elif crop_acreage_dict[crop_num][row[-2]] < area_threshold:
-                    if remove_empty_flag:
-                        cursor.deleteRow()
-                    continue
-                # Write parameter values
-                for i, (param_field, param_method, param_type) in enumerate(param_list):
-                    row[i] = getattr(crop_param, param_method)
-                # Write crop acreage
-                if crop_num not in crop_add_list:
-                    row[-1] = crop_acreage_dict[crop_num][row[-2]]
-                cursor.updateRow(row)
+        # Note: Couldn't use _arcpy.udpate_cursor directly since the
+        # crop_acreage_dict is keyed by crop_num then by cell_id (not FID first)
+        input_driver = _arcpy.get_ogr_driver(crop_path)
+        input_ds = input_driver.Open(crop_path, 1)
+        input_lyr = input_ds.GetLayer()
+        for input_ftr in input_lyr:
+            cell_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
+
+            # Don't remove zero acreage crops if in add list
+            if crop_num in crop_add_list:
+                pass
+            # Skip and/or remove zones without crop acreage
+            elif crop_acreage_dict[crop_num][cell_id] < area_threshold:
+                if remove_empty_flag:
+                    input_lyr.DeleteFeature(input_ftr)
+                continue
+
+            # Write parameter values
+            for param_field, param_method, param_type in param_list:
+                input_ftr.SetField(
+                    input_ftr.GetFieldIndex(param_field),
+                    getattr(crop_param, param_method))
+
+            # Write crop acreage
+            if crop_num not in crop_add_list:
+                input_ftr.SetField(
+                    input_ftr.GetFieldIndex(crop_acres_field),
+                    crop_acreage_dict[crop_num][cell_id])
+
+            input_lyr.SetFeature(input_ftr)
+        input_ds = None
 
     # # Cleanup
     # # Remove the empty/zero crop field
@@ -462,9 +461,6 @@ def arg_parse():
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -485,4 +481,4 @@ if __name__ == '__main__':
     main(ini_path=args.ini, zone_type=args.zone, area_threshold=args.area,
          dairy_cuttings=args.dairy, beef_cuttings=args.beef,
          remove_empty_flag=args.empty, crop_str=args.crops,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+         overwrite_flag=args.overwrite)
