@@ -9,11 +9,9 @@ import datetime as dt
 import logging
 import os
 import sys
-import time
 
-from osgeo import gdal, ogr, osr
+from osgeo import ogr, osr
 import pandas as pd
-import numpy as np
 import rasterstats
 
 import _arcpy

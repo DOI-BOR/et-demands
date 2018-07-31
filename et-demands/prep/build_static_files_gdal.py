@@ -12,8 +12,6 @@ import re
 import shutil
 import sys
 
-from osgeo import gdal, ogr, osr
-
 import _arcpy
 import _util as util
 

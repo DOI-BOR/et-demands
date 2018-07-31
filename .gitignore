@@ -12,8 +12,11 @@ __pycache__/
 # Common Data
 common
 
+# Example folders/files
+example/calibration
 example/gis/ETCells*
 example/gis/cdl
 example/gis/scratch
 example/gis/soils
 example/gis/zone_tables
+example/static
