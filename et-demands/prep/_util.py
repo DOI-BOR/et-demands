@@ -125,13 +125,13 @@ def read_ini(ini_path, section):
 
 
 def ranges(i):
-    """"""
-    for a, b in groupby(enumerate(i), lambda x, y: y - x):
+    """Join sequential values into ranges"""
+    for a, b in groupby(enumerate(sorted(i)), lambda t: t[1] - t[0]):
         b = list(b)
         if b[0][1] == b[-1][1]:
             yield str(b[0][1])
         else:
-            yield '{0}-{1}'.format(b[0][1], b[-1][1])
+            yield '{}-{}'.format(b[0][1], b[-1][1])
         # yield b[0][1], b[-1][1]
 
 
