@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         build_ag_cdl_rasters.py
 # Purpose:      Build agricultural land and mask rasters from CDL rasters
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -63,39 +60,44 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         # [93, 180, 0], [176, 1], [183, 203, 0], [204, 254, 1]]
         [97, 100, 1], [101, 203, 0], [204, 254, 1]]
 
-    # Check input folders
-    if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {} ' +
-                       'does not exist\n').format(gis_ws))
-        sys.exit()
-    elif not os.path.isdir(cdl_ws):
-        logging.error(('\nERROR: The CDL workspace {} ' +
-                       'does not exist\n').format(cdl_ws))
-        sys.exit()
-    elif mask_flag and not os.path.isfile(zone_raster_path):
-        logging.error(
-            ('\nERROR: The zone raster {} does not exist\n' +
-             '  Try re-running "clip_cdl_raster.py"').format(zone_raster_path))
-        sys.exit()
-    logging.info('\nGIS Workspace:   {}'.format(gis_ws))
-    logging.info('CDL Workspace:   {}'.format(cdl_ws))
-
     if pyramids_flag:
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
 
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
+    # Check input folders
+    if not os.path.isdir(gis_ws):
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
+        sys.exit()
+    elif not os.path.isdir(cdl_ws):
+        logging.error('\nERROR: The CDL workspace does not exist'
+                      '\n  {}'.format(cdl_ws))
+        sys.exit()
+    elif mask_flag and not os.path.isfile(zone_raster_path):
+        logging.error(
+            '\nERROR: The zone raster {} does not exist\n'
+            '  Try re-running "clip_cdl_raster.py"'.format(zone_raster_path))
+        sys.exit()
+    logging.info('\nGIS Workspace:   {}'.format(gis_ws))
+    logging.info('CDL Workspace:   {}'.format(cdl_ws))
+
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
-        logging.info('\n{0}'.format(cdl_year))
+        logging.info('\n{}'.format(cdl_year))
         cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year))
         agmask_path = os.path.join(
             cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
         agland_path = os.path.join(
             cdl_ws, 'agland_{}_30m_cdls.img'.format(cdl_year))
         if not os.path.isfile(cdl_path):
-            logging.error(('\nERROR: The CDL raster {} ' +
-                           'does not exist\n').format(cdl_path))
+            logging.error('\nERROR: The CDL raster does not exist'
+                          '\n  {}'.format(cdl_path))
             continue
 
         # Get color table and spatial reference from CDL raster
@@ -120,13 +122,15 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         # Copy the input raster to hold the ag data
         logging.debug('{}'.format(agland_path))
         if os.path.isfile(agland_path) and overwrite_flag:
-            subprocess.call(['gdalmanage', 'delete', agland_path])
+            subprocess.check_output(
+                ['gdalmanage', 'delete', agland_path], shell=shell_flag)
         if not os.path.isfile(agland_path):
             logging.info('Copying CDL raster')
             logging.debug('{}'.format(cdl_path))
-            subprocess.call(
+            subprocess.check_output(
                 ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
-                 cdl_path, agland_path])
+                 cdl_path, agland_path],
+                shell=shell_flag)
                 # '-a_nodata', agland_nodata
 
             if os.path.isfile(cdl_path.replace('.img', '.img.vat.dbf')):
@@ -165,7 +169,8 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         logging.info('\nBuilding empty ag mask raster')
         logging.debug('{}'.format(agmask_path))
         if os.path.isfile(agmask_path) and overwrite_flag:
-            subprocess.call(['gdalmanage', 'delete', agmask_path])
+            subprocess.check_output(
+                ['gdalmanage', 'delete', agmask_path], shell=shell_flag)
         if not os.path.isfile(agmask_path):
             gdc.build_empty_raster(
                 agmask_path, band_cnt=1, output_dtype=np.uint8,
@@ -220,25 +225,27 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
             logging.info('Computing statistics')
             if os.path.isfile(agland_path):
                 logging.debug('{}'.format(agland_path))
-                subprocess.call(
+                subprocess.check_output(
                     ['gdalinfo', '-stats', '-nomd', '-noct', '-norat',
-                     agland_path])
+                     agland_path], shell=shell_flag)
             if os.path.isfile(agmask_path):
                 logging.debug('{}'.format(agmask_path))
-                subprocess.call(
+                subprocess.check_output(
                     ['gdalinfo', '-stats', '-nomd', '-noct', '-norat',
-                     agmask_path])
+                     agmask_path], shell=shell_flag)
 
         if pyramids_flag:
             logging.info('Building pyramids')
             if os.path.isfile(agland_path):
                 logging.debug('{}'.format(agland_path))
-                subprocess.call(
-                    ['gdaladdo', '-ro', agland_path] + levels.split())
+                subprocess.check_output(
+                    ['gdaladdo', '-ro', agland_path] + levels.split(),
+                    shell=shell_flag)
             if os.path.isfile(agmask_path):
                 logging.debug('{}'.format(agmask_path))
-                subprocess.call(
-                    ['gdaladdo', '-ro', agmask_path] + levels.split())
+                subprocess.check_output(
+                    ['gdaladdo', '-ro', agmask_path] + levels.split(),
+                    shell=shell_flag)
 
 
 def arg_parse():
@@ -282,6 +289,7 @@ def arg_parse():
     # Convert input file to an absolute path
     if args.gis and os.path.isdir(os.path.abspath(args.gis)):
         args.gis = os.path.abspath(args.gis)
+
     return args
 
 

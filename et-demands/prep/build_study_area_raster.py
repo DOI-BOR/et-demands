@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         build_study_area_raster.py
 # Purpose:      Build study area raster
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -45,23 +42,21 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
     # If multiple years were passed in, only use the first one
     cdl_year = list(util.parse_int_set(cdl_year))[0]
 
-    cdl_format = '{0}_30m_cdls.img'
+    cdl_format = '{}_30m_cdls.img'
     cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year))
 
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {} ' +
-                       'does not exist').format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isfile(cdl_path):
-        logging.error(
-            ('\nERROR: The input CDL raster {} ' +
-             'does not exist').format(cdl_path))
+        logging.error('\nERROR: The input CDL raster does not exist'
+                      '\n  {}'.format(cdl_path))
         sys.exit()
     elif not os.path.isfile(study_area_path):
-        logging.error(
-            ('\nERROR: The extent shapefile {} ' +
-             'does not exist').format(study_area_path))
+        logging.error('\nERROR: The extent shapefile does not exist'
+                      '\n  {}'.format(study_area_path))
         sys.exit()
     if not os.path.isdir(scratch_ws):
         os.makedirs(scratch_ws)
@@ -85,21 +80,29 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
 
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Overwrite
     if os.path.isfile(zone_raster_path) and overwrite_flag:
-        subprocess.call(['gdalmanage', 'delete', zone_raster_path])
+        subprocess.check_output(
+            ['gdalmanage', 'delete', zone_raster_path], shell=shell_flag)
     if os.path.isfile(zone_polygon_path) and overwrite_flag:
         remove_file(zone_polygon_path)
-        # subprocess.call(['gdalmanage', 'delete', zone_polygon_path])
+        # subprocess.check_output(
+        #   ['gdalmanage', 'delete', zone_polygon_path], shell=shell_flag)
 
     # Project extent shapefile to CDL spatial reference
     if not os.path.isfile(zone_polygon_path):
         # Project study area extent to the input/CDL spatial reference
         logging.info('Projecting extent shapefile')
-        subprocess.call(
+        subprocess.check_output(
             ['ogr2ogr', '-overwrite', '-preserve_fid',
              '-t_srs', str(output_proj),
-             zone_polygon_path, study_area_path])
+             zone_polygon_path, study_area_path],
+            shell=shell_flag)
 
     # Get the study area extent from the projected shapefile
     clip_extent = gdc.feature_path_extent(zone_polygon_path)
@@ -110,7 +113,7 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
         logging.debug('Buffering: {}'.format(study_area_buffer))
         clip_extent.buffer_extent(study_area_buffer)
         logging.debug('Clip Extent: {}'.format(clip_extent))
-    clip_extent.adjust_to_snap('EXPAND', output_x, output_y, output_cs)
+    clip_extent.adjust_to_snap(output_x, output_y, output_cs, method='EXPAND')
     logging.debug('Clip Extent: {}'.format(clip_extent))
 
     # gdal_translate uses ul/lr corners, not extent
@@ -121,27 +124,30 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
     if (not os.path.isfile(zone_raster_path) and
         os.path.isfile(zone_polygon_path)):
         logging.info('Rasterizing shapefile')
-        subprocess.call(
+        subprocess.check_output(
             ['gdal_rasterize', '-of', 'HFA', '-ot', 'Byte', '-burn', '1',
              '-init', '0', '-a_nodata', '255', '-co', 'COMPRESSED=YES'] +
             ['-te'] + str(clip_extent).split() +
             ['-tr', str(output_cs), str(output_cs),
-             zone_polygon_path, zone_raster_path])
+             zone_polygon_path, zone_raster_path],
+            shell=shell_flag)
         # remove_file(zonse_polygon_path)
 
     # Statistics
     if stats_flag and os.path.isfile(zone_raster_path):
         logging.info('Computing statistics')
         logging.debug('  {}'.format(zone_raster_path))
-        subprocess.call(
-            ['gdalinfo', '-stats', '-nomd', '-noct', '-norat',
-             zone_raster_path])
+        subprocess.check_output(
+            ['gdalinfo', '-stats', '-nomd', '-noct', '-norat', zone_raster_path],
+            shell=shell_flag)
 
     # Pyramids
     if pyramids_flag and os.path.isfile(zone_raster_path):
         logging.info('Building statistics')
         logging.debug('  {}'.format(zone_raster_path))
-        subprocess.call(['gdaladdo', '-ro', zone_raster_path] + levels.split())
+        subprocess.check_output(
+            ['gdaladdo', '-ro', zone_raster_path] + levels.split(),
+            shell=shell_flag)
 
 
 def remove_file(file_path):
@@ -193,6 +199,7 @@ def arg_parse():
         args.cdl = os.path.abspath(args.cdl)
     if args.shapefile and os.path.isfile(os.path.abspath(args.shapefile)):
         args.shapefile = os.path.abspath(args.shapefile)
+
     return args
 
 if __name__ == '__main__':

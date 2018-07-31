@@ -43,7 +43,7 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
     elif dem_cs == 30:
         site_folder = 'vdelivery/Datasets/Staged/Elevation/1/IMG'
     else:
-        logging.error('\nERROR: The input cellsize must be 10 or 30\n')
+        logging.error('\nERROR: The input cell size must be 10 or 30\n')
         sys.exit()
 
     # Use 1 degree snap point and "cellsize" to get 1x1 degree tiles
@@ -99,7 +99,7 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
 
         # Extent needed to select 1x1 degree tiles
         tile_extent.buffer_extent(tile_buffer)
-        tile_extent.adjust_to_snap('EXPAND', tile_x, tile_y, tile_cs)
+        tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('Tile Extent: {}'.format(tile_extent))
 
         # Get list of available tiles that intersect the extent
@@ -187,7 +187,7 @@ def polygon_tiles(input_path, tile_osr=gdc.epsg_osr(4269),
 
         # Extent needed to select 1x1 degree tiles
         tile_extent.buffer_extent(tile_buffer)
-        tile_extent.adjust_to_snap('EXPAND', tile_x, tile_y, tile_cs)
+        tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('  Tile Extent: {}'.format(tile_extent))
 
         # Get list of available tiles that intersect the extent

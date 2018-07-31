@@ -85,7 +85,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         cdl_ws, 'agland_{}_30m_cdls.img'.format(cdl_year))
     agmask_path = os.path.join(
         cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
-    table_fmt = 'zone_{0}.dbf'
+    table_fmt = 'zone_{}.dbf'
 
     # Field names
     cell_lat_field = 'LAT'
@@ -258,48 +258,48 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {0} ' +
-                       'does not exist\n').format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isdir(cdl_ws):
-        logging.error(('\nERROR: The CDL workspace {0} ' +
-                       'does not exist\n').format(cdl_ws))
+        logging.error('\nERROR: The CDL workspace does not exist'
+                      '\n  {}'.format(cdl_ws))
         sys.exit()
     elif not os.path.isdir(soil_ws):
-        logging.error(('\nERROR: The soil workspace {0} ' +
-                       'does not exist\n').format(soil_ws))
+        logging.error('\nERROR: The soil workspace does not exist'
+                      '\n  {}'.format(soil_ws))
         sys.exit()
     elif input_soil_ws != soil_ws and not os.path.isdir(input_soil_ws):
-        logging.error(('\nERROR: The input soil folder {} ' +
-                       'does not exist\n').format(input_soil_ws))
+        logging.error('\nERROR: The input soil folder does not exist'
+                      '\n  {}'.format(input_soil_ws))
         sys.exit()
     elif not os.path.isdir(zone_ws):
-        logging.error(('\nERROR: The zone workspace {0} ' +
-                       'does not exist\n').format(zone_ws))
+        logging.error('\nERROR: The zone workspace does not exist'
+                      '\n  {}'.format(zone_ws))
         sys.exit()
-    logging.info('\nGIS Workspace:   {0}'.format(gis_ws))
-    logging.info('CDL Workspace:   {0}'.format(cdl_ws))
-    logging.info('Soil Workspace:  {0}'.format(soil_ws))
+    logging.info('\nGIS Workspace:   {}'.format(gis_ws))
+    logging.info('CDL Workspace:   {}'.format(cdl_ws))
+    logging.info('Soil Workspace:  {}'.format(soil_ws))
     if input_soil_ws != soil_ws:
-        logging.info('Soil Workspace:  {0}'.format(input_soil_ws))
-    logging.info('Zone Workspace:  {0}'.format(zone_ws))
+        logging.info('Soil Workspace:  {}'.format(input_soil_ws))
+    logging.info('Zone Workspace:  {}'.format(zone_ws))
 
     # Check input files
     if not os.path.isfile(snap_raster):
-        logging.error('\nERROR: The snap raster {} ' +
-                      'does not exist\n'.format(snap_raster))
+        logging.error('\nERROR: The snap raster does not exist'
+                      '\n  {}'.format(snap_raster))
         sys.exit()
     elif not os.path.isfile(agland_path):
-        logging.error('\nERROR: The agland raster {0} ' +
-                      'does not exist\n'.format(agland_path))
+        logging.error('\nERROR: The agland raster does not exist'
+                      '\n  {}'.format(agland_path))
         sys.exit()
     elif not os.path.isfile(agland_path):
-        logging.error('\nERROR: The agmask raster {0} ' +
-                      'does not exist\n'.format(agland_path))
+        logging.error('\nERROR: The agmask raster does not exist'
+                      '\n  {}'.format(agland_path))
         sys.exit()
     elif not os.path.isfile(zone_path):
-        logging.error('\nERROR: The zone shapefile {0} ' +
-                      'does not exist\n'.format(zone_path))
+        logging.error('\nERROR: The zone shapefile does not exist'
+                      '\n  {}'.format(zone_path))
         sys.exit()
 
     arcpy.CheckOutExtension('Spatial')
@@ -350,13 +350,12 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         sys.exit()
 
     # The built in ArcPy zonal stats function fails if count >= 65536
-    zone_count = int(
-        arcpy.GetCount_management(zone_path).getOutput(0))
-    logging.info('\nZone count: {0}'.format(zone_count))
+    zone_count = int(arcpy.GetCount_management(zone_path).getOutput(0))
+    logging.info('\nZone count: {}'.format(zone_count))
     if zone_count >= 65536:
         logging.error(
-            ('\nERROR: Zonal stats cannot be calculated since there ' +
-             'are more than 65536 unique features\n').format(zone_field))
+            '\nERROR: Zonal stats cannot be calculated since there '
+            'are more than 65536 unique features\n  {}'.format(zone_path))
         sys.exit()
 
     # Copy the zone_path
@@ -385,38 +384,38 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     output_sr = arcpy.Describe(et_cells_path).spatialReference
     snap_sr = arcpy.Raster(snap_raster).spatialReference
     snap_cs = arcpy.Raster(snap_raster).meanCellHeight
-    logging.debug('  Zone SR: {0}'.format(output_sr.name))
-    logging.debug('  Snap SR: {0}'.format(snap_sr.name))
-    logging.debug('  Snap Cellsize: {0}'.format(snap_cs))
+    logging.debug('  Zone SR: {}'.format(output_sr.name))
+    logging.debug('  Snap SR: {}'.format(snap_sr.name))
+    logging.debug('  Snap Cellsize: {}'.format(snap_cs))
 
     # Add lat/lon fields
     logging.info('Adding Fields')
     field_list = [f.name for f in arcpy.ListFields(et_cells_path)]
     if cell_lat_field not in field_list:
-        logging.debug('  {0}'.format(cell_lat_field))
+        logging.debug('  {}'.format(cell_lat_field))
         arcpy.AddField_management(et_cells_path, cell_lat_field, 'DOUBLE')
         lat_lon_flag = True
     if cell_lon_field not in field_list:
-        logging.debug('  {0}'.format(cell_lon_field))
+        logging.debug('  {}'.format(cell_lon_field))
         arcpy.AddField_management(et_cells_path, cell_lon_field, 'DOUBLE')
         lat_lon_flag = True
     # Cell/station ID
     if cell_id_field not in field_list:
-        logging.debug('  {0}'.format(cell_id_field))
-        arcpy.AddField_management(
-            et_cells_path, cell_id_field, 'TEXT', '', '', 24)
+        logging.debug('  {}'.format(cell_id_field))
+        arcpy.AddField_management(et_cells_path, cell_id_field, 'TEXT',
+                                  '', '', 24)
     if cell_name_field not in field_list:
-        logging.debug('  {0}'.format(cell_name_field))
-        arcpy.AddField_management(
-            et_cells_path, cell_name_field, 'TEXT', '', '', 48)
+        logging.debug('  {}'.format(cell_name_field))
+        arcpy.AddField_management(et_cells_path, cell_name_field, 'TEXT',
+                                  '', '', 48)
     if met_id_field not in field_list:
-        logging.debug('  {0}'.format(met_id_field))
-        arcpy.AddField_management(
-            et_cells_path, met_id_field, 'TEXT', '', '', 24)
+        logging.debug('  {}'.format(met_id_field))
+        arcpy.AddField_management(et_cells_path, met_id_field, 'TEXT',
+                                  '', '', 24)
     if zone_id_field not in field_list:
-        logging.debug('  {0}'.format(zone_id_field))
-        arcpy.AddField_management(
-            et_cells_path, zone_id_field, 'TEXT', '', '', 8)
+        logging.debug('  {}'.format(zone_id_field))
+        arcpy.AddField_management(et_cells_path, zone_id_field, 'TEXT',
+                                  '', '', 8)
 
     # Status flags
     # if active_flag_field not in field_list:
@@ -428,45 +427,44 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Add zonal stats fields
     for field_name, stat, raster_path in raster_list:
         if field_name not in field_list:
-            logging.debug('  {0}'.format(field_name))
+            logging.debug('  {}'.format(field_name))
             arcpy.AddField_management(et_cells_path, field_name, 'FLOAT')
 
     # Other soil fields
     if awc_in_ft_field not in field_list:
-        logging.debug('  {0}'.format(awc_in_ft_field))
-        arcpy.AddField_management(
-            et_cells_path, awc_in_ft_field, 'FLOAT', 8, 4)
+        logging.debug('  {}'.format(awc_in_ft_field))
+        arcpy.AddField_management(et_cells_path, awc_in_ft_field, 'FLOAT', 8, 4)
     if hydgrp_num_field not in field_list:
-        logging.debug('  {0}'.format(hydgrp_num_field))
+        logging.debug('  {}'.format(hydgrp_num_field))
         arcpy.AddField_management(et_cells_path, hydgrp_num_field, 'SHORT')
     if hydgrp_field not in field_list:
-        logging.debug('  {0}'.format(hydgrp_field))
-        arcpy.AddField_management(
-            et_cells_path, hydgrp_field, 'TEXT', '', '', 1)
+        logging.debug('  {}'.format(hydgrp_field))
+        arcpy.AddField_management(et_cells_path, hydgrp_field, 'TEXT',
+                                  '', '', 1)
     # if permeability_field not in field_list:
-    #     .debug('  {0}'.format(permeability_field))
-    #     .AddField_management(et_cells_path, permeability_field, 'FLOAT')
+    #     logging.debug('  {}'.format(permeability_field))
+    #     arcpy.AddField_management(et_cells_path, permeability_field, 'FLOAT')
     # if soil_depth_field not in field_list:
-    #     .debug('  {0}'.format(soil_depth_field))
-    #     .AddField_management(et_cells_path, soil_depth_field, 'FLOAT')
+    #     logging.debug('  {}'.format(soil_depth_field))
+    #     arcpy.AddField_management(et_cells_path, soil_depth_field, 'FLOAT')
     # if aridity_field not in field_list:
-    #     .debug('  {0}'.format(aridity_field))
-    #     .AddField_management(et_cells_path, aridity_field, 'FLOAT')
+    #     logging.debug('  {}'.format(aridity_field))
+    #     arcpy.AddField_management(et_cells_path, aridity_field, 'FLOAT')
 
     # Cuttings
     # if dairy_cutting_field not in field_list:
-    #     .debug('  {0}'.format(dairy_cutting_field))
-    #     .AddField_management(et_cells_path, dairy_cutting_field, 'SHORT')
+    #     logging.debug('  {}'.format(dairy_cutting_field))
+    #     arcpy.AddField_management(et_cells_path, dairy_cutting_field, 'SHORT')
     # if beef_cutting_field not in field_list:
-    #     .debug('  {0}'.format(beef_cutting_field))
-    #     .AddField_management(et_cells_path, beef_cutting_field, 'SHORT')
+    #     logging.debug('  {}'.format(beef_cutting_field))
+    #     arcpy.AddField_management(et_cells_path, beef_cutting_field, 'SHORT')
 
     # Crop fields are only added for needed crops (after zonal histogram)
     # for crop_num in crop_num_list:
-    #     _name = 'CROP_{0:02d}'.format(crop_num)
-    #      field_name not in field_list:
-    #        logging.debug('  {0}'.format(field_name))
-    #        arcpy.AddField_management(et_cells_path, field_name, 'LONG')
+    #     field_name = 'CROP_{0:02d}'.format(crop_num)
+    #     if field_name not in field_list:
+    #         logging.debug('  {}'.format(field_name))
+    #         arcpy.AddField_management(et_cells_path, field_name, 'LONG')
 
     # Calculate lat/lon
     logging.info('Calculating lat/lon')
@@ -476,14 +474,14 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     #zone_id_field must be a string
     arcpy.CalculateField_management(
         et_cells_path, cell_id_field,
-        'str(!{0}!)'.format(zone_id_field), 'PYTHON')
+        'str(!{}!)'.format(zone_id_field), 'PYTHON')
     arcpy.CalculateField_management(
         et_cells_path, cell_name_field,
-        '"{0}" + str(!{1}!)'.format(zone_name_str, zone_name_field), 'PYTHON')
+        '"{}" + str(!{}!)'.format(zone_name_str, zone_name_field), 'PYTHON')
     # Set MET_ID (STATION_ID) to NLDAS_ID
     # arcpy.CalculateField_management(
     #     et_cells_path, met_id_field,
-    #     'str(!{0}!)'.format(station_id_field), 'PYTHON')
+    #     'str(!{}!)'.format(station_id_field), 'PYTHON')
 
     # Remove existing (could use overwrite instead)
     zone_proj_path = os.path.join(table_ws, zone_proj_name)
@@ -495,12 +493,12 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # Project zones to match CDL/snap coordinate system
     logging.info('Projecting zones')
-    if (arcpy.Exists(et_cells_path) and not arcpy.Exists(zone_proj_path)):
+    if arcpy.Exists(et_cells_path) and not arcpy.Exists(zone_proj_path):
         arcpy.Project_management(et_cells_path, zone_proj_path, snap_sr)
 
     # Convert the zones polygon to raster
     logging.info('Converting zones to raster')
-    if (arcpy.Exists(zone_proj_path) and not arcpy.Exists(zone_raster_path)):
+    if arcpy.Exists(zone_proj_path) and not arcpy.Exists(zone_raster_path):
         arcpy.env.snapRaster = snap_raster
         # arcpy.env.extent = arcpy.Describe(snap_raster).extent
         arcpy.FeatureToRaster_conversion(
@@ -511,13 +509,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # # Link zone raster Value to zone field
     # #zone_id_field must be a string
     fields = ('Value', cell_id_field)
-    print(fields)
-    print(zone_raster_path)
     zone_value_dict = {
-        row[0]: row[1]
-        for row in arcpy.da.SearchCursor(zone_raster_path, fields)}
-
-
+        r[0]: r[1] for r in arcpy.da.SearchCursor(zone_raster_path, fields)}
 
     # Calculate zonal stats
     logging.info('\nProcessing soil rasters')
@@ -561,7 +554,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     logging.info('Calculating AWC in in/ft')
     arcpy.CalculateField_management(
         et_cells_path, awc_in_ft_field,
-        '!{0}! * 12'.format(awc_field), 'PYTHON')
+        '!{}! * 12'.format(awc_field), 'PYTHON')
 
     # Calculate hydrologic group
     logging.info('Calculating hydrologic group')
@@ -578,27 +571,27 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # # Calculate default values
     # logging.info('\nCalculating default values')
-    # logging.info('  {0:10s}: {1}'.format(active_flag_field, active_flag_default))
+    # logging.info('  {:10s}: {}'.format(active_flag_field, active_flag_default))
     # arcpy.CalculateField_management(
     #     _cells_path, active_flag_field, active_flag_default, 'PYTHON')
-    # logging.info('  {0:10s}: {1}'.format(irrig_flag_field, irrig_flag_default))
+    # logging.info('  {:10s}: {}'.format(irrig_flag_field, irrig_flag_default))
     # arcpy.CalculateField_management(
     #     _cells_path, irrig_flag_field, irrig_flag_default, 'PYTHON')
     #
-    # logging.info('  {0:10s}: {1}'.format(permeability_field, permeability_default))
+    # logging.info('  {:10s}: {}'.format(permeability_field, permeability_default))
     # arcpy.CalculateField_management(
     #     _cells_path, permeability_field, permeability_default, 'PYTHON')
-    # logging.info('  {0:10s}: {1}'.format(soil_depth_field, soil_depth_default))
+    # logging.info('  {:10s}: {}'.format(soil_depth_field, soil_depth_default))
     # arcpy.CalculateField_management(
     #     _cells_path, soil_depth_field, soil_depth_default, 'PYTHON')
-    # logging.info('  {0:10s}: {1}'.format(aridity_field, aridity_default))
+    # logging.info('  {:10s}: {}'.format(aridity_field, aridity_default))
     # arcpy.CalculateField_management(
     #     _cells_path, aridity_field, aridity_default, 'PYTHON')
     #
-    # logging.info('  {0:10s}: {1}'.format(dairy_cutting_field, dairy_cutting_default))
+    # logging.info('  {:10s}: {}'.format(dairy_cutting_field, dairy_cutting_default))
     # arcpy.CalculateField_management(
     #     _cells_path, dairy_cutting_field, dairy_cutting_default, 'PYTHON')
-    # logging.info('  {0:10s}: {1}'.format(beef_cutting_field, beef_cutting_default))
+    # logging.info('  {:10s}: {}'.format(beef_cutting_field, beef_cutting_default))
     # arcpy.CalculateField_management(
     #     _cells_path, beef_cutting_field, beef_cutting_default, 'PYTHON')
 
@@ -654,7 +647,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         logging.info(temp_table_path)
         field_name_list = [f.name for f in arcpy.ListFields(temp_table_path)]
         value_list = [f.split('_')[-1] for f in field_name_list]
-        logging.debug('  Crop histogram field list:\n    {0}'.format(
+        logging.debug('  Crop histogram field list:\n    {}'.format(
             ', '.join(field_name_list)))
         with arcpy.da.SearchCursor(temp_table_path, '*') as s_cursor:
             for i, row in enumerate(s_cursor):
@@ -689,14 +682,14 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         for crop_num in crop_dict.keys()])))
     logging.debug('Crop number list: ' + ', '.join(map(str, crop_number_list)))
     crop_field_list = sorted([
-        'CROP_{0:02d}'.format(crop_num) for crop_num in crop_number_list])
+        'CROP_{:02d}'.format(crop_num) for crop_num in crop_number_list])
     logging.debug('Crop field list: ' + ', '.join(crop_field_list))
 
     # Add fields for CDL values
     logging.info('Writing crop zonal stats')
     for field_name in crop_field_list:
         if field_name not in field_list:
-            logging.debug('  {0}'.format(field_name))
+            logging.debug('  {}'.format(field_name))
             arcpy.AddField_management(et_cells_path, field_name, 'FLOAT')
 
     # Write zonal stats values to zone polygon shapefile
@@ -774,6 +767,7 @@ def arg_parse():
     #     .station = os.path.abspath(args.station)
     if args.soil and os.path.isdir(os.path.abspath(args.soil)):
         args.soil = os.path.abspath(args.soil)
+
     return args
 
 

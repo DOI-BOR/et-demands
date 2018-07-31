@@ -1,8 +1,6 @@
 #--------------------------------
 # Name:         build_spatial_crop_params_arcpy.py
 # Purpose:      Build spatial parameter files for ET-Demands from zonal stats ETCells
-# Author:       Charles Morton
-# Created       2017-01-11
 # Python:       2.7
 #--------------------------------
 
