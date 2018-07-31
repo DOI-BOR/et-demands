@@ -237,8 +237,10 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             cell_data_dict[str(row[cell_id_field])][f] = row[f]
 
     # Update ET Cell MET_ID/STATION_ID value
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-    input_ds = shp_driver.Open(et_cells_path, 1)
+    # Note: Couldn't use _arcpy.udpate_cursor directly since the station data
+    # is keyed by cell_id and not FID.
+    input_driver = _arcpy.get_ogr_driver(et_cells_path)
+    input_ds = input_driver.Open(et_cells_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
         input_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
@@ -248,20 +250,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         input_lyr.SetFeature(input_ftr)
     input_ds = None
 
-    # # This update_cursor call won't work since station_data_dict isn't using FID
-    # _arcpy.update_cursor(et_cells_path, station_data_dict)
-
-    # DEADBEEF
-    # fields = [cell_id_field, met_id_field]
-    # with arcpy.da.UpdateCursor(et_cells_path, fields) as u_cursor:
-    #     for row in u_cursor:
-    #         try:
-    #             row[1] = station_data_dict[row[0]][station_id_field]
-    #             u_cursor.updateRow(row)
-    #         except KeyError:
-    #             pass
-
-    # Covert elevation units if necessary
+    # Convert elevation units if necessary
     if station_elev_units.upper() in ['METERS', 'M']:
         logging.debug('  Convert station elevation from meters to feet')
         for k in station_data_dict.keys():
@@ -270,7 +259,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.info('\nCopying template static files')
     for static_name in static_list:
         # if (overwrite_flag or
-        #      os.path.isfile(os.path.join(static_ws, static_name))):
+        #         os.path.isfile(os.path.join(static_ws, static_name))):
         logging.debug('  {}'.format(static_name))
         shutil.copy(os.path.join(template_ws, static_name), static_ws)
         # shutil.copyfile(

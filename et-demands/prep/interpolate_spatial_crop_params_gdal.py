@@ -16,15 +16,13 @@ import _arcpy
 import _util as util
 
 
-def main(ini_path, zone_type='gridmet', overwrite_flag=False,
-         cleanup_flag=True):
+def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     """Interpolate Preliminary Calibration Zones to All Zones
 
     Args:
         ini_path (str): file path of the project INI file
         zone_type (str): Zone type (huc8, huc10, county, gridmet)
         overwrite_flag (bool): If True (default), overwrite existing files
-        cleanup_flag (bool): If True, remove temporary files
 
     Returns:
         None
@@ -88,13 +86,13 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False,
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
     else:
-        print('FUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
+        logging.error('\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME\n')
         sys.exit()
 
     cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
     cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    _arcpy.project(
-        et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
+    _arcpy.project(et_cells_path, cells_dd_path,
+                   arcpy.SpatialReference('WGS 1984'))
 
     temp_path = os.path.join(calibration_ws, 'temp')
     if not os.path.exists(temp_path):
@@ -236,9 +234,6 @@ def arg_parse():
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -257,5 +252,4 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, zone_type=args.zone,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+    main(ini_path=args.ini, zone_type=args.zone, overwrite_flag=args.overwrite)

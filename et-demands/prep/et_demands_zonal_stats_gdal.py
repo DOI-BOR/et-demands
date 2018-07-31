@@ -338,11 +338,11 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     ]
 
     # The zone field must be defined
-    if len(_arcpy.list_fields(zone_path, zone_id_field)) == 0:
+    if zone_id_field not in _arcpy.list_fields(zone_path):
         logging.error('\nERROR: The zone ID field {} does not exist\n'.format(
             zone_id_field))
         sys.exit()
-    elif len(_arcpy.list_fields(zone_path, zone_name_field)) == 0:
+    elif zone_name_field not in _arcpy.list_fields(zone_path):
         logging.error(
             '\nERROR: The zone name field {} does not exist\n'.format(
                 zone_name_field))

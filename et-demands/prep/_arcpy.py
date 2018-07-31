@@ -27,13 +27,13 @@ def add_field(input_path, name, type, width=None, precision=None):
     http://www.gdal.org/ogr__core_8h.html#a787194bea637faf12d61643124a7c9fc
 
     """
-    driver = get_driver(input_path)
+    input_driver = get_ogr_driver(input_path)
 
     fields = list_fields(input_path)
     if name in fields:
         logging.debug('The field already exists')
 
-    input_ds = driver.Open(input_path, 1)
+    input_ds = input_driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
 
     field = ogr.FieldDefn(name, type)
@@ -62,23 +62,18 @@ def calculate_field(input_path, field_name, calc_expr):
     expr : str
 
     """
-    # logging.debug('Calculate Field')
-    driver = get_driver(input_path)
-
+    input_driver = get_ogr_driver(input_path)
     # input_fields = list_fields(input_path)
 
     # Extract expression fields
     expr_fields = re.findall('\!\w+\!', calc_expr)
 
-    # logging.debug('  Expression fields: {}'.format(', '.join(expr_fields)))
-
-    input_ds = driver.Open(input_path, 1)
+    input_ds = input_driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
         input_fid = input_ftr.GetFID()
         # logging.debug('  FID: {}'.format(input_fid))
         ftr_expr = calc_expr[:]
-        # logging.debug(ftr_expr)
         for f in expr_fields:
             f_value = input_ftr.GetField(f.replace('!', ''))
             try:
@@ -88,7 +83,6 @@ def calculate_field(input_path, field_name, calc_expr):
                 logging.info('  {}'.format(e))
                 logging.info('  {}'.format(calc_expr))
                 logging.info('  {}'.format(ftr_expr))
-        logging.debug(ftr_expr)
         try:
             input_ftr.SetField(field_name, eval(ftr_expr))
         except Exception as e:
@@ -111,9 +105,9 @@ def copy(input_path, output_path):
 
     """
     if is_shapefile(input_path):
-        shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-        input_ds = shp_driver.Open(input_path, 0)
-        output_ds = shp_driver.CopyDataSource(input_ds, output_path)
+        input_driver = ogr.GetDriverByName('ESRI Shapefile')
+        input_ds = input_driver.Open(input_path, 0)
+        output_ds = input_driver.CopyDataSource(input_ds, output_path)
         output_ds, input_ds = None, None
 
     # # Brute force approach for copying a file and all sidecars
@@ -155,15 +149,14 @@ def delete_field(input_path, field_name):
     field_name : str
 
     """
-    driver = get_driver(input_path)
-
-    input_ds = driver.Open(input_path, 1)
+    input_driver = get_ogr_driver(input_path)
+    input_ds = input_driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
     input_field_def = input_lyr.GetLayerDefn()
     for n in range(input_field_def.GetFieldCount()):
-        input_field = input_field_def.GetFieldDefn(n)
-        if input_field.name == field_name:
-            input_lyr.DreateField(n)
+        if field_name == input_field_def.GetFieldDefn(n).name:
+            input_lyr.DeleteField(n)
+            break
     input_ds = None
 
 
@@ -215,7 +208,7 @@ def feature_to_raster(input_path, input_field, output_path, output_geo):
     logging.debug('  {}'.format(input_path))
     logging.debug('  {}'.format(input_field))
     logging.debug('  {}'.format(output_path))
-    input_driver = get_driver(input_path)
+    input_driver = get_ogr_driver(input_path)
     input_ds = input_driver.Open(input_path)
     input_lyr = input_ds.GetLayer()
     input_count = input_lyr.GetFeatureCount()
@@ -238,7 +231,7 @@ def feature_to_raster(input_path, input_field, output_path, output_geo):
         output_gtype = gdal.GDT_UInt32
         output_nodata = 4294967295
 
-    output_driver = get_driver(output_path)
+    output_driver = get_ogr_driver(output_path)
     output_ds = output_driver.Create(output_path, output_cols, output_rows, 1,
                                      output_gtype)
     output_ds.SetProjection(input_osr.ExportToWkt())
@@ -263,16 +256,15 @@ def get_count(input_path):
     int
 
     """
-    driver = get_driver(input_path)
-
-    input_ds = driver.Open(input_path, 0)
+    input_driver = get_ogr_driver(input_path)
+    input_ds = input_driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     count = input_lyr.GetFeatureCount()
     input_ds = None
     return count
 
 
-def get_driver(input_path):
+def get_ogr_driver(input_path):
     """
 
     Parameters
@@ -281,17 +273,37 @@ def get_driver(input_path):
 
     Returns
     -------
+    ogr.Driver
 
+    Notes
+    -----
+    Eventually try and support reading ESRI GeoDatabases
 
     """
     if is_shapefile(input_path):
         return ogr.GetDriverByName('ESRI Shapefile')
-    elif input_path.lower().endswith('.tif'):
+    else:
+        raise Exception('input must be a .shp type')
+
+
+def get_gdal_driver(input_path):
+    """
+
+    Parameters
+    ----------
+    input_path
+
+    Returns
+    -------
+    gdal.Driver
+
+    """
+    if input_path.lower().endswith('.tif'):
         return gdal.GetDriverByName('GTiff')
     elif input_path.lower().endswith('.img'):
         return gdal.GetDriverByName('HFA')
     else:
-        raise Exception('input must be a .shp, .img, or .tif type')
+        raise Exception('input must be a .img or .tif type')
 
 
 def is_shapefile(input_path):
@@ -312,15 +324,12 @@ def is_shapefile(input_path):
         return False
 
 
-def list_fields(input_path, wild_card=None):
+def list_fields(input_path):
     """
 
     Parameters
     ----------
     input_path : str
-    wild_card : str
-        Currently the wild_card must match a field name exactly.
-
 
     Returns
     -------
@@ -328,28 +337,35 @@ def list_fields(input_path, wild_card=None):
 
     Notes
     -----
-    Different from the ArcPy function in that it returns a list of field names
-    instead of Field objects.
+    Different from the ArcPy function:
+    * Returns field names instead of field objects.
+    * Does not currently accept a wildcard parameter to filter the list.
+    * Does not return the geometry field.
 
     """
-    driver = get_driver(input_path)
-
+    driver = get_ogr_driver(input_path)
     input_ds = driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     field_def = input_lyr.GetLayerDefn()
+    # for n in range(field_def.GetFieldCount()):
+    #     print(dir(field_def.GetFieldDefn(n)))
+    #     print(field_def.GetFieldDefn(n).name)
+    #     print(field_def.GetFieldDefn(n).type)
+    #     print(field_def.GetFieldDefn(n).width)
+    #     print(field_def.GetFieldDefn(n).precision)
+    #     input('ENTER')
+    # input('ENTER')
     fields = [
         field_def.GetFieldDefn(n).name
-        for n in range(field_def.GetFieldCount())]
+        for n in range(field_def.GetFieldCount())
+    ]
     input_ds = None
-
-    if wild_card is not None:
-        fields = [f for f in fields if f == wild_card]
 
     return fields
 
 
 def project(input_path, output_path, output_osr):
-    """
+    """Project a feature dataset to a new projection
 
     Parameters
     ----------
@@ -358,7 +374,7 @@ def project(input_path, output_path, output_osr):
     output_osr :
 
     """
-    driver = get_driver(input_path)
+    driver = get_ogr_driver(input_path)
 
     # First make a copy of the dataset
     input_ds = driver.Open(input_path, 0)
@@ -396,8 +412,8 @@ def search_cursor(input_path, fields):
     dict : values[fid][field]
 
     """
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-    input_ds = shp_driver.Open(input_path, 0)
+    driver = get_ogr_driver(input_path)
+    input_ds = driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     values = defaultdict(dict)
     for input_ftr in input_lyr:
@@ -420,8 +436,8 @@ def update_cursor(input_path, values):
         values[fid][field]
 
     """
-    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-    input_ds = shp_driver.Open(input_path, 1)
+    driver = get_ogr_driver(input_path)
+    input_ds = driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
         input_fid = input_ftr.GetFID()

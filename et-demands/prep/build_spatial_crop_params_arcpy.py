@@ -19,7 +19,7 @@ import _util as util
 
 def main(ini_path, zone_type='huc8', area_threshold=10,
          dairy_cuttings=5, beef_cuttings=4, crop_str='',
-         remove_empty_flag=True, overwrite_flag=False, cleanup_flag=False):
+         remove_empty_flag=True, overwrite_flag=False):
     """Build a feature class for each crop and set default crop parameters
 
     Apply the values in the CropParams.txt as defaults to every cell
@@ -32,7 +32,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         beef_cuttings (int): Initial number of beef hay cuttings
         crop_str (str): comma separated list or range of crops to compare
         overwrite_flag (bool): If True, overwrite existing output rasters
-        cleanup_flag (bool): If True, remove temporary files
 
     Returns:
         None
@@ -51,32 +50,32 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error('project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error('gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         cells_path = config.get(crop_et_sec, 'cells_path')
     except:
         # cells_path = os.path.join(gis_ws, 'ETCells.shp')
-        logging.error('et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         stations_path = config.get(crop_et_sec, 'stations_path')
     except:
-        logging.error('stations_path parameter must be set in the INI file, exiting')
+        logging.error('stations_path parameter must be set in the INI file, '
+                      'exiting')
         return False
 
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
-    try:
-        template_ws = config.get(crop_et_sec, 'template_folder')
-    except:
-        template_ws = os.path.join(os.path.dirname(crop_et_ws), 'static')
     try:
         calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
     except:
@@ -84,27 +83,18 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
-    pmdata_ws = os.path.join(project_ws, 'pmdata')
+    # pmdata_ws = os.path.join(project_ws, 'pmdata')
     crop_params_path = os.path.join(static_ws, 'CropParams.txt')
-
-    # Input units
-    cell_elev_units = 'FEET'
-    station_elev_units = 'FEET'
 
     # Field names
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
     crop_acres_field = 'CROP_ACRES'
-    dairy_cutting_field = 'Dairy_Cut'
-    beef_cutting_field = 'Beef_Cut'
 
     # Only keep the following ET Cell fields
     keep_field_list = [cell_id_field, cell_name_field, 'AG_ACRES']
     # keep_field_list = ['NLDAS_ID', 'CELL_ID', 'HUC8', 'COUNTY', 'AG_ACRES']
     # keep_field_list = ['FIPS', 'COUNTY']
-
-    # The maximum crop name was ~50 characters
-    string_field_len = 50
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
@@ -136,7 +126,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         logging.error('\nERROR: The crop parameters file does not exist'
                       '\n  {}'.format(crop_params_path))
         sys.exit()
-    elif not not os.path.isfile(cells_path):
+    elif not os.path.isfile(cells_path):
         logging.error('\nERROR: The ET Cell shapefile does not exist'
                       '\n  {}'.format(cells_path))
         sys.exit()
@@ -196,7 +186,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         ['CGDD_Term', 'cgdd_for_termination', 'LONG'],
         ['Time_EFC', 'time_for_efc', 'LONG'],
         ['Time_Harv', 'time_for_harvest', 'LONG'],
-        ['KillFrostC', 'killing_frost_temperature', 'Float'],
+        ['KillFrostC', 'killing_frost_temperature', 'FLOAT'],
         # ['InvokeStrs', 'invoke_stress', 'SHORT'],
         # ['CN_Coarse', 'cn_coarse_soil', 'LONG'],
         # ['CN_Medium', 'cn_medium_soil', 'LONG'],
@@ -232,7 +222,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     #        ['CGDD_Termination', 'cgdd_for_termination', 'LONG'],
     #        ['Time_EFC', 'time_for_efc', 'LONG'],
     #        ['Time_Harvest', 'time_for_harvest', 'LONG'],
-    #        ['Killing_Crost_C', 'killing_frost_temperature', 'Float'],
+    #        ['Killing_Crost_C', 'killing_frost_temperature', 'FLOAT'],
     #        # ['Invoke_Stress', 'invoke_stress', 'SHORT'],
     #        # ['CN_Coarse_Soil', 'cn_coarse_soil', 'LONG'],
     #        # ['CN_Medium_Soil', 'cn_medium_soil', 'LONG'],
@@ -288,7 +278,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     with arcpy.da.SearchCursor(cells_path, field_list) as cursor:
         for row in cursor:
             for i, crop_num in enumerate(crop_number_list):
-                print(crop_num, i)
+                # logging.info('{} {}'.format(crop_num, i))
                 if crop_num in crop_add_list:
                     crop_acreage_dict[crop_num][row[0]] = 0
                 else:
@@ -472,9 +462,6 @@ def arg_parse():
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -495,4 +482,4 @@ if __name__ == '__main__':
     main(ini_path=args.ini, zone_type=args.zone, area_threshold=args.area,
          dairy_cuttings=args.dairy, beef_cuttings=args.beef,
          remove_empty_flag=args.empty, crop_str=args.crops,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+         overwrite_flag=args.overwrite)

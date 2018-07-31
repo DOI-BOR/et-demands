@@ -1,3 +1,9 @@
+# --------------------------------
+# Name:         interpolate_spatial_crop_params_gdal.py
+# Purpose:      Interpolate spatial parameter files for ET-Demands
+# Python:       2.7
+# --------------------------------
+
 import argparse
 import datetime as dt
 import logging
@@ -10,15 +16,13 @@ import arcpy
 import _util as util
 
 
-
-def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True):
+def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     """Interpolate Preliminary Calibration Zones to All Zones
 
     Args:
         ini_path (str): file path of the project INI file
         zone_type (str): Zone type (huc8, huc10, county, gridmet)
         overwrite_flag (bool): If True (default), overwrite existing files
-        cleanup_flag (bool): If True, remove temporary files
 
     Returns:
         None
@@ -28,23 +32,24 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     #  INI path
     crop_et_sec = 'CROP_ET'
     config = util.read_ini(ini_path, section=crop_et_sec)
+
     try:
         project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error(
-            'project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error(
-            'gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
-        logging.error(
-            'et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
@@ -59,7 +64,9 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
 
     # Check input folders
     if not os.path.exists(calibration_ws):
-        logging.critical('ERROR: The calibration folder does not exist. Run build_spatial_crop_params_arcpy.py, exiting')
+        logging.critical(
+            'ERROR: The calibration folder does not exist. '
+            'Run build_spatial_crop_params_arcpy.py, exiting')
         sys.exit()
 
     # Check input folders
@@ -233,9 +240,6 @@ def arg_parse():
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -253,5 +257,4 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, zone_type=args.zone,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+    main(ini_path=args.ini, zone_type=args.zone, overwrite_flag=args.overwrite)
