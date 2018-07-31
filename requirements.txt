@@ -3,4 +3,5 @@ gdal>=2.2.3
 numpy
 pandas
 openpyxl>=2.4.7
+rasterio
 rasterstats
