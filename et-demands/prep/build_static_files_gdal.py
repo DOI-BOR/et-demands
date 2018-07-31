@@ -205,19 +205,18 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     if not os.path.isdir(static_ws):
         os.makedirs(static_ws)
 
-    # Read Weather station\NLDAS cell station data
+    # Read weather station/cell data
     logging.info('\nReading station shapefile')
     logging.debug('  {}'.format(stations_path))
     fields = [station_zone_field, station_id_field, station_elev_field,
               station_lat_field, station_lon_field]
     logging.debug('  Fields: {}'.format(fields))
     station_data_dict = defaultdict(dict)
-    with arcpy.da.SearchCursor(stations_path, fields) as s_cursor:
-        for row in s_cursor:
-            for field in fields[1:]:
-                # Key/match on strings even if ID is an integer
-                station_data_dict[str(row[0])][field] = row[fields.index(field)]
-    for k, v in station_data_dict.iteritems():
+    for fid, row in _arcpy.search_cursor(stations_path, fields).items():
+        # Switch to station_zone_field as index (instead of FID)
+        for f in fields[1:]:
+            station_data_dict[str(row[station_zone_field])][f] = row[f]
+    for k, v in station_data_dict.items():
         logging.debug('  {}: {}'.format(k, v))
 
     # Read ET Cell zonal stats
@@ -232,21 +231,35 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     fields = fields + crop_field_list
     logging.debug('  Fields: {}'.format(fields))
     cell_data_dict = defaultdict(dict)
-    with arcpy.da.SearchCursor(et_cells_path, fields) as s_cursor:
-        for row in s_cursor:
-            for field in fields[1:]:
-                # Key/match on strings even if ID is an integer
-                cell_data_dict[str(row[0])][field] = row[fields.index(field)]
+    for fid, row in _arcpy.search_cursor(et_cells_path, fields).items():
+        # Switch to station_zone_field as index (instead of FID)
+        for f in fields[1:]:
+            cell_data_dict[str(row[cell_id_field])][f] = row[f]
 
     # Update ET Cell MET_ID/STATION_ID value
-    fields = [cell_id_field, met_id_field]
-    with arcpy.da.UpdateCursor(et_cells_path, fields) as u_cursor:
-        for row in u_cursor:
-            try:
-                row[1] = station_data_dict[row[0]][station_id_field]
-                u_cursor.updateRow(row)
-            except KeyError:
-                pass
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    input_ds = shp_driver.Open(et_cells_path, 1)
+    input_lyr = input_ds.GetLayer()
+    for input_ftr in input_lyr:
+        input_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
+        input_ftr.SetField(
+            input_ftr.GetFieldIndex(met_id_field),
+            station_data_dict[input_id][station_id_field])
+        input_lyr.SetFeature(input_ftr)
+    input_ds = None
+
+    # # This update_cursor call won't work since station_data_dict isn't using FID
+    # _arcpy.update_cursor(et_cells_path, station_data_dict)
+
+    # DEADBEEF
+    # fields = [cell_id_field, met_id_field]
+    # with arcpy.da.UpdateCursor(et_cells_path, fields) as u_cursor:
+    #     for row in u_cursor:
+    #         try:
+    #             row[1] = station_data_dict[row[0]][station_id_field]
+    #             u_cursor.updateRow(row)
+    #         except KeyError:
+    #             pass
 
     # Covert elevation units if necessary
     if station_elev_units.upper() in ['METERS', 'M']:
@@ -275,7 +288,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell properties
     logging.debug('  {}'.format(cell_props_path))
     with open(cell_props_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_data = station_data_dict[cell_id]
                 station_id = station_data[station_id_field]
@@ -302,7 +315,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell crops
     logging.debug('  {}'.format(cell_crops_path))
     with open(cell_crops_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_id = station_data_dict[cell_id][station_id_field]
             else:
@@ -325,7 +338,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write cell cuttings
     logging.debug('  {}'.format(cell_cuttings_path))
     with open(cell_cuttings_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             output_list = [
                 cell_id, cell_data[cell_name_field],
                 '{:>9.4f}'.format(cell_data[cell_lat_field]),
@@ -336,7 +349,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Write monthly ETo ratios
     logging.debug('  {}'.format(eto_ratio_path))
     with open(eto_ratio_path, 'a') as output_f:
-        for cell_id, cell_data in sorted(cell_data_dict.iteritems()):
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
             if cell_id in station_data_dict.keys():
                 station_data = station_data_dict[cell_id]
                 station_id = station_data[station_id_field]
@@ -365,7 +378,8 @@ def arg_parse():
     parser.add_argument(
         '--zone', default='huc8', metavar='STR', type=str,
         choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(', '.join(['huc8', 'huc10', 'county','gridmet'])))
+        help='Zone type [{}]'.format(
+            ', '.join(['huc8', 'huc10', 'county','gridmet'])))
     parser.add_argument(
         '--acres', default=10, type=float,
         help='Crop area threshold')

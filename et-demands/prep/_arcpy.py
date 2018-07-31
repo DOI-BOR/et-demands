@@ -1,3 +1,4 @@
+from collections import defaultdict
 import glob
 import logging
 import os
@@ -61,29 +62,40 @@ def calculate_field(input_path, field_name, calc_expr):
     expr : str
 
     """
-    logging.debug('Calculate Field')
+    # logging.debug('Calculate Field')
     driver = get_driver(input_path)
 
-    input_fields = list_fields(input_path)
+    # input_fields = list_fields(input_path)
 
     # Extract expression fields
     expr_fields = re.findall('\!\w+\!', calc_expr)
 
-    logging.debug('  Expression fields: {}'.format(', '.join(expr_fields)))
+    # logging.debug('  Expression fields: {}'.format(', '.join(expr_fields)))
 
     input_ds = driver.Open(input_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
         input_fid = input_ftr.GetFID()
-        logging.debug('  FID: {}'.format(input_fid))
+        # logging.debug('  FID: {}'.format(input_fid))
         ftr_expr = calc_expr[:]
-        logging.debug(ftr_expr)
+        # logging.debug(ftr_expr)
         for f in expr_fields:
             f_value = input_ftr.GetField(f.replace('!', ''))
-            logging.debug('  {} {}'.format(f, f_value))
-            ftr_expr = ftr_expr.replace(f, f_value)
+            try:
+                ftr_expr = ftr_expr.replace(f, str(f_value))
+            except Exception as e:
+                logging.info('Error building calculate field expression')
+                logging.info('  {}'.format(e))
+                logging.info('  {}'.format(calc_expr))
+                logging.info('  {}'.format(ftr_expr))
         logging.debug(ftr_expr)
-        input_ftr.SetField(field_name, eval(ftr_expr))
+        try:
+            input_ftr.SetField(field_name, eval(ftr_expr))
+        except Exception as e:
+            logging.info('Error writing calculate field value')
+            logging.info('  {}'.format(e))
+            logging.info('  {}'.format(calc_expr))
+            logging.info('  {}'.format(ftr_expr))
         input_lyr.SetFeature(input_ftr)
 
     input_ds = None
@@ -125,6 +137,7 @@ def delete(input_path):
     """
     file_ws = os.path.dirname(input_path)
     for file_name in glob.glob(os.path.splitext(input_path)[0] + ".*"):
+        # logging.debug('Remove: {}'.format(os.path.join(file_ws, file_name)))
         os.remove(os.path.join(file_ws, file_name))
 
     # if is_shp(input_path):
@@ -175,19 +188,19 @@ def exists(input_path):
         except:
             del input_ds
             return False
-    # elif is_raster(input_path):
-    #     try:
-    #         input_ds = gdal.Open(input_path)
-    #     except:
-    #         del input_ds
-    #         return False
+    elif os.path.splitext(input_path.lower())[-1] in ['.img', '.tif']:
+        try:
+            input_ds = gdal.Open(input_path)
+        except:
+            del input_ds
+            return False
     else:
         raise Exception('unsupported file type')
 
     return True
 
 
-def feature_to_raster(input_path, field, output_path, output_cs):
+def feature_to_raster(input_path, input_field, output_path, output_geo):
     """
 
     Parameters
@@ -195,32 +208,45 @@ def feature_to_raster(input_path, field, output_path, output_cs):
     input_path : str
     field : str
     output_path : str
-    output_cs : float
+    output_geo : tuple, list
 
     """
+    logging.debug('Feature to Raster')
+    logging.debug('  {}'.format(input_path))
+    logging.debug('  {}'.format(input_field))
+    logging.debug('  {}'.format(output_path))
     input_driver = get_driver(input_path)
     input_ds = input_driver.Open(input_path)
     input_lyr = input_ds.GetLayer()
+    input_count = input_lyr.GetFeatureCount()
     input_osr = input_lyr.GetSpatialRef()
     # input_osr.MorphToESRI()
     input_extent = gdc.Extent(input_lyr.GetExtent())
     output_extent = input_extent.ogrenv_swap()
-    # TODO: Need to adjust extent to snap geotransform also
-    output_extent.adjust_to_snap('EXPAND', cs=output_cs)
+    output_cs = output_geo[1]
+    output_extent.adjust_to_snap(snap_x=output_geo[0], snap_y=output_geo[3],
+                                 cs=output_cs, method='EXPAND', )
     output_rows, output_cols = output_extent.shape(output_cs)
+    if input_count < 255:
+        output_gtype = gdal.GDT_Byte
+        output_nodata = 255
+    elif input_count < 65535:
+        output_gtype = gdal.GDT_UInt16
+        output_nodata = 65535
+    # elif input_count < 4294967295:
+    else:
+        output_gtype = gdal.GDT_UInt32
+        output_nodata = 4294967295
 
     output_driver = get_driver(output_path)
-    output_ds = output_driver.Create(
-        output_path, output_cols, output_rows, 1, gdal.GDT_Byte)
+    output_ds = output_driver.Create(output_path, output_cols, output_rows, 1,
+                                     output_gtype)
     output_ds.SetProjection(input_osr.ExportToWkt())
     output_ds.SetGeoTransform(output_extent.geo(output_cs))
     output_band = output_ds.GetRasterBand(1)
-    # TODO: Need a nodata value
-    # output_band.Fill(nodata_value)
-    # output_band.SetNoDataValue(nodata_value)
-    # TODO: What does burn_value need to be set to
-    gdal.RasterizeLayer(
-        output_ds, [1], input_lyr, burn_values=[burn_value])
+    output_band.Fill(output_nodata)
+    output_band.SetNoDataValue(output_nodata)
+    gdal.RasterizeLayer(output_ds, [1], input_lyr, burn_values=[1])
     input_ds = None
     output_ds = None
 
@@ -355,3 +381,52 @@ def project(input_path, output_path, output_osr):
         output_ftr.SetGeometry(output_geom)
         input_lyr.SetFeature(output_ftr)
     output_ds = None
+
+
+def search_cursor(input_path, fields):
+    """Mimic arcpy.da.SearchCursor() function
+
+    Parameters
+    ----------
+    input_path : str
+    fields : list
+
+    Returns
+    -------
+    dict : values[fid][field]
+
+    """
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    input_ds = shp_driver.Open(input_path, 0)
+    input_lyr = input_ds.GetLayer()
+    values = defaultdict(dict)
+    for input_ftr in input_lyr:
+        input_fid = input_ftr.GetFID()
+        # logging.debug('  FID: {}'.format(input_fid))
+        for f in fields:
+            i = input_ftr.GetFieldIndex(f)
+            values[input_fid][f] = input_ftr.GetField(i)
+    input_ds = None
+    return values
+
+
+def update_cursor(input_path, values):
+    """Mimic arcpy.da.UpdateCursor() function
+
+    Parameters
+    ----------
+    input_path : str
+    values : dict
+        values[fid][field]
+
+    """
+    shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+    input_ds = shp_driver.Open(input_path, 1)
+    input_lyr = input_ds.GetLayer()
+    for input_ftr in input_lyr:
+        input_fid = input_ftr.GetFID()
+        # logging.debug('  FID: {}'.format(input_fid))
+        for k, v in values[input_fid].items():
+            input_ftr.SetField(k, v)
+        input_lyr.SetFeature(input_ftr)
+    input_ds = None

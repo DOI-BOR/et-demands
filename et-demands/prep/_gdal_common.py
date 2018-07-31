@@ -39,17 +39,7 @@ class Extent:
         self.xmax = round(extent[2], ndigits)
         self.ymax = round(extent[3], ndigits)
 
-    def adjust_to_snap(self, method='EXPAND', snap_x=None, snap_y=None,
-                       cs=None):
-        if snap_x is None and env.snap_x is not None:
-            snap_x = env.snap_x
-        if snap_y is None and env.snap_y is not None:
-            snap_y = env.snap_y
-        if cs is None:
-            if env.cellsize:
-                cs = env.cellsize
-            else:
-                raise SystemExit('Cellsize was not set')
+    def adjust_to_snap(self, snap_x, snap_y, cs, method='EXPAND'):
         if method.upper() == 'ROUND':
             self.xmin = math.floor((self.xmin - snap_x) / cs + 0.5) * cs + snap_x
             self.ymin = math.floor((self.ymin - snap_y) / cs + 0.5) * cs + snap_y
@@ -112,26 +102,19 @@ class Extent:
         return ((self.xmin + 0.5 * (self.xmax - self.xmin)),
                 (self.ymin + 0.5 * (self.ymax - self.ymin)))
 
-    def shape(self, cs=None):
+    def shape(self, cs):
         """Return number of rows and columns of the extent
         Args:
             cs: cellsize (default to env.cellsize if not set)
         Returns:
             tuple of raster rows and columns
         """
-        if cs is None and env.cellsize:
-            cs = env.cellsize
         cols = int(round(abs((self.xmin - self.xmax) / cs), 0))
         rows = int(round(abs((self.ymax - self.ymin) / -cs), 0))
         return rows, cols
 
-    def geo(self, cs=None):
+    def geo(self, cs):
         """Geo-tranform of the extent"""
-        if cs is None:
-            if env.cellsize:
-                cs = env.cellsize
-            else:
-                raise SystemExit('Cellsize was not set')
         return (self.xmin, abs(cs), 0., self.ymax, 0., -abs(cs))
 
     def geometry(self):
@@ -153,19 +136,6 @@ class Extent:
             return False
         else:
             return True
-
-
-class env:
-    """"Generic enviornment parameters used in gdal_common"""
-    snap_proj, snap_osr, snap_geo = None, None, None
-    snap_gcs_proj, snap_gcs_osr = None, None
-    # snap_extent = Extent((0, 0, 1, 1))
-    cellsize, snap_x, snap_y = None, None, None
-    mask_geo, mask_path, mask_array = None, None, None
-    mask_extent = Extent((0, 0, 1, 1))
-    mask_gcs_extent = Extent((0, 0, 1, 1))
-    mask_rows, mask_cols = 0, 0
-    cloud_mask_ws = ''
 
 
 def raster_driver(raster_path):
@@ -846,7 +816,7 @@ def raster_ds_shape(raster_ds):
     return raster_ds.RasterYSize, raster_ds.RasterXSize
 
 
-def project_extent(input_extent, input_osr, output_osr, cellsize=None):
+def project_extent(input_extent, input_osr, output_osr, cellsize):
     """Project extent to different spatial reference / coordinate system
 
     Args:
@@ -860,8 +830,6 @@ def project_extent(input_extent, input_osr, output_osr, cellsize=None):
     Returns:
         tuple: :class:`gdal_common.extent` in the desired projection
     """
-    if cellsize is None and env.cellsize:
-        cellsize = env.cellsize
     # Build an in memory feature to project to
     mem_driver = ogr.GetDriverByName('Memory')
     output_ds = mem_driver.CreateDataSource('')
@@ -1074,15 +1042,11 @@ def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
     if output_dtype is None:
         output_dtype = np.float32
     output_gtype = numpy_to_gdal_type(output_dtype)
+
     # Only get the numpy nodata value if one was not passed to function
     if output_nodata is None and output_dtype:
         output_nodata = numpy_type_nodata(output_dtype)
-    if output_proj is None and env.snap_proj:
-        output_proj = env.snap_proj
-    if output_cs is None and env.cellsize:
-        output_cs = env.cellsize
-    if output_extent is None and env.mask_extent:
-        output_extent = env.mask_extent
+
     output_driver = raster_driver(output_raster)
     remove_file(output_raster)
     # output_driver.Delete(output_raster)
@@ -1091,17 +1055,23 @@ def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
         output_ds = output_driver.Create(
             output_raster, output_cols, output_rows, band_cnt, output_gtype,
             ['COMPRESSED=YES', 'BLOCKSIZE={}'.format(output_bs)])
+    elif output_raster.upper().endswith('TIF'):
+        output_ds = output_driver.Create(
+            output_raster, output_cols, output_rows, band_cnt, output_gtype,
+            ['COMPRESS=LZW', 'TILED=YES'])
     else:
         output_ds = output_driver.Create(
             output_raster, output_cols, output_rows,
             band_cnt, output_gtype)
     output_ds.SetGeoTransform(output_extent.geo(output_cs))
     output_ds.SetProjection(output_proj)
+
     for band in range(band_cnt):
         output_band = output_ds.GetRasterBand(band + 1)
         if output_fill_flag:
             output_band.Fill(output_nodata)
         output_band.SetNoDataValue(output_nodata)
+
     output_ds = None
     return True
 
