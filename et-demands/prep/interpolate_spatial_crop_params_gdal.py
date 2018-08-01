@@ -91,6 +91,12 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     elif zone_type == 'huc8':
         station_zone_field = 'HUC8'
         station_id_field = 'STATION_ID'
+    elif zone_type == 'huc10':
+        station_zone_field = 'HUC10'
+        station_id_field = 'STATION_ID'
+    elif zone_type == 'county':
+        station_zone_field = 'COUNTYNAME'
+        station_id_field = 'STATION_ID'
     else:
         logging.error(
             '\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME\n')
@@ -108,7 +114,6 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
 
     # Read in the cell locations and values
     et_cells_data = defaultdict(dict)
-    # input_fields = [cell_id_field]
     input_driver = _arcpy.get_ogr_driver(et_cells_path)
     input_ds = input_driver.Open(et_cells_path, 0)
     input_lyr = input_ds.GetLayer()
@@ -126,9 +131,6 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         centroid_geom = centroid_geom.Centroid()
         et_cells_data[input_id]['X'] = centroid_geom.GetX()
         et_cells_data[input_id]['Y'] = centroid_geom.GetY()
-        # for f in input_fields:
-        #     et_cells_data[input_id][f] = input_ftr.GetField(
-        #         input_ftr.GetFieldIndex(f))
     input_ds = None
 
     # Read crop parameters using ET Demands functions/methods
@@ -255,131 +257,6 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
                     round(final_cal_data[output_id][param], 1))
             output_lyr.SetFeature(output_ftr)
         output_ds = None
-
-    # DEADBEEF - Code copied from arcpy script
-    # cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
-    # cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    # output_osr = osr.SpatialReference()
-    # output_osr.ImportFromEPSG(4326)
-    # _arcpy.project(et_cells_path, cells_dd_path, output_osr)
-    #
-    # temp_path = os.path.join(calibration_ws, 'temp')
-    # if not os.path.exists(temp_path):
-    #     os.makedirs(temp_path)
-    # temp_pt_file = os.path.join(temp_path, 'temp_pt_file.shp')
-    #
-    # # Read crop parameters using ET Demands functions/methods
-    # logging.info('\nReading Default Crop Parameters')
-    # sys.path.append(bin_ws)
-    # import crop_parameters
-    # crop_param_dict = crop_parameters.read_crop_parameters(crop_params_path)
-    #
-    # # Get list of crops specified in ET cells
-    # crop_field_list = [
-    #     field for field in _arcpy.list_fields(et_cells_path)
-    #     if re.match('CROP_\d{2}', field.name)]
-    # crop_number_list = [int(f.split('_')[1]) for f in crop_field_list]
-    # logging.info('Cell crop numbers: {}'.format(
-    #     ', '.join(list(util.ranges(crop_number_list)))))
-    # logging.debug('Cell crop fields: {}'.format(', '.join(crop_field_list)))
-    #
-    # # Get Crop Names for each Crop in crop_number_list
-    # crop_name_list = []
-    # logging.info('\nBuilding Crop Name List')
-    # for crop_num in crop_number_list:
-    #     try:
-    #         crop_param = crop_param_dict[crop_num]
-    #     except:
-    #         continue
-    #     logging.info('{0:>2d} {1}'.format(crop_num, crop_param))
-    #     # Replace other characters with spaces, then remove multiple spaces
-    #     crop_name = re.sub('[-"().,/~]', ' ', str(crop_param.name).lower())
-    #     crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
-    #     crop_name_list.append(crop_name)
-    #
-    # # Convert cells_dd to cells_ras
-    # # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
-    # _arcpy.feature_to_raster(cells_dd_path, station_id_field, cells_ras_path,
-    #                          0.041666667)
-    #
-    # # Location of preliminary calibration .shp files (ADD AS INPUT ARG?)
-    # prelim_calibration_ws = os.path.join(calibration_ws,
-    #                                      'preliminary_calibration')
-    #
-    # for crop_num, crop_name in zip(crop_number_list, crop_name_list):
-    #     # Preliminary calibration .shp
-    #     subset_cal_file = os.path.join(
-    #         prelim_calibration_ws,
-    #         'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
-    #     final_cal_file = os.path.join(
-    #         calibration_ws,
-    #         'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
-    #
-    #     if not _arcpy.exists(subset_cal_file):
-    #         logging.info(
-    #             '\nCrop No: {} Preliminary calibration file not found. '
-    #             'skipping.'.format(crop_num))
-    #         continue
-    #     logging.info('\nInterpolating Crop: {:02d}').format(crop_num)
-    #     # Polygon to Point
-    #     arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
-    #                                     "CENTROID")
-    #
-    #     # Params to Interpolate
-    #     # Full list
-    #     # param_list = ['MAD_Init', 'MAD_Mid', 'T30_CGDD',
-    #     #     'PL_GU_Date', 'CGDD_Tbase', 'CGDD_EFC',
-    #     #     'CGDD_Term', 'Time_EFC', 'Time_Harv', 'KillFrostC']
-    #
-    #     # Short list
-    #     param_list = ['T30_CGDD', 'CGDD_EFC', 'CGDD_TERM', 'KillFrostC']
-    #
-    #     # Create final pt file based on cells raster for ExtractMultiValuesToPoints
-    #     final_pt_path = os.path.join(temp_path, 'final_pt.shp')
-    #     arcpy.RasterToPoint_conversion(cells_ras_path, final_pt_path, 'VALUE')
-    #
-    #     # Empty list to fill with idw raster paths
-    #     ras_list = []
-    #     for param in param_list:
-    #         outIDW_ras = arcpy.sa.Idw(temp_pt_file, param, cell_size)
-    #         outIDW_ras_path = os.path.join(temp_path, '{}{}').format(param,
-    #                                                                  '.img')
-    #         outIDW_ras.save(outIDW_ras_path)
-    #         ras_list.append(outIDW_ras_path)
-    #
-    #     # Extract all idw raster values to point .shp
-    #     arcpy.sa.ExtractMultiValuesToPoints(final_pt_path, ras_list, 'NONE')
-    #
-    #     # Read Interpolated Point Attribute table into dictionary ('GRID_CODE' is key)
-    #     # https://gist.github.com/tonjadwyer/0e4162b1423c404dc2a50188c3b3c2f5
-    #     def make_attribute_dict(fc, key_field, attr_list=['*']):
-    #         attdict = {}
-    #         fc_field_objects = _arcpy.list_fields(fc)
-    #         fc_fields = [field.name for field in fc_field_objects if
-    #                      field.type != 'Geometry']
-    #         if attr_list == ['*']:
-    #             valid_fields = fc_fields
-    #         else:
-    #             valid_fields = [field for field in attr_list if
-    #                             field in fc_fields]
-    #         # Ensure that key_field is always the first field in the field list
-    #         cursor_fields = [key_field] + list(
-    #             set(valid_fields) - set([key_field]))
-    #         with arcpy.da.SearchCursor(fc, cursor_fields) as cursor:
-    #             for row in cursor:
-    #                 attdict[row[0]] = dict(zip(cursor.fields, row))
-    #         return attdict
-    #
-    #     cal_dict = make_attribute_dict(final_pt_path, 'GRID_CODE', param_list)
-    #
-    #     # Overwrite values in calibration .shp with values from interpolated dictionary
-    #     fields = ['CELL_ID'] + param_list
-    #     with arcpy.da.UpdateCursor(final_cal_file, fields) as cursor:
-    #         for row in cursor:
-    #             for param_i, param in enumerate(param_list):
-    #                 row[param_i + 1] = round(
-    #                     cal_dict[int(row[0])][fields[param_i + 1]], 1)
-    #             cursor.updateRow(row)
 
 
 def arg_parse():
