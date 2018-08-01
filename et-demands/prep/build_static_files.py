@@ -1,5 +1,5 @@
 #--------------------------------
-# Name:         build_static_files_gdal.py
+# Name:         build_static_files.py
 # Purpose:      Build static files for ET-Demands from zonal stats ETCells
 #--------------------------------
 

@@ -1,5 +1,5 @@
 # --------------------------------
-# Name:         interpolate_spatial_crop_params_gdal.py
+# Name:         interpolate_spatial_crop_params.py
 # Purpose:      Interpolate spatial parameter files for ET-Demands
 # --------------------------------
 

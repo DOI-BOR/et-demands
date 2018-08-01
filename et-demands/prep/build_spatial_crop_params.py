@@ -1,5 +1,5 @@
 #--------------------------------
-# Name:         build_spatial_crop_params_gdal.py
+# Name:         build_spatial_crop_params.py
 # Purpose:      Build spatial parameter files for ET-Demands from zonal stats ETCells
 #--------------------------------
 

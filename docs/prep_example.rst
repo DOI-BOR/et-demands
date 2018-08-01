@@ -89,10 +89,10 @@ Zonal Stats
 -----------
 Compute the soil properties and crop acreages for each feature/polygon. ::
 
-    > python ..\et-demands\prep\et_demands_zonal_stats_gdal.py --year 2010 -o --zone huc8
+    > python ..\et-demands\prep\et_demands_zonal_stats.py --year 2010 -o --zone huc8
 
 Static Text Files
 -----------------
 Build the static text files from the templates in "et-demands\\static". ::
 
-    > python ..\et-demands\prep\build_static_files_gdal.py --ini example.ini --zone huc8 --acres 10 -o
+    > python ..\et-demands\prep\build_static_files.py --ini example.ini --zone huc8 --acres 10 -o

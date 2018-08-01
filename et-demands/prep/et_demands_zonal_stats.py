@@ -1,5 +1,5 @@
 #--------------------------------
-# Name:         et_demands_zonal_stats_gdal.py
+# Name:         et_demands_zonal_stats.py
 # Purpose:      Calculate zonal stats for all rasters
 #--------------------------------
 
