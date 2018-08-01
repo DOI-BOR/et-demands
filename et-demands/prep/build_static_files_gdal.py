@@ -230,17 +230,17 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         for f in fields[1:]:
             cell_data_dict[str(row[cell_id_field])][f] = row[f]
 
-    # Update ET Cell MET_ID/STATION_ID value
+    # Update ET Cell STATION_ID value
     # Note: Couldn't use _arcpy.udpate_cursor directly since the station data
     # is keyed by cell_id and not FID.
     input_driver = _arcpy.get_ogr_driver(et_cells_path)
     input_ds = input_driver.Open(et_cells_path, 1)
     input_lyr = input_ds.GetLayer()
     for input_ftr in input_lyr:
-        input_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
+        cell_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
         input_ftr.SetField(
             input_ftr.GetFieldIndex(cell_station_id_field),
-            station_data_dict[input_id][station_id_field])
+            station_data_dict[cell_id][station_id_field])
         input_lyr.SetFeature(input_ftr)
     input_ds = None
 
@@ -309,9 +309,12 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             output_list = [
                 cell_id, cell_data[cell_name_field], station_id, irrigation]
             crop_list = ['CROP_{:02d}'.format(i) for i in range(1, crops + 1)]
-            crop_area_list = [
-                cell_data[crop] if crop in cell_data.keys() else 0
-                for crop in crop_list]
+            crop_area_list = []
+            for crop in crop_list:
+                if crop in cell_data.keys() and cell_data[crop] is not None:
+                    crop_area_list.append(cell_data[crop])
+                else:
+                    crop_area_list.append(0)
             crop_flag_list = [
                 1 if area > area_threshold else 0 for area in crop_area_list]
             output_list = output_list + crop_flag_list
