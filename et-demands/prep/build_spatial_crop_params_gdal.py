@@ -272,8 +272,10 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 continue
             elif crop_num in crop_add_list:
                 crop_acreage_dict[crop_num][row[cell_id_field]] = 0
-            else:
+            elif row[crop_field]:
                 crop_acreage_dict[crop_num][row[cell_id_field]] = row[crop_field]
+            else:
+                crop_acreage_dict[crop_num][row[cell_id_field]] = 0
 
     crop_number_list = sorted(list(set(crop_number_list) | set(crop_add_list)))
 
@@ -341,7 +343,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
         crop_path = os.path.join(calibration_ws, 'crop_{0:02d}_{1}{2}'.format(
             crop_num, crop_name, ext))
-        crop_field = 'CROP_{0:02d}'.format(crop_num)
+        # crop_field = 'CROP_{0:02d}'.format(crop_num)
 
         # Don't check crops in add list
         if crop_num in crop_add_list:
@@ -362,7 +364,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
         # if ((crop_test_list and crop_num not in crop_test_list) or
         #     _skip_list and crop_num in crop_skip_list)):
         #     .debug('  Skipping')
-        #
 
         # Copy ET cells for each crop if needed
         if _arcpy.exists(crop_path):
@@ -405,7 +406,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
             # Skip and/or remove zones without crop acreage
             elif crop_acreage_dict[crop_num][cell_id] < area_threshold:
                 if remove_empty_flag:
-                    input_lyr.DeleteFeature(input_ftr)
+                    input_lyr.DeleteFeature(input_ftr.GetFID())
                 continue
 
             # Write parameter values
