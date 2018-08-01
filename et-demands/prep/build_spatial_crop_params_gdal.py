@@ -85,7 +85,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     static_ws = os.path.join(project_ws, 'static')
     crop_params_path = os.path.join(static_ws, 'CropParams.txt')
 
-    # Field names
+    # ET cells field names
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
     crop_acres_field = 'CROP_ACRES'
@@ -245,7 +245,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.info('\ncrop_add_list = {}'.format(crop_add_list))
 
     # Read crop parameters using ET Demands functions/methods
-    logging.info('\nReading Default Crop Parameters')
+    logging.info('\nReading default crop parameters')
     sys.path.append(bin_ws)
     import crop_parameters
     crop_param_dict = crop_parameters.read_crop_parameters(crop_params_path)
@@ -331,19 +331,20 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     #     _arcpy.calculate_field(cells_path, 'CROP_EMPTY', '0')
 
     # Process each crop
-    logging.info('\nBuild crop feature classes')
+    logging.info('\nBuilding crop feature classes')
     for crop_num in crop_number_list:
         try:
             crop_param = crop_param_dict[crop_num]
         except:
             continue
-        logging.info('{0:>2d} {1}'.format(crop_num, crop_param))
+        logging.info('{:>2d} {}'.format(crop_num, crop_param.name))
+        logging.debug('{}'.format(crop_param))
         # Replace other characters with spaces, then remove multiple spaces
         crop_name = re.sub('[-"().,/~]', ' ', str(crop_param.name).lower())
         crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
         crop_path = os.path.join(calibration_ws, 'crop_{0:02d}_{1}{2}'.format(
             crop_num, crop_name, ext))
-        # crop_field = 'CROP_{0:02d}'.format(crop_num)
+        # crop_field = 'CROP_{:02d}'.format(crop_num)
 
         # Don't check crops in add list
         if crop_num in crop_add_list:

@@ -80,13 +80,16 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         sys.exit()
     logging.info('\nGIS Workspace:      {}'.format(gis_ws))
 
-
     # Check input zone type (GRIDMET ONLY FOR NOW!!!!)
     if zone_type == 'gridmet':
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
-    else: 
-        print('FUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
+    # DEADBEEF - Added for testing
+    elif zone_type == 'huc8':
+        station_zone_field = 'HUC8'
+        station_id_field = 'STATION_ID'
+    else:
+        logging.error('\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
         sys.exit()
 
     arcpy.env.overwriteOutput = overwrite_flag
@@ -122,13 +125,14 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
 
     # Get Crop Names for each Crop in crop_number_list
     crop_name_list = []
-    logging.info('\nBuilding Crop Name List')
+    logging.debug('\nBuilding crop name list')
     for crop_num in crop_number_list:
         try:
             crop_param = crop_param_dict[crop_num]
         except:
             continue
-        logging.info('{:>2d} {}'.format(crop_num, crop_param))
+        # logging.info('{:>2d} {}'.format(crop_num, crop_param.name))
+        logging.debug('{}'.format(crop_param))
         # Replace other characters with spaces, then remove multiple spaces
         crop_name = re.sub('[-"().,/~]', ' ', str(crop_param.name).lower())
         crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
@@ -147,6 +151,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     prelim_calibration_ws = os.path.join(
         calibration_ws, 'preliminary_calibration')
 
+    logging.info('\nInterpolating calibration parameters')
     for crop_num, crop_name in zip(crop_number_list, crop_name_list):
         # Preliminary calibration .shp
         subset_cal_file = os.path.join(
@@ -159,9 +164,10 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         if not arcpy.Exists(subset_cal_file):
             logging.info(
                 '\nCrop No: {} preliminary calibration file not found. '
-                'Skipping.').format(crop_num)
+                'Skipping.'.format(crop_num))
             continue
-            logging.info('\nInterpolating Crop: {0:02d}').format(crop_num)
+        logging.info('\nInterpolating Crop: {:02d}'.format(crop_num))
+
         # Polygon to Point
         arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
                                         "CENTROID")

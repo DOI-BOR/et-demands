@@ -422,27 +422,29 @@ def search_cursor(input_path, fields):
         for f in fields:
             i = input_ftr.GetFieldIndex(f)
             values[input_fid][f] = input_ftr.GetField(i)
+
     input_ds = None
     return values
 
 
-def update_cursor(input_path, values):
+def update_cursor(output_path, values):
     """Mimic arcpy.da.UpdateCursor() function
 
     Parameters
     ----------
-    input_path : str
+    output_path : str
     values : dict
         values[fid][field]
 
     """
-    input_driver = get_ogr_driver(input_path)
-    input_ds = input_driver.Open(input_path, 1)
-    input_lyr = input_ds.GetLayer()
-    for input_ftr in input_lyr:
-        input_fid = input_ftr.GetFID()
-        # logging.debug('  FID: {}'.format(input_fid))
-        for k, v in values[input_fid].items():
-            input_ftr.SetField(k, v)
-        input_lyr.SetFeature(input_ftr)
-    input_ds = None
+    output_driver = get_ogr_driver(output_path)
+    output_ds = output_driver.Open(output_path, 1)
+    output_lyr = output_ds.GetLayer()
+    for output_ftr in output_lyr:
+        output_fid = output_ftr.GetFID()
+        # logging.debug('  FID: {}'.format(output_fid))
+        for k, v in values[output_fid].items():
+            output_ftr.SetField(k, v)
+        output_lyr.SetFeature(output_ftr)
+
+    output_ds = None
