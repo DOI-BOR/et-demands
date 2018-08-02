@@ -1,0 +1,21 @@
+###Prep Commands
+
+python ..\et-demands\prep\download_cdl_raster.py --cdl ..\common\cdl --years 2010
+
+python ..\et-demands\prep\build_study_area_raster.py -shp gis\huc8\wbdhu8_albers.shp --cdl ..\common\cdl --year 2010 --buffer 300 --stats -o
+
+python ..\et-demands\prep\clip_cdl_raster.py --cdl ..\common\cdl --years 2010 --stats -o
+
+python ..\et-demands\prep\build_ag_cdl_rasters.py --years 2010 --mask -o --stats
+
+python ..\et-demands\prep\rasterize_soil_polygons.py --soil ..\common\soils -o --stats
+
+python ..\et-demands\prep\build_ag_soil_rasters.py --years 2010 --mask -o --stats
+
+python ..\et-demands\prep\et_demands_zonal_stats_arcpy.py --year 2010 -o --zone huc8
+
+python ..\et-demands\prep\build_static_files_arcpy.py --ini example.ini --zone huc8 --acres 10 -o
+
+###Model Command
+
+python run_basin.py -i example.ini

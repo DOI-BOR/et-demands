@@ -20,3 +20,8 @@ example/gis/scratch
 example/gis/soils
 example/gis/zone_tables
 example/static
+example/annual_stats
+example/daily_stats
+example/monthly_stats
+example/growing_season_stats
+
