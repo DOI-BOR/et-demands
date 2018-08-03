@@ -4,6 +4,7 @@ import logging
 import os
 import re
 # import shutil
+import subprocess
 
 from osgeo import gdal, ogr, osr
 
@@ -104,11 +105,22 @@ def copy(input_path, output_path):
     output_path : str
 
     """
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     if is_shapefile(input_path):
-        input_driver = ogr.GetDriverByName('ESRI Shapefile')
-        input_ds = input_driver.Open(input_path, 0)
-        output_ds = input_driver.CopyDataSource(input_ds, output_path)
-        output_ds, input_ds = None, None
+        subprocess.check_output(
+            ['ogr2ogr', '-f', 'ESRI Shapefile', output_path, input_path],
+            shell=shell_flag)
+        # input_driver = ogr.GetDriverByName('ESRI Shapefile')
+        # input_ds = input_driver.Open(input_path, 0)
+        # output_ds = input_driver.CopyDataSource(input_ds, output_path)
+        # output_ds = None
+        # input_ds = None
+    else:
+        raise Exception('input must be a .shp type')
 
     # # Brute force approach for copying a file and all sidecars
     # input_ws = os.path.dirname(input_path)
