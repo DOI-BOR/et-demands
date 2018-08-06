@@ -64,7 +64,6 @@ def calculate_field(input_path, field_name, calc_expr):
 
     """
     input_driver = get_ogr_driver(input_path)
-    # input_fields = list_fields(input_path)
 
     # Extract expression fields
     expr_fields = re.findall('\!\w+\!', calc_expr)
@@ -76,14 +75,20 @@ def calculate_field(input_path, field_name, calc_expr):
         # logging.debug('  FID: {}'.format(input_fid))
         ftr_expr = calc_expr[:]
         for f in expr_fields:
-            f_value = input_ftr.GetField(f.replace('!', ''))
+            f_index = input_ftr.GetFieldIndex(f.replace('!', ''))
+            f_value = input_ftr.GetField(f_index)
+            # f_value = input_ftr.GetFieldAsDouble(f_index)
+            # f_value = input_ftr.GetFieldAsString(f_index)
             try:
                 ftr_expr = ftr_expr.replace(f, str(f_value))
             except Exception as e:
                 logging.info('Error building calculate field expression')
                 logging.info('  {}'.format(e))
                 logging.info('  {}'.format(calc_expr))
-                logging.info('  {}'.format(ftr_expr))
+                logging.info('  {}'.format(f))
+                logging.info('  {}'.format(f_value))
+                # input('ENTER')
+
         try:
             input_ftr.SetField(field_name, eval(ftr_expr))
         except Exception as e:
@@ -91,6 +96,8 @@ def calculate_field(input_path, field_name, calc_expr):
             logging.info('  {}'.format(e))
             logging.info('  {}'.format(calc_expr))
             logging.info('  {}'.format(ftr_expr))
+            # input('ENTER')
+
         input_lyr.SetFeature(input_ftr)
 
     input_ds = None
@@ -445,7 +452,6 @@ def search_cursor(input_path, fields):
         for f in fields:
             i = input_ftr.GetFieldIndex(f)
             values[input_fid][f] = input_ftr.GetField(i)
-
     input_ds = None
     return values
 
@@ -463,11 +469,28 @@ def update_cursor(output_path, values):
     output_driver = get_ogr_driver(output_path)
     output_ds = output_driver.Open(output_path, 1)
     output_lyr = output_ds.GetLayer()
+    output_defn = output_lyr.GetLayerDefn()
+
+    # Map field names to types
+    f_types = {
+        output_defn.GetFieldDefn(i).GetName(): output_defn.GetFieldDefn(i)\
+            .GetFieldTypeName(output_defn.GetFieldDefn(i).GetType())
+        for i in range(output_defn.GetFieldCount())}
+
     for output_ftr in output_lyr:
         output_fid = output_ftr.GetFID()
         # logging.debug('  FID: {}'.format(output_fid))
-        for k, v in values[output_fid].items():
-            output_ftr.SetField(k, v)
+        for f_name, f_value in values[output_fid].items():
+            if f_value is not None:
+                output_ftr.SetField(f_name, f_value)
+            elif f_types[f_name] in ['Real', 'Integer']:
+                output_ftr.SetField(f_name, 0)
+            elif f_types[f_name] in ['String']:
+                output_ftr.SetField(f_name, '')
+            # elif f_types[f_name] in ['Date']:
+            #     output_ftr.SetField(f_name, '')
+            else:
+                # output_ftr.SetField(f_name, None)
+                pass
         output_lyr.SetFeature(output_ftr)
-
     output_ds = None
