@@ -83,7 +83,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     cell_lon_field = 'LON'
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
-    station_id_field = 'STATION_ID'
+    cell_station_id_field = 'STATION_ID'
     awc_field = 'AWC'
     clay_field = 'CLAY'
     sand_field = 'SAND'
@@ -351,24 +351,24 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     if cell_lat_field not in field_list:
         logging.debug('  {}'.format(cell_lat_field))
         _arcpy.add_field(et_cells_path, cell_lat_field, ogr.OFTReal)
-        lat_lon_flag = True
     if cell_lon_field not in field_list:
         logging.debug('  {}'.format(cell_lon_field))
         _arcpy.add_field(et_cells_path, cell_lon_field, ogr.OFTReal)
-        lat_lon_flag = True
-    # Cell/station ID
+
+    # Cell ID/name
     if cell_id_field not in field_list:
         logging.debug('  {}'.format(cell_id_field))
         _arcpy.add_field(et_cells_path, cell_id_field, ogr.OFTString, width=24)
     if cell_name_field not in field_list:
         logging.debug('  {}'.format(cell_name_field))
-        _arcpy.add_field(et_cells_path, cell_name_field, ogr.OFTString, width=48)
-    if station_id_field not in field_list:
-        logging.debug('  {}'.format(station_id_field))
-        _arcpy.add_field(et_cells_path, station_id_field, ogr.OFTString, width=24)
-    if zone_id_field not in field_list:
-        logging.debug('  {}'.format(zone_id_field))
-        _arcpy.add_field(et_cells_path, zone_id_field, ogr.OFTString, width=8)
+        _arcpy.add_field(et_cells_path, cell_name_field, ogr.OFTString,
+                         width=48)
+
+    # Station ID
+    if cell_station_id_field not in field_list:
+        logging.debug('  {}'.format(cell_station_id_field))
+        _arcpy.add_field(et_cells_path, cell_station_id_field, ogr.OFTString,
+                         width=24)
 
     # Status flags
     # if active_flag_field not in field_list:
@@ -377,6 +377,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # if irrig_flag_field not in field_list:
     #     logging.debug('  {}'.format(irrig_flag_field))
     #     _arcpy.add_field(et_cells_path, irrig_flag_field, OFTInteger)
+
     # Add zonal stats fields
     for field_name, stat, raster_path in raster_list:
         if field_name not in field_list:
@@ -432,6 +433,12 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     _arcpy.calculate_field(
         et_cells_path, cell_name_field,
         '"{}" + str(!{}!)'.format(zone_name_str, zone_name_field))
+
+    # Automatically populate the cell STATION_ID using the zone ID
+    if zone_type in ['gridmet']:
+        logging.info('Calculating {}'.format(cell_station_id_field))
+        _arcpy.calculate_field(
+            et_cells_path, cell_station_id_field, '"{}"'.format(zone_id_field))
 
     # # Remove existing (could use overwrite instead)
     # zone_proj_path = os.path.join(table_ws, zone_proj_name)
@@ -574,8 +581,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     logging.info('Writing crop zonal stats')
     _arcpy.update_cursor(et_cells_path, zone_crop_dict)
 
-    if cleanup_flag and _arcpy.exists(zone_proj_path):
-        _arcpy.delete(zone_proj_path)
+    # if cleanup_flag and _arcpy.exists(zone_proj_path):
+    #     _arcpy.delete(zone_proj_path)
 
 
 def cell_lat_lon_func(input_path, lat_field, lon_field):
