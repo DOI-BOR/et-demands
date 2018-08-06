@@ -142,6 +142,10 @@ def gen_zonal_stats(
         # This might contribute to memory issues
         array = array[mask]
 
+        # Remove nan values
+        if np.any(np.isnan(array)):
+            array = array[np.isfinite(array)]
+
         if categorical and array.dtype not in [np.float32, np.float64]:
             # Compute categorical stats
             ftr_stats = dict(zip(*np.unique(array, return_counts=True)))
@@ -151,15 +155,15 @@ def gen_zonal_stats(
                 if stat == 'mean':
                     ftr_stats[stat] = float(np.mean(array))
                 elif stat == 'max':
-                    ftr_stats[stat] = float(np.nanmax(array))
+                    ftr_stats[stat] = float(np.max(array))
                 elif stat == 'min':
-                    ftr_stats[stat] = float(np.nanmin(array))
+                    ftr_stats[stat] = float(np.min(array))
                 elif stat == 'median':
-                    ftr_stats[stat] = float(np.nanmedian(array))
+                    ftr_stats[stat] = float(np.median(array))
                 elif stat == 'sum':
                     ftr_stats[stat] = float(np.sum(array))
                 elif stat == 'std':
-                    ftr_stats[stat] = float(np.nanstd(array))
+                    ftr_stats[stat] = float(np.std(array))
                 elif stat == 'count':
                     ftr_stats[stat] = int(array.size)
                 else:
