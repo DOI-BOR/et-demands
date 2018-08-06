@@ -1,16 +1,11 @@
 #--------------------------------
 # Name:         gdal_common.py
 # Purpose:      Common GDAL Support Functions
-# Author:       Charles Morton & Andrew Vitale
-# Created       2016-07-25
-# Python:       2.7
 #--------------------------------
 
 import glob
-import itertools
 import math
 import os
-import random
 import sys
 
 import numpy as np
@@ -138,7 +133,7 @@ class Extent:
             return True
 
 
-def raster_driver(raster_path):
+def get_gdal_driver(raster_path):
     """Return the GDAL driver from a raster path
 
     Currently supports ERDAS Imagine format, GeoTiff,
@@ -299,6 +294,7 @@ def gdal_to_numpy_type(gdal_type):
     elif gdal_type == gdal.GDT_Float64:
         numpy_type = np.float64
     # elif gdal_type == gdal.GDT_CInt16:
+    #     numpy_type = np.complex64
     #     numpy_type = np.complex64
     # elif gdal_type == gdal.GDT_CInt32:
     #     numpy_type = np.complex64
@@ -1047,7 +1043,7 @@ def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
     if output_nodata is None and output_dtype:
         output_nodata = numpy_type_nodata(output_dtype)
 
-    output_driver = raster_driver(output_raster)
+    output_driver = get_gdal_driver(output_raster)
     remove_file(output_raster)
     # output_driver.Delete(output_raster)
     output_rows, output_cols = output_extent.shape(output_cs)

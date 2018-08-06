@@ -10,13 +10,13 @@ import logging
 import os
 import sys
 
-from osgeo import ogr, osr
+from osgeo import gdal, ogr, osr
 import pandas as pd
-import rasterstats
 
 import _arcpy
 import _gdal_common as gdc
-import _util as util
+import _rasterstats
+import _util
 
 
 def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
@@ -68,12 +68,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     #     zone_name_str = 'NLDAS_4km_'
 
     et_cells_path = os.path.join(gis_ws, 'ETCells.shp')
-    # if gdb_flag:
-    #     _path = os.path.join(
-    #        os.path.dirname(gis_ws), 'et-demands_py\et_demands.gdb')
-    #     _cells_path = os.path.join(gdb_path, 'et_cells')
-    # else:
-    #     _cells_path = os.path.join(gis_ws, 'ETCells.shp')
 
     cdl_ws = os.path.join(gis_ws, 'cdl')
     soil_ws = os.path.join(gis_ws, 'soils')
@@ -301,35 +295,22 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
                       '\n  {}'.format(zone_path))
         sys.exit()
 
-    # Build output table folder if necessary
-    if not os.path.isdir(table_ws):
-        os.makedirs(table_ws)
-    # if gdb_flag and not os.path.isdir(os.path.dirname(gdb_path)):
-    #     os.makedirs(os.path.dirname(gdb_path))
-
-    # Remove existing data if overwrite
-    # if overwrite_flag and _arcpy.exists(et_cells_path):
-    #     _arcpy.delete(et_cells_path)
-    # if overwrite_flag and gdb_flag and _arcpy.exists(gdb_path):
-    #     shutil.rmtree(gdb_path)
-
-    # # Build output geodatabase if necessary
-    # if gdb_flag and not _arcpy.exists(gdb_path):
-    #     arcpy.CreateFileGDB_management(
-    #         os.path.dirname(gdb_path), os.path.basename(gdb_path))
+    # # Build output table folder if necessary
+    # if not os.path.isdir(table_ws):
+    #     os.makedirs(table_ws)
 
     raster_list = [
-        [awc_field, 'mean', os.path.join(input_soil_ws, 'AWC_30m_albers.img')],
-        [clay_field, 'mean', os.path.join(input_soil_ws, 'CLAY_30m_albers.img')],
-        [sand_field, 'mean', os.path.join(input_soil_ws, 'SAND_30m_albers.img')],
+        [awc_field, 'mean', os.path.join(input_soil_ws, 'awc_30m_albers.img')],
+        [clay_field, 'mean', os.path.join(input_soil_ws, 'clay_30m_albers.img')],
+        [sand_field, 'mean', os.path.join(input_soil_ws, 'sand_30m_albers.img')],
         ['AG_COUNT', 'sum', agmask_path],
         ['AG_ACRES', 'sum', agmask_path],
         ['AG_' + awc_field, 'mean', os.path.join(
-            soil_ws, 'AWC_{}_30m_cdls.img'.format(cdl_year))],
+            soil_ws, 'awc_{}_30m_cdls.img'.format(cdl_year))],
         ['AG_' + clay_field, 'mean', os.path.join(
-            soil_ws, 'CLAY_{}_30m_cdls.img'.format(cdl_year))],
+            soil_ws, 'clay_{}_30m_cdls.img'.format(cdl_year))],
         ['AG_' + sand_field, 'mean', os.path.join(
-            soil_ws, 'SAND_{}_30m_cdls.img'.format(cdl_year))]
+            soil_ws, 'sand_{}_30m_cdls.img'.format(cdl_year))]
     ]
 
     # The zone field must be defined
@@ -353,21 +334,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Just copy the input shapefile
     if not _arcpy.exists(et_cells_path):
         _arcpy.copy(zone_path, et_cells_path)
-
-    # Join the stations to the zones and read in the matches
-    # if not _arcpy.exists(et_cells_path):
-    #     zone_field_list = _arcpy.list_fields(zone_path)
-    #     zone_field_list.append(station_id_field)
-    #     zone_field_list.append('OBJECTID_1')
-    #     arcpy.SpatialJoin_analysis(zone_path, station_path, et_cells_path)
-    #     # arcpy.SpatialJoin_analysis(station_path, zone_path, et_cells_path)
-    #     delete_field_list = [f for f in _arcpy.list_fields(et_cells_path)
-    #                          if f not in zone_field_list]
-    #     logging.info('Deleting Fields')
-    #     if field_name in delete_field_list:
-    #         logging.debug('  {}'.format(field_name))
-    #         try: _arcpy.delete_field(et_cells_path, field_name)
-    #         except: pass
 
     # Get spatial reference
     output_osr = gdc.feature_path_osr(et_cells_path)
@@ -455,25 +421,27 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
 
     # Calculate lat/lon
     logging.info('Calculating lat/lon')
-    cell_lat_lon_func(et_cells_path, 'LAT', 'LON')
+    cell_lat_lon_func(et_cells_path, cell_lat_field, cell_lon_field)
 
     # Set CELL_ID and CELL_NAME
     # zone_id_field must be a string
+    logging.info('Calculating {}'.format(cell_id_field))
     _arcpy.calculate_field(
         et_cells_path, cell_id_field, 'str(!{}!)'.format(zone_id_field))
+    logging.info('Calculating {}'.format(cell_name_field))
     _arcpy.calculate_field(
         et_cells_path, cell_name_field,
         '"{}" + str(!{}!)'.format(zone_name_str, zone_name_field))
 
-    # Remove existing (could use overwrite instead)
-    zone_proj_path = os.path.join(table_ws, zone_proj_name)
-    if overwrite_flag and _arcpy.exists(zone_proj_path):
-        _arcpy.delete(zone_proj_path)
-
-    # Project zones to match CDL/snap coordinate system
-    if _arcpy.exists(et_cells_path) and not _arcpy.exists(zone_proj_path):
-        logging.info('Projecting zones')
-        _arcpy.project(et_cells_path, zone_proj_path, snap_osr)
+    # # Remove existing (could use overwrite instead)
+    # zone_proj_path = os.path.join(table_ws, zone_proj_name)
+    # if overwrite_flag and _arcpy.exists(zone_proj_path):
+    #     _arcpy.delete(zone_proj_path)
+    #
+    # # Project zones to match CDL/snap coordinate system
+    # if _arcpy.exists(et_cells_path) and not _arcpy.exists(zone_proj_path):
+    #     logging.info('Projecting zones')
+    #     _arcpy.project(et_cells_path, zone_proj_path, snap_osr)
 
     # Calculate zonal stats
     # Use "rasterstats" package for computing zonal statistics
@@ -482,14 +450,15 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     for field_name, stat, raster_path in raster_list:
         logging.info('{} {}'.format(field_name, stat))
         logging.debug('  {}'.format(raster_path))
-        logging.debug('  {}'.format(zone_proj_path))
-        zs = rasterstats.zonal_stats(zone_proj_path, raster_path, stats=[stat])
+        zs = _rasterstats.zonal_stats(et_cells_path, raster_path, stats=[stat])
+        # logging.debug('  {}'.format(zone_proj_path))
+        # zs = _rasterstats.zonal_stats(zone_proj_path, raster_path, stats=[stat])
 
         # Save by FID/feature for easier writing to shapefile
         for i, item in enumerate(zs):
-            if item[stat]:
+            try:
                 zs_dict[i][field_name] = item[stat]
-            else:
+            except:
                 zs_dict[i][field_name] = None
 
     # Write zonal stats to shapefile
@@ -549,9 +518,11 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Calculate zonal stats
     # Use "rasterstats" package for computing zonal statistics
     logging.info('\nCalculating crop zonal stats')
-    logging.debug('  {}'.format(zone_proj_path))
+    logging.debug('  {}'.format(et_cells_path))
     logging.debug('  {}'.format(raster_path))
-    zs = rasterstats.zonal_stats(zone_proj_path, agland_path, categorical=True)
+    zs = _rasterstats.zonal_stats(et_cells_path, agland_path, categorical=True)
+    # logging.debug('  {}'.format(zone_proj_path))
+    # zs = _rasterstats.zonal_stats(zone_proj_path, agland_path, categorical=True)
 
     # Save by FID/feature for easier writing to shapefile
     zone_crop_dict = {}
@@ -621,7 +592,7 @@ def cell_lat_lon_func(input_path, lat_field, lon_field):
 
     for input_ftr in input_lyr:
         input_fid = input_ftr.GetFID()
-        logging.debug('  FID: {}'.format(input_fid))
+        # logging.debug('  FID: {}'.format(input_fid))
         input_geom = input_ftr.GetGeometryRef()
         # Project geometry to 4326 then extract geometry centroid
         centroid_geom = input_geom.Clone()
@@ -641,7 +612,7 @@ def arg_parse():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '--gis', nargs='?', default=os.path.join(os.getcwd(), 'gis'),
-        type=lambda x: util.is_valid_directory(parser, x),
+        type=lambda x: _util.is_valid_directory(parser, x),
         help='GIS workspace/folder', metavar='FOLDER')
     parser.add_argument(
         '--zone', default='huc8', metavar='', type=str,
@@ -653,7 +624,7 @@ def arg_parse():
     parser.add_argument(
         '--soil', metavar='FOLDER',
         nargs='?', default=os.path.join(os.getcwd(), 'gis', 'soils'),
-        type=lambda x: util.is_valid_directory(parser, x),
+        type=lambda x: _util.is_valid_directory(parser, x),
         help='Common soil workspace/folder')
     parser.add_argument(
         '-o', '--overwrite', default=None, action='store_true',
@@ -666,11 +637,8 @@ def arg_parse():
         help='Debug level logging', action="store_const", dest="loglevel")
     # parser.add_argument(
     #    '--station', nargs='?', required=True,
-    #     =lambda x: util.is_valid_file(parser, x),
+    #     =lambda x: _util.is_valid_file(parser, x),
     #     ='Weather station shapefile', metavar='FILE')
-    # parser.add_argument(
-    #    '--gdb', default=None, action='store_true',
-    #     ='Write ETCells to a geodatabase')
     args = parser.parse_args()
 
     # Convert relative paths to absolute paths
