@@ -111,9 +111,21 @@ def copy(input_path, output_path):
         shell_flag = True
 
     if is_shapefile(input_path):
+        # DEADBEEF - Extra command(s) remove the field type warning but make
+        # the DBF quite a bit larger since all the field types are doubles.
         subprocess.check_output(
-            ['ogr2ogr', '-f', 'ESRI Shapefile', output_path, input_path],
+            ['ogr2ogr', '-f', 'ESRI Shapefile',
+                # '-mapFieldType', 'Real(Float32):Real',
+                '-unsetFieldWidth',
+                output_path, input_path],
             shell=shell_flag)
+
+        # # DEADBEEF - Only runs on Python 3 but suppresses field width warning
+        # subprocess.run(
+        #     ['ogr2ogr', '-f', 'ESRI Shapefile', output_path, input_path],
+        #     shell=shell_flag, stderr=subprocess.DEVNULL)
+
+        # # DEADBEEEF - The CopyDataSource call was crashing randomly
         # input_driver = ogr.GetDriverByName('ESRI Shapefile')
         # input_ds = input_driver.Open(input_path, 0)
         # output_ds = input_driver.CopyDataSource(input_ds, output_path)
@@ -187,18 +199,15 @@ def exists(input_path):
     if not os.path.isfile(input_path):
         return False
     elif is_shapefile(input_path):
-        shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-        try:
-            input_ds = shp_driver.Open(input_path, 0)
-        except:
-            del input_ds
+        input_ds = ogr.GetDriverByName('ESRI Shapefile').Open(input_path, 0)
+        if input_ds is None:
             return False
+        input_ds = None
     elif os.path.splitext(input_path.lower())[-1] in ['.img', '.tif']:
-        try:
-            input_ds = gdal.Open(input_path)
-        except:
-            del input_ds
+        input_ds = gdal.Open(input_path, 0)
+        if input_ds is None:
             return False
+        input_ds = None
     else:
         raise Exception('unsupported file type')
 
@@ -396,19 +405,21 @@ def project(input_path, output_path, output_osr):
     output_ds = driver.CopyDataSource(input_ds, output_path)
     output_ds = None
     input_ds = None
+    del input_ds, output_ds
 
     # Project the geometry of each feature
-    output_ds = driver.Open(input_path, 1)
+    output_ds = driver.Open(output_path, 1)
     output_lyr = output_ds.GetLayer()
     for output_ftr in output_lyr:
         output_fid = output_ftr.GetFID()
-        logging.debug('  FID: {}'.format(output_fid))
+        # logging.debug('  FID: {}'.format(output_fid))
         output_geom = output_ftr.GetGeometryRef()
-        output_geom.Transform(
-            osr.CoordinateTransformation(input_osr, output_osr))
-        output_ftr.SetGeometry(output_geom)
+        proj_geom = output_geom.Clone()
+        proj_geom.Transform(osr.CoordinateTransformation(input_osr, output_osr))
+        output_ftr.SetGeometry(proj_geom)
         input_lyr.SetFeature(output_ftr)
     output_ds = None
+    del output_ds
 
 
 def search_cursor(input_path, fields):
