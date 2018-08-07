@@ -171,7 +171,9 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
         if pyramids_flag and os.path.isfile(output_raster_path):
             logging.info('Building pyramids')
             logging.debug('  {}'.format(output_raster_path))
-            args = ['gdaladdo', '-ro', output_raster_path] + levels.split()
+            subprocess.check_output(
+                ['gdaladdo', '-ro', output_raster_path] + levels.split(),
+                shell=shell_flag)
             # args = ['gdaladdo', '-ro']
             # if output_raster_path.endswith('.img'):
             #     args.extend([
@@ -180,9 +182,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
             #         '--config', 'HFA_COMPRESS_OVR YES'])
             # args.append(output_raster_path)
             # args.extend(levels.split())
-            # print(args)
-            # input('ENTER')
-            subprocess.check_output(args, shell=shell_flag)
+            # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():

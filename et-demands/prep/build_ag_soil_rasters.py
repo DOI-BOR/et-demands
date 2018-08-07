@@ -184,6 +184,15 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
                 subprocess.check_output(
                     ['gdaladdo', '-ro', output_soil_path] + levels.split(),
                     shell=shell_flag)
+                # args = ['gdaladdo', '-ro']
+                # if output_soil_path.endswith('.img'):
+                #     args.extend([
+                #         '--config', 'USE_RRD YES',
+                #         '--config', 'HFA_USE_RRD YES',
+                #         '--config', 'HFA_COMPRESS_OVR YES'])
+                # args.append(output_soil_path)
+                # args.extend(levels.split())
+                # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():

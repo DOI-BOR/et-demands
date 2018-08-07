@@ -187,6 +187,15 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
             subprocess.check_output(
                 ['gdaladdo', '-ro', cdl_output_path] + levels.split(),
                 shell=shell_flag)
+            # args = ['gdaladdo', '-ro']
+            # if cdl_output_path.endswith('.img'):
+            #     args.extend([
+            #         '--config', 'USE_RRD YES',
+            #         '--config', 'HFA_USE_RRD YES',
+            #         '--config', 'HFA_COMPRESS_OVR YES'])
+            # args.append(cdl_output_path)
+            # args.extend(levels.split())
+            # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():

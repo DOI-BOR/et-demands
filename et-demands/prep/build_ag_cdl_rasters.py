@@ -242,11 +242,29 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
                 subprocess.check_output(
                     ['gdaladdo', '-ro', agland_path] + levels.split(),
                     shell=shell_flag)
+                # args = ['gdaladdo', '-ro']
+                # if agland_path.endswith('.img'):
+                #     args.extend([
+                #         '--config', 'USE_RRD YES',
+                #         '--config', 'HFA_USE_RRD YES',
+                #         '--config', 'HFA_COMPRESS_OVR YES'])
+                # args.append(agland_path)
+                # args.extend(levels.split())
+                # subprocess.check_output(args, shell=shell_flag)
             if os.path.isfile(agmask_path):
                 logging.debug('{}'.format(agmask_path))
                 subprocess.check_output(
                     ['gdaladdo', '-ro', agmask_path] + levels.split(),
                     shell=shell_flag)
+                # args = ['gdaladdo', '-ro']
+                # if agmask_path.endswith('.img'):
+                #     args.extend([
+                #         '--config', 'USE_RRD YES',
+                #         '--config', 'HFA_USE_RRD YES',
+                #         '--config', 'HFA_COMPRESS_OVR YES'])
+                # args.append(agmask_path)
+                # args.extend(levels.split())
+                # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():
