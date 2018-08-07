@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *.bak
 
+# Shapefiles
+*.lock
+*.cpg
+
 # Temporary microsoft files
 ~$*
 
