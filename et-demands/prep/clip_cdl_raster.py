@@ -98,7 +98,8 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
         # Overwrite
         if os.path.isfile(cdl_output_path) or overwrite_flag:
             subprocess.check_output(
-                ['gdalmanage', 'delete', cdl_output_path], shell=shell_flag)
+                ['gdalmanage', 'delete', cdl_output_path],
+                shell=shell_flag)
             # remove_file(cdl_output_path)
 
         # Clip

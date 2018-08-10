@@ -139,11 +139,11 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
                 output_extent, output_osr, input_osr)
             logging.debug('Input Extent: {}'.format(input_extent))
             subprocess.check_output(
-                ['ogr2ogr', '-overwrite', '-preserve_fid',
-                 '-t_srs', str(output_wkt),
-                 '-spat', str(input_extent.xmin), str(input_extent.ymin),
-                 str(input_extent.ymax), str(input_extent.ymax),
-                 temp_polygon_path, input_polygon_path],
+                ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite',
+                    '-unsetFieldWidth', '-t_srs', str(output_wkt),
+                    '-spat', str(input_extent.xmin), str(input_extent.ymin),
+                    str(input_extent.ymax), str(input_extent.ymax),
+                    temp_polygon_path, input_polygon_path],
                 shell=shell_flag)
 
             logging.info('Rasterizing shapefile')

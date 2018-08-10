@@ -107,6 +107,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # dairy_cutting_default = 3
     # beef_cutting_default = 2
 
+    # DEADBEEF - Needed if using projected cells for computing zonal stats
     # Output names/paths
     # zone_proj_name = 'zone_proj.shp'
     # # zone_raster_name = 'zone_raster.img'
@@ -177,6 +178,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
                       '\n  {}'.format(zone_path))
         sys.exit()
 
+    # DEADBEEF - Needed if using projected cells for computing zonal stats
     # # Build output table folder if necessary
     # if not os.path.isdir(table_ws):
     #     os.makedirs(table_ws)
@@ -319,12 +321,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         et_cells_path, cell_name_field,
         '"{}" + str(!{}!)'.format(zone_name_str, zone_name_field))
 
-    # Automatically populate the cell STATION_ID using the zone ID
-    if zone_type in ['gridmet']:
-        logging.info('Calculating {}'.format(cell_station_id_field))
-        _arcpy.calculate_field(
-            et_cells_path, cell_station_id_field, '"{}"'.format(zone_id_field))
-
+    # DEADBEEF - Needed if using projected cells for computing zonal stats
     # # Remove existing (could use overwrite instead)
     # zone_proj_path = os.path.join(table_ws, zone_proj_name)
     # if overwrite_flag and _arcpy.exists(zone_proj_path):
@@ -338,23 +335,35 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Calculate zonal stats
     # Use "rasterstats" package for computing zonal statistics
     logging.info('\nProcessing soil rasters')
-    zs_dict = defaultdict(dict)
+    # zs_dict = defaultdict(dict)
     for field_name, stat, field_type, raster_path in raster_list:
         logging.info('{} {}'.format(field_name, stat))
         logging.debug('  {}'.format(raster_path))
         zs = _rasterstats.zonal_stats(et_cells_path, raster_path, stats=[stat])
+
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug('Sample Output')
+            for i, item in enumerate(zs[:3]):
+                logging.debug('  {} {}'.format(i, item))
+            # input('ENTER')
+
+        # DEADBEEF - Needed if using projected cells for computing zonal stats
         # logging.debug('  {}'.format(zone_proj_path))
         # zs = _rasterstats.zonal_stats(zone_proj_path, raster_path, stats=[stat])
 
         # Save by FID/feature for easier writing to shapefile
+        zs_dict = defaultdict(dict)
         for i, item in enumerate(zs):
             try:
                 zs_dict[i][field_name] = item[stat]
             except:
                 zs_dict[i][field_name] = None
 
-    # Write zonal stats to shapefile
-    _arcpy.update_cursor(et_cells_path, zs_dict)
+        # Write zonal stats to shapefile separately for each raster
+        _arcpy.update_cursor(et_cells_path, zs_dict)
+
+    # # Write zonal stats to shapefile
+    # _arcpy.update_cursor(et_cells_path, zs_dict)
 
     # Calculate agricultural area in acres
     logging.info('\nCalculating agricultural acreage')
@@ -413,19 +422,30 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     logging.debug('  {}'.format(et_cells_path))
     logging.debug('  {}'.format(raster_path))
     zs = _rasterstats.zonal_stats(et_cells_path, agland_path, categorical=True)
+
+    # DEADBEEF - Needed if using projected cells for computing zonal stats
     # logging.debug('  {}'.format(zone_proj_path))
     # zs = _rasterstats.zonal_stats(zone_proj_path, agland_path, categorical=True)
 
+    if logging.getLogger().isEnabledFor(logging.DEBUG):
+        logging.debug('Sample Output')
+        for i, item in enumerate(zs[:3]):
+            logging.debug('  {} {}'.format(i, item))
+        # input('ENTER')
+
     # Save by FID/feature for easier writing to shapefile
+    logging.debug('\nParsing crop zonal stats')
     zone_crop_dict = {}
     crop_field_fmt = 'CROP_{:02d}'
     for i, ftr in enumerate(zs):
         zone_crop_dict[i] = {}
         for cdl_str, cdl_pixels in ftr.items():
+            logging.debug('  {} {}'.format(cdl_str, cdl_pixels))
             cdl_number = int(cdl_str)
             # Only 'crops' have a crop number (no shrub, water, urban, etc.)
             if cdl_number not in crop_num_dict.keys():
-                logging.debug('  Skipping CDL {}'.format(cdl_number))
+                if cdl_number != 0:
+                    logging.debug('  Skipping CDL {}'.format(cdl_number))
                 continue
 
             # Crop number can be an integer or list of integers (double crops)
@@ -451,21 +471,22 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     crop_field_list = sorted(list(set([
         crop_field for crop_dict in zone_crop_dict.values()
         for crop_field in crop_dict.keys()])))
-    logging.debug('Crop field list: ' + ', '.join(crop_field_list))
+    logging.debug('\nCrop field list: ' + ', '.join(crop_field_list))
     crop_number_list = [int(f.split('_')[-1]) for f in crop_field_list]
     logging.debug('Crop number list: ' + ', '.join(map(str, crop_number_list)))
 
     # Add fields for CDL values
-    logging.info('Adding crop fields')
+    logging.info('\nAdding crop fields')
     for field_name in crop_field_list:
         if field_name not in field_list:
             logging.debug('  {}'.format(field_name))
             _arcpy.add_field(et_cells_path, field_name, ogr.OFTReal)
 
     # Write zonal stats to shapefile
-    logging.info('Writing crop zonal stats')
+    logging.info('\nWriting crop zonal stats')
     _arcpy.update_cursor(et_cells_path, zone_crop_dict)
 
+    # DEADBEEF - Needed if using projected cells for computing zonal stats
     # if cleanup_flag and _arcpy.exists(zone_proj_path):
     #     _arcpy.delete(zone_proj_path)
 

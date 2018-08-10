@@ -121,10 +121,8 @@ def copy(input_path, output_path):
         # DEADBEEF - Extra command(s) remove the field type warning but make
         # the DBF quite a bit larger since all the field types are doubles.
         subprocess.check_output(
-            ['ogr2ogr', '-f', 'ESRI Shapefile',
-                # '-mapFieldType', 'Real(Float32):Real',
-                '-unsetFieldWidth',
-                output_path, input_path],
+            ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite', '-preserve_fid',
+                '-unsetFieldWidth', output_path, input_path],
             shell=shell_flag)
 
         # # DEADBEEF - Only runs on Python 3 but suppresses field width warning

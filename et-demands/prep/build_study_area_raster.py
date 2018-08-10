@@ -99,8 +99,8 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
         # Project study area extent to the input/CDL spatial reference
         logging.info('Projecting extent shapefile')
         subprocess.check_output(
-            ['ogr2ogr', '-overwrite', '-preserve_fid',
-             '-t_srs', str(output_proj),
+            ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite', '-preserve_fid',
+             '-unsetFieldWidth', '-t_srs', str(output_proj),
              zone_polygon_path, study_area_path],
             shell=shell_flag)
 

@@ -167,8 +167,10 @@ def gen_zonal_stats(
                     ftr_stats[stat] = float(np.sum(array))
                 elif stat == 'std':
                     ftr_stats[stat] = float(np.std(array))
+                elif stat == 'var':
+                    ftr_stats[stat] = float(np.var(array))
                 elif stat == 'count':
-                    ftr_stats[stat] = int(array.size)
+                    ftr_stats[stat] = float(np.sum(np.isfinite(array)))
                 else:
                     raise ValueError('Stat {} not supported'.format(stat))
 

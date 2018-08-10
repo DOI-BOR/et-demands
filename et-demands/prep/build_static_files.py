@@ -102,15 +102,6 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # Weather station shapefile fields
     station_id_field = 'STATION_ID'
-    if zone_type == 'huc8':
-        station_zone_field = 'HUC8'
-    elif zone_type == 'huc10':
-        station_zone_field = 'HUC10'
-    elif zone_type == 'county':
-        station_zone_field = 'COUNTYNAME'
-    elif zone_type == 'gridmet':
-        station_zone_field = 'GRIDMET_ID'
-        station_id_field = 'GRIDMET_ID'
     station_lat_field = 'LAT'
     station_lon_field = 'LON'
     if station_elev_units.upper() in ['FT', 'FEET']:
@@ -121,10 +112,10 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
 
     # ET Cell field names
     cell_lat_field = 'LAT'
-    cell_lon_field = 'LON'
+    # cell_lon_field = 'LON'
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
-    cell_station_id_field = 'STATION_ID'
+    # cell_station_id_field = 'STATION_ID'
     # awc_field = 'AWC'
     clay_field = 'CLAY'
     sand_field = 'SAND'
@@ -202,14 +193,14 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     # Read weather station/cell data
     logging.info('\nReading station shapefile')
     logging.debug('  {}'.format(stations_path))
-    fields = [station_zone_field, station_id_field, station_elev_field,
+    fields = [station_id_field, station_elev_field,
               station_lat_field, station_lon_field]
     logging.debug('  Fields: {}'.format(fields))
     station_data_dict = defaultdict(dict)
     for fid, row in _arcpy.search_cursor(stations_path, fields).items():
-        # Switch to station_zone_field as index (instead of FID)
+        # Switch to station_id_field as index (instead of FID)
         for f in fields[1:]:
-            station_data_dict[str(row[station_zone_field])][f] = row[f]
+            station_data_dict[str(row[station_id_field])][f] = row[f]
     for k, v in station_data_dict.items():
         logging.debug('  {}: {}'.format(k, v))
 
@@ -219,30 +210,16 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     crop_field_list = sorted([
         f for f in _arcpy.list_fields(et_cells_path)
         if re.match('CROP_\d{2}', f)])
-    fields = [cell_id_field, cell_name_field, cell_lat_field,
+    fields = [cell_id_field, cell_name_field, cell_lat_field, station_id_field,
               awc_in_ft_field, clay_field, sand_field,
               hydgrp_num_field, hydgrp_field]
     fields = fields + crop_field_list
     logging.debug('  Fields: {}'.format(fields))
     cell_data_dict = defaultdict(dict)
     for fid, row in _arcpy.search_cursor(et_cells_path, fields).items():
-        # Switch to station_zone_field as index (instead of FID)
+        # Switch to cell_id_field as index (instead of FID)
         for f in fields[1:]:
             cell_data_dict[str(row[cell_id_field])][f] = row[f]
-
-    # Update ET Cell STATION_ID value
-    # Note: Couldn't use _arcpy.udpate_cursor directly since the station data
-    # is keyed by cell_id and not FID.
-    input_driver = _arcpy.get_ogr_driver(et_cells_path)
-    input_ds = input_driver.Open(et_cells_path, 1)
-    input_lyr = input_ds.GetLayer()
-    for input_ftr in input_lyr:
-        cell_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
-        input_ftr.SetField(
-            input_ftr.GetFieldIndex(cell_station_id_field),
-            station_data_dict[cell_id][station_id_field])
-        input_lyr.SetFeature(input_ftr)
-    input_ds = None
 
     # Convert elevation units if necessary
     if station_elev_units.upper() in ['METERS', 'M']:
@@ -272,17 +249,21 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.debug('  {}'.format(cell_props_path))
     with open(cell_props_path, 'a') as output_f:
         for cell_id, cell_data in sorted(cell_data_dict.items()):
-            if cell_id in station_data_dict.keys():
-                station_data = station_data_dict[cell_id]
-                station_id = station_data[station_id_field]
+            try:
+                station_id = cell_data[station_id_field]
+            except KeyError:
+                logging.info(
+                    '    {} field was not found in the cell data'.format(
+                        station_id_field))
+
+            if station_id:
+                station_data = station_data_dict[station_id]
                 station_lat = '{:>9.4f}'.format(station_data[station_lat_field])
                 station_lon = '{:>9.4f}'.format(station_data[station_lon_field])
                 station_elev = '{:.2f}'.format(station_data[station_elev_field])
             else:
-                logging.debug(
-                    '    Cell_ID {} was not found in the '
-                    'station data'.format(cell_id))
-                station_id, station_lat, station_lon, station_elev = '', '', '', ''
+                station_lat, station_lon, station_elev = '', '', ''
+
             # There is an extra/unused column in the template and excel files
             output_list = [
                 cell_id, cell_data[cell_name_field],
@@ -292,6 +273,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 cell_data[hydgrp_field], cell_data[hydgrp_num_field],
                 aridity, '']
             output_f.write('\t'.join(map(str, output_list)) + '\n')
+
             del output_list
             del station_id, station_lat, station_lon, station_elev
 
@@ -299,13 +281,14 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     logging.debug('  {}'.format(cell_crops_path))
     with open(cell_crops_path, 'a') as output_f:
         for cell_id, cell_data in sorted(cell_data_dict.items()):
-            if cell_id in station_data_dict.keys():
-                station_id = station_data_dict[cell_id][station_id_field]
-            else:
-                logging.debug(
-                    '    Cell_ID {} was not found in the '
-                    'station data'.format(cell_id))
+            try:
+                station_id = cell_data[station_id_field]
+            except KeyError:
+                logging.info(
+                    '    {} field was not found in the cell data'.format(
+                        station_id_field))
                 station_id = ''
+
             output_list = [
                 cell_id, cell_data[cell_name_field], station_id, irrigation]
             crop_list = ['CROP_{:02d}'.format(i) for i in range(1, crops + 1)]
@@ -319,6 +302,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 1 if area > area_threshold else 0 for area in crop_area_list]
             output_list = output_list + crop_flag_list
             output_f.write('\t'.join(map(str, output_list)) + '\n')
+
             del crop_list, crop_area_list, crop_flag_list, output_list
 
     # Write cell cuttings
@@ -330,27 +314,22 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                 '{:>9.4f}'.format(cell_data[cell_lat_field]),
                 dairy_cuttings, beef_cuttings]
             output_f.write('\t'.join(map(str, output_list)) + '\n')
-            del output_list
 
     # Write monthly ETo ratios
     logging.debug('  {}'.format(eto_ratio_path))
     with open(eto_ratio_path, 'a') as output_f:
         for cell_id, cell_data in sorted(cell_data_dict.items()):
-            if cell_id in station_data_dict.keys():
-                station_data = station_data_dict[cell_id]
-                station_id = station_data[station_id_field]
-                # station_lat = '{:>9.4f}'.format(station_data[station_lat_field])
-                # station_lon = '{:>9.4f}'.format(station_data[station_lon_field])
-                # station_elev = '{:.2f}'.format(station_data[station_elev_field])
-            else:
-                logging.debug(
-                    '    Cell_ID {} was not found in the '
-                    'station data'.format(cell_id))
-                # station_id, station_lat, station_lon, station_elev = '', '', '', ''
+            try:
+                station_id = cell_data[station_id_field]
+            except KeyError:
+                logging.info(
+                    '    {} field was not found in the cell data, '
+                    'skipping'.format(station_id_field))
+                # station_id = ''
                 continue
-            output_list = [station_id, ''] + [1.0] * 12
-            output_f.write('\t'.join(map(str, output_list)) + '\n')
-            del output_list
+
+            output_f.write(
+                '\t'.join(map(str, [station_id, ''] + [1.0] * 12)) + '\n')
 
 
 def arg_parse():
