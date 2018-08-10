@@ -25,7 +25,7 @@ def gen_zonal_stats(
         categorical=False,
         **kwargs):
     """"""
-    logger.debug('Zonal Statistics')
+    logger.debug('Computing Zonal Statistics')
 
     # Should the raster be kept open or reopened for each feature?
     raster_ds = gdal.Open(raster, 0)
@@ -63,7 +63,6 @@ def gen_zonal_stats(
     logger.debug('  Snap Y:   {}'.format(raster_y))
     logger.debug('Vectors: {}'.format(vectors))
     logger.debug('  WKT: {}'.format(vector_osr.ExportToWkt()))
-    logger.debug('')
 
     # Iterate through the features
     for vector_ftr in vector_lyr:

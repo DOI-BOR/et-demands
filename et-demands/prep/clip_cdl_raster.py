@@ -38,10 +38,13 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+
     if pyramids_flag:
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
 
     if os.name == 'posix':
         shell_flag = False
@@ -69,7 +72,7 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
 
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
-        logging.info('{}'.format(cdl_year))
+        logging.debug('\nCDL Year: {}'.format(cdl_year))
         cdl_input_path = os.path.join(
             cdl_input_ws, cdl_format.format(cdl_year))
         cdl_output_path = os.path.join(
@@ -85,7 +88,7 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
         output_osr = gdc.raster_ds_osr(zone_raster_ds)
         # output_wkt = gdc.raster_ds_proj(zone_raster_ds)
         output_cs = gdc.raster_ds_cellsize(zone_raster_ds)[0]
-        output_x, output_y = gdc.raster_ds_origin(zone_raster_ds)
+        # output_x, output_y = gdc.raster_ds_origin(zone_raster_ds)
         output_extent = gdc.raster_ds_extent(zone_raster_ds)
         output_ullr = output_extent.ul_lr_swap()
         zone_raster_ds = None
@@ -97,15 +100,19 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
 
         # Overwrite
         if os.path.isfile(cdl_output_path) or overwrite_flag:
+            logging.info('\nDeleting existing raster')
+            logging.debug('  {}'.format(cdl_output_path))
             subprocess.check_output(
-                ['gdalmanage', 'delete', cdl_output_path],
+                ['gdalmanage', 'delete', '-f', output_format, cdl_output_path],
                 shell=shell_flag)
             # remove_file(cdl_output_path)
 
         # Clip
         if not os.path.isfile(cdl_output_path):
+            logging.info('\nClipping CDL raster')
+            logging.debug('  {}\n  {}'.format(cdl_input_path, cdl_output_path))
             subprocess.check_output(
-                ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES'] +
+                ['gdal_translate', '-of', output_format, '-co', 'COMPRESSED=YES'] +
                 ['-projwin'] + str(output_ullr).split() +
                 ['-a_ullr'] + str(output_ullr).split() +
                 [cdl_input_path, cdl_output_path],
@@ -117,7 +124,7 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
                 )
             # , '-a_srs', 'output_proj'
             # subprocess.check_output(
-            #     'gdalwarp', '-overwrite', '-of', 'HFA']+
+            #     'gdalwarp', '-overwrite', '-of', output_format]+
             #     '-te'] + str(output_extent).split() +
             #     '-tr', '{}'.format(input_cs), '{}'.format(input_cs),
             #     _cdl_path, cdl_output_path], shell=shell_flag)
@@ -183,7 +190,7 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
 
         # Pyramids
         if pyramids_flag and os.path.isfile(cdl_output_path):
-            logging.info('Building statistics')
+            logging.info('Building pyramids')
             logging.debug('  {}'.format(cdl_output_path))
             subprocess.check_output(
                 ['gdaladdo', '-ro', cdl_output_path] + levels.split(),

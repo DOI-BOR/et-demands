@@ -83,7 +83,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     cell_lon_field = 'LON'
     cell_id_field = 'CELL_ID'
     cell_name_field = 'CELL_NAME'
-    cell_station_id_field = 'STATION_ID'
+    # cell_station_id_field = 'STATION_ID'
     awc_field = 'AWC'
     clay_field = 'CLAY'
     sand_field = 'SAND'
@@ -114,7 +114,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # table_ws = os.path.join(gis_ws, 'zone_tables')
 
     snap_raster = os.path.join(cdl_ws, '{}_30m_cdls.img'.format(cdl_year))
-    sqm_2_acres = 0.000247105381        # From google
+    sqm_2_acres = 0.000247105381        # Square meters to acres (from google)
 
     # Link ET demands crop number (1-84) with CDL values (1-255)
     # Key is CDL number, value is crop number, comment is CDL class name
@@ -251,12 +251,6 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         _arcpy.add_field(et_cells_path, cell_name_field, ogr.OFTString,
                          width=48)
 
-    # Station ID
-    if cell_station_id_field not in field_list:
-        logging.debug('  {}'.format(cell_station_id_field))
-        _arcpy.add_field(et_cells_path, cell_station_id_field, ogr.OFTString,
-                         width=24)
-
     # Status flags
     # if active_flag_field not in field_list:
     #     logging.debug('  {}'.format(active_flag_field))
@@ -362,6 +356,8 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         # Write zonal stats to shapefile separately for each raster
         _arcpy.update_cursor(et_cells_path, zs_dict)
 
+        logging.debug('')
+
     # # Write zonal stats to shapefile
     # _arcpy.update_cursor(et_cells_path, zs_dict)
 
@@ -437,10 +433,11 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     logging.debug('\nParsing crop zonal stats')
     zone_crop_dict = {}
     crop_field_fmt = 'CROP_{:02d}'
-    for i, ftr in enumerate(zs):
-        zone_crop_dict[i] = {}
+    for fid, ftr in enumerate(zs):
+        # logging.debug('FID: {}'.format(i))
+        zone_crop_dict[fid] = {}
         for cdl_str, cdl_pixels in ftr.items():
-            logging.debug('  {} {}'.format(cdl_str, cdl_pixels))
+            # logging.debug('  {} {}'.format(cdl_str, cdl_pixels))
             cdl_number = int(cdl_str)
             # Only 'crops' have a crop number (no shrub, water, urban, etc.)
             if cdl_number not in crop_num_dict.keys():
@@ -462,10 +459,10 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
             # Save acreage for both double crops
             for c in crop_number:
                 crop_field = crop_field_fmt.format(c)
-                if crop_field not in zone_crop_dict[i].keys():
-                    zone_crop_dict[i][crop_field] = crop_acreage
+                if crop_field not in zone_crop_dict[fid].keys():
+                    zone_crop_dict[fid][crop_field] = crop_acreage
                 else:
-                    zone_crop_dict[i][crop_field] += crop_acreage
+                    zone_crop_dict[fid][crop_field] += crop_acreage
 
     # Get unique crop number values and field names
     crop_field_list = sorted(list(set([

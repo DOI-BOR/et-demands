@@ -48,6 +48,8 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+
     # Ag landuses are 1, all others in state are 0, outside state is nodata
     # Crop 61 is fallow/idle and was excluded from analysis
     # Crop 176 is Grassland/Pasture in the new national CDL rasters
@@ -65,6 +67,7 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
 
     if os.name == 'posix':
         shell_flag = False
@@ -124,12 +127,13 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         logging.debug('{}'.format(agland_path))
         if os.path.isfile(agland_path) and overwrite_flag:
             subprocess.check_output(
-                ['gdalmanage', 'delete', agland_path], shell=shell_flag)
+                ['gdalmanage', 'delete', '-f', output_format, agland_path],
+                shell=shell_flag)
         if not os.path.isfile(agland_path):
             logging.info('Copying CDL raster')
             logging.debug('{}'.format(cdl_path))
             subprocess.check_output(
-                ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
+                ['gdal_translate', '-of', output_format, '-co', 'COMPRESSED=YES',
                  cdl_path, agland_path],
                 shell=shell_flag)
                 # '-a_nodata', agland_nodata
@@ -171,7 +175,8 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         logging.debug('{}'.format(agmask_path))
         if os.path.isfile(agmask_path) and overwrite_flag:
             subprocess.check_output(
-                ['gdalmanage', 'delete', agmask_path], shell=shell_flag)
+                ['gdalmanage', 'delete', '-f', output_format, agmask_path],
+                shell=shell_flag)
         if not os.path.isfile(agmask_path):
             gdc.build_empty_raster(
                 agmask_path, band_cnt=1, output_dtype=np.uint8,
