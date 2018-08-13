@@ -63,6 +63,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
 
     if os.name == 'posix':
         shell_flag = False
@@ -127,7 +128,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
             continue
         elif os.path.isfile(output_raster_path) and overwrite_flag:
             subprocess.check_output(
-                ['gdalmanage', 'delete', output_raster_path],
+                ['gdalmanage', 'delete', '-f', output_format, output_raster_path],
                 shell=shell_flag)
 
         if not os.path.isfile(output_raster_path):

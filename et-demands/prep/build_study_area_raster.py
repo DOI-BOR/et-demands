@@ -45,6 +45,30 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
     cdl_format = '{}_30m_cdls.img'
     cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year))
 
+    # Reference all output rasters to CDL
+    # output_osr = gdc.raster_path_osr(cdl_path)
+    output_proj = gdc.raster_path_proj(cdl_path)
+    output_cs = gdc.raster_path_cellsize(cdl_path)[0]
+    output_x, output_y = gdc.raster_path_origin(cdl_path)
+    # output_osr = gdc.proj4_osr(
+    #     "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 "+
+    #     "+x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m "+
+    #     "+no_defs")
+    # output_cs = 30
+    # output_x, output_y = 15, 15
+    output_format = 'HFA'
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Check input folders
     if not os.path.isdir(gis_ws):
         logging.error('\nERROR: The GIS workspace does not exist'
@@ -63,36 +87,16 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
     logging.info('\nGIS Workspace:      {}'.format(gis_ws))
     logging.info('Scratch Workspace:  {}'.format(scratch_ws))
 
-    # Reference all output rasters to CDL
-    # output_osr = gdc.raster_path_osr(cdl_path)
-    output_proj = gdc.raster_path_proj(cdl_path)
-    output_cs = gdc.raster_path_cellsize(cdl_path)[0]
-    output_x, output_y = gdc.raster_path_origin(cdl_path)
-    # output_osr = gdc.proj4_osr(
-    #     "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 "+
-    #     "+x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m "+
-    #     "+no_defs")
-    # output_cs = 30
-    # output_x, output_y = 15, 15
-
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-
-    if os.name == 'posix':
-        shell_flag = False
-    else:
-        shell_flag = True
-
     # Overwrite
     if os.path.isfile(zone_raster_path) and overwrite_flag:
         subprocess.check_output(
-            ['gdalmanage', 'delete', zone_raster_path], shell=shell_flag)
+            ['gdalmanage', 'delete', '-f', output_format, zone_raster_path],
+            shell=shell_flag)
     if os.path.isfile(zone_polygon_path) and overwrite_flag:
         remove_file(zone_polygon_path)
         # subprocess.check_output(
-        #   ['gdalmanage', 'delete', zone_polygon_path], shell=shell_flag)
+        #     ['gdalmanage', 'delete', zone_polygon_path],
+        #     shell=shell_flag)
 
     # Project extent shapefile to CDL spatial reference
     if not os.path.isfile(zone_polygon_path):
@@ -125,8 +129,9 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
         os.path.isfile(zone_polygon_path)):
         logging.info('Rasterizing shapefile')
         subprocess.check_output(
-            ['gdal_rasterize', '-of', 'HFA', '-ot', 'Byte', '-burn', '1',
-             '-init', '0', '-a_nodata', '255', '-co', 'COMPRESSED=YES'] +
+            ['gdal_rasterize', '-of', output_format, '-ot', 'Byte',
+             '-burn', '1', '-init', '0', '-a_nodata', '255',
+             '-co', 'COMPRESSED=YES'] +
             ['-te'] + str(clip_extent).split() +
             ['-tr', str(output_cs), str(output_cs),
              zone_polygon_path, zone_raster_path],

@@ -53,6 +53,20 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+    output_nodata = -9999
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Check input folders
     if not os.path.isdir(gis_ws):
         logging.error('\nERROR: The GIS folder does not exist'
@@ -75,19 +89,6 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
     logging.info('CDL Workspace:   {}'.format(cdl_ws))
     logging.info('Input Soil Workspace:  {}'.format(input_soil_ws))
     logging.info('Output Soil Workspace: {}'.format(output_soil_ws))
-
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-
-    if os.name == 'posix':
-        shell_flag = False
-    else:
-        shell_flag = True
-
-    # Override nodata value
-    output_nodata = -9999
 
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
@@ -124,14 +125,14 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
             # Create a copy of the input raster to modify
             if overwrite_flag and os.path.isfile(output_soil_path):
                 subprocess.check_output(
-                    ['gdalmanage', 'delete', output_soil_path],
+                    ['gdalmanage', 'delete', '-f', output_format, output_soil_path],
                     shell=shell_flag)
             if (os.path.isfile(input_soil_path) and
                     not os.path.isfile(output_soil_path)):
                 logging.info('\nCopying soil raster')
                 logging.debug('{}'.format(input_soil_path))
                 subprocess.check_output(
-                    ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
+                    ['gdal_translate', '-of', output_format, '-co', 'COMPRESSED=YES',
                      input_soil_path, output_soil_path],
                     shell=shell_flag)
 

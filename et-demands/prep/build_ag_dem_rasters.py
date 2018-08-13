@@ -45,6 +45,19 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Check input folders
     if not os.path.isdir(gis_ws):
         logging.error('\nERROR: The GIS workspace does not exist'
@@ -74,16 +87,6 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
             input_dem_path))
         sys.exit()
 
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-
-    if os.name == 'posix':
-        shell_flag = False
-    else:
-        shell_flag = True
-
     # Process existing dem rasters (from merge_dems.py)
     input_rows, input_cols = gdc.raster_path_shape(input_dem_path)
 
@@ -107,13 +110,15 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         # Copy input DEM
         if overwrite_flag and os.path.isfile(output_dem_path):
             subprocess.check_output(
-                ['gdalmanage', 'delete', output_dem_path], shell=shell_flag)
+                ['gdalmanage', 'delete', '-f', output_format, output_dem_path],
+                shell=shell_flag)
         if (os.path.isfile(input_dem_path) and
             not os.path.isfile(output_dem_path)):
             logging.info('\nCopying DEM raster')
             logging.debug('{}'.format(input_dem_path))
             subprocess.check_output(
-                ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
+                ['gdal_translate', '-of', output_format,
+                 '-co', 'COMPRESSED=YES',
                  input_dem_path, output_dem_path],
                 shell=shell_flag)
 

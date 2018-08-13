@@ -47,12 +47,14 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
     tile_buffer = 0.5
     tile_x, tile_y, tile_cs = 0, 0, 1
 
-    f32_nodata = float(np.finfo(np.float32).min)
+    output_format = 'HFA'
+    output_nodata = float(np.finfo(np.float32).min)
 
     if pyramids_flag:
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
 
     if os.name == 'posix':
         shell_flag = False
@@ -141,7 +143,7 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
         if os.path.isfile(dem_gcs_path) and overwrite_flag:
             util.remove_file(dem_gcs_path)
             # subprocess.check_output(
-            #     'gdalmanage', 'delete', '-f', 'HFA', dem_gcs_path],
+            #     'gdalmanage', 'delete', '-f', output_format, dem_gcs_path],
             #     shell=shell_flag)
         if not os.path.isfile(dem_gcs_path):
             # gdal_merge.py was only working if shell=True
@@ -149,9 +151,9 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
             # Or the scripts folder could be added to the system PYTHONPATH?
             args_list = [
                 'python', '{}\scripts\gdal_merge.py'.format(sys.exec_prefix),
-                '-o', dem_gcs_path, '-of', 'HFA',
+                '-o', dem_gcs_path, '-of', output_format,
                 '-co', 'COMPRESSED=YES', '-a_nodata',
-                str(f32_nodata)] + input_path_list
+                str(output_nodata)] + input_path_list
             logging.debug(args_list)
             logging.debug('command length: {}'.format(len(' '.join(args_list))))
             subprocess.check_output(args_list, cwd=tile_ws, shell=shell_flag)
@@ -159,9 +161,9 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
             #     'set', 'GDAL_DATA={}\Lib\site-packages\osgeo\data\gdal'.format(sys.exec_prefix)],
             #     shell=shell_flag)
             # subprocess.check_output(
-            #     'gdal_merge.py', '-o', dem_gcs_path, '-of', 'HFA',
+            #     'gdal_merge.py', '-o', dem_gcs_path, '-of', output_format,
             #     '-co', 'COMPRESSED=YES', '-a_nodata',
-            #     str(f32_nodata)] + input_path_list,
+            #     str(output_nodata)] + input_path_list,
             #     shell=shell_flag)
 
     # Convert DEM from meters to feet
@@ -170,8 +172,8 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
         # subprocess.check_output(
         #     'gdal_calc.py', '-A', dem_gcs_path,
         #     '--outfile={}'.format(dem_feet_path), '--calc="0.3048*A"',
-        #     '--format', 'HFA', '--co', 'COMPRESSED=YES',
-        #     '--NoDataValue={}'.format(str(f32_nodata)),
+        #     '--format', output_format, '--co', 'COMPRESSED=YES',
+        #     '--NoDataValue={}'.format(str(output_nodata)),
         #     '--type', 'Float32', '--overwrite'],
         #     =dem_ws, shell=shell_flag)
         # dem_gcs_path = dem_feet_path
@@ -180,11 +182,11 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
 
     if os.path.isfile(dem_proj_path) and overwrite_flag:
         subprocess.check_output(
-            ['gdalmanage', 'delete', '-f', 'HFA', dem_proj_path],
+            ['gdalmanage', 'delete', '-f', output_format, dem_proj_path],
             shell=shell_flag)
     if os.path.isfile(dem_hs_path) and overwrite_flag:
         subprocess.check_output(
-            ['gdalmanage', 'delete', '-f', 'HFA', dem_hs_path],
+            ['gdalmanage', 'delete', '-f', output_format, dem_hs_path],
             shell=shell_flag)
 
     if (not os.path.isfile(dem_proj_path) and
@@ -195,7 +197,7 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
              '-s_srs', 'EPSG:4269', '-t_srs', output_wkt, '-ot', 'Float32'] +
             ['-te'] + str(output_extent).split() +
             # ['-srcnodata', 'None', '-dstnodata', str(f32_nodata),
-            ['-of', 'HFA', '-co', 'COMPRESSED=YES', '-overwrite',
+            ['-of', output_format, '-co', 'COMPRESSED=YES', '-overwrite',
              '-multi', '-wm', '1024', '-wo', 'NUM_THREADS=ALL_CPUS',
              dem_gcs_path, dem_proj_path],
             shell=shell_flag)
@@ -203,7 +205,7 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
         os.path.isfile(dem_proj_path)):
         subprocess.check_output(
             ['gdaldem', 'hillshade', dem_proj_path, dem_hs_path,
-             '-of', 'HFA', '-co', 'COMPRESSED=YES'], shell=shell_flag)
+             '-of', output_format, '-co', 'COMPRESSED=YES'], shell=shell_flag)
 
     if stats_flag:
         logging.info('Computing statistics')
@@ -240,7 +242,7 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
 
     if os.path.isfile(os.path.join(dem_ws, dem_gcs_path)):
         subprocess.check_output(
-            ['gdalmanage', 'delete', '-f', 'HFA', dem_gcs_path],
+            ['gdalmanage', 'delete', '-f', output_format, dem_gcs_path],
             shell=shell_flag)
 
 
