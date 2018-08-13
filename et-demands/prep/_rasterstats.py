@@ -112,7 +112,8 @@ def gen_zonal_stats(
         # Create an in-memory dataset/layer for each feature
         v_driver = ogr.GetDriverByName('Memory')
         v_ds = v_driver.CreateDataSource('out')
-        v_lyr = v_ds.CreateLayer('poly', geom_type=ogr.wkbPolygon, srs=vector_osr)
+        v_lyr = v_ds.CreateLayer('poly', geom_type=ogr.wkbPolygon,
+                                 srs=raster_osr)
         v_feat = ogr.Feature(v_lyr.GetLayerDefn())
         v_feat.SetGeometryDirectly(v_geom)
         v_lyr.CreateFeature(v_feat)
