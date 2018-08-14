@@ -87,7 +87,7 @@ Plots of Crop ET-Demands paramters ET, ETo, Kc, growing season, irrigation, prec
 ## Dependencies
 The ET-Demands tools have only been tested using Python 2.7 but they may work with Python 3.X.
 
-Please see requirements.txt file for details on versioning requirements.  Older versions of modules may work but have not been extensively tested.
+Please see etdemands_env.yml file for details on versioning requirements.  Older versions of modules may work but have not been extensively tested.
 
 #### RefET
 + [NumPy](http://www.numpy.org)
@@ -111,7 +111,7 @@ Please see requirements.txt file for details on versioning requirements.  Older 
 
 #### Prep tools
 + [GDAL](http://gdal.org/)
-+ [rasterstats](https://pypi.python.org/pypi/rasterstats)
++ [NumPy](http://www.numpy.org)
 
 #### Spatial crop parameters
 + [PyShp](https://github.com/GeospatialPython/pyshp)
@@ -147,22 +147,16 @@ After installing Anaconda, add [conda-forge](https://conda-forge.github.io/) cha
 
 External modules can installed all at once (this is preferred approach):
 ```
-> conda install numpy scipy pandas gdal bokeh rasterstats
+> conda install numpy pandas gdal bokeh openpyxl>=2.4.7
 ```
 
 or one at a time:
 ```
 > conda install numpy
 > conda install pandas
+> conda install gdal
 > conda install bokeh
-...
-```
-
-#### Out of date module
-
-Required openpylx (at least 2.4.7) is not yet installed with Anaconda. Install it as:
-```
-> pip install --upgrade openpyxl>=2.4.7
+> conda install openpyxl>=2.4.7
 ```
 
 #### GDAL_DATA
