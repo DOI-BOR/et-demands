@@ -257,7 +257,7 @@ class ETCellData():
 
             cell.crop_flags = {
                 c: f and c in cell.crop_num_list
-                for c, f in cell.crop_flags.iteritems()}
+                for c, f in cell.crop_flags.items()}
             logging.info('  CellID: {1:{0}s}: {2}'.format(
                 cell_id_len, cell_id,
                 ', '.join(map(str, cell.crop_num_list))))

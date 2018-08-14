@@ -3,7 +3,7 @@ CropET Input Data
 
 Weather Station Points
 ----------------------
-To generate the ET-Demands static input files, the user must provide a weather station point shapefile with at least one feature.  The shapefile must have columns/fields of the station ID, the corresponding zone ID, and the station latitude, longitude, and elevation (in feet).  Currently these fields must be named NLDAS_ID, [HUC8, HUC10, or COUNTYNAME], LAT, LON, and ELEV_FT respectively.  These fields are hard coded into the scripts, but they may eventually be set and modified using an INI file.
+To generate the ET-Demands static input files, the user must provide a weather station point shapefile with at least one feature.  The shapefile must have columns/fields of the weather station ID (STATION_ID), the corresponding zone ID (HUC8, HUC10, COUNTYNAME, or GRIDMET_ID), and the station latitude, longitude, and elevation (in feet) (LAT, LON, and ELEV_FT).  These fields are hard coded into the scripts, but they may eventually be set and modified using an INI file.
 
 The weather station elevation is not currently used in the ET-Demands CropET module, but it is needed if running the RefET module.  The station elevation can also be set in meters in which case the field should be named ELEV_M.
 
@@ -13,11 +13,13 @@ The user must provide weather and reference ET data for each weather station.
 
 Study Area
 ----------
-The user must provide a study area polygon shapefile with at least one feature.  Each feature in the study area shapefile will become a separate ET cell/unit.  Currently, only HUC8, HUC10, and county shapefiles are fully supported by the prep tools.
+The user must provide a study area polygon shapefile with at least one feature.  Each feature in the study area shapefile will become a separate ET cell/unit.  Currently, only HUC8, HUC10, county, and gridmet cell shapefiles are fully supported by the prep tools.
 
 HUC8 and HUC10 features can be extracted from the full `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase.  A subset of the WBD HUC polygons can downloaded using the `USDA Geospatial Data Gateway <https://gdg.sc.egov.usda.gov/>`_ or the full dataset can be downloaded using the `USGS FTP <ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/WBD/>`_.
 
 County features can be downloaded from the `USDA Geospatial Data Gateway <https://gdg.sc.egov.usda.gov/>`_.  For the zonal stats prep tool to work, the shapefile must have a field called "COUNTYNAME".  Other county features (such as the `US Census Cartographic Boundary Shapefiles <https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html>`_) could eventually be supported (or the name field could be manually changed to COUNTYNAME).
+
+The GRIDMET grid cells can be constructed how?
 
 Cropland Data Layer (CDL)
 -------------------------
@@ -35,4 +37,4 @@ The AWC, percent clay, and percent sand data cannot (currently) be directly down
 
 *Add additional details about which options were used in the Soil Data Viewer*
 
-The soils data must be provided as separate shapefiles for each product.  The names of the soil shapefiles are hard coded in the scripts as "gsmsoilmu_a_us_{}_albers.shp", the folders are hardcoded as "gsmsoil_{}", where {} can be "awc", "clay", or "sand" (see :doc:`structure`).  For each shapefile, the value field name is hardcoded as the upper case of the property (i.e. "AWC", "CLAY", or "SAND").
+To use the soil prep tools, the soils data must be provided as separate shapefiles for each product.  The names of the soil shapefiles are hard coded in the rasterize_soil_polygons.py script as "{}_WTA_0to152cm_statsgo.shp", where {} can be "AWC", "Clay", or "Sand" (see :doc:`structure`).  For each shapefile, the value field name is hardcoded as the upper case of the property (i.e. "AWC", "CLAY", or "SAND").

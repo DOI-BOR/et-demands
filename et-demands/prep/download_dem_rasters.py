@@ -1,17 +1,14 @@
 #--------------------------------
 # Name:         download_dem_rasters.py
 # Purpose:      Download NED tiles
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
 import datetime as dt
 import logging
 import os
+import re
 import sys
-import urllib
 import zipfile
 
 from osgeo import gdal, ogr
@@ -36,20 +33,17 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
         mask_flag (bool): If True, only download tiles intersecting zones mask
         overwrite_flag (bool): If True, overwrite existing files
 
-    Returns:
-        None
     """
     logging.info('\nDownload DEM tiles')
 
     zip_fmt = 'n{0:02d}w{1:03d}.zip'
+    site_url = 'rockyftp.cr.usgs.gov'
     if dem_cs == 10:
-        site_url = 'ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/13/IMG'
-        tile_fmt = 'imgn{0:02d}w{1:03d}_13.img'
+        site_folder = 'vdelivery/Datasets/Staged/Elevation/13/IMG'
     elif dem_cs == 30:
-        site_url = 'ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/Elevation/1/IMG'
-        tile_fmt = 'imgn{0:02d}w{1:03d}_1.img'
+        site_folder = 'vdelivery/Datasets/Staged/Elevation/1/IMG'
     else:
-        logging.error('\nERROR: The input cellsize must be 10 or 30\n')
+        logging.error('\nERROR: The input cell size must be 10 or 30\n')
         sys.exit()
 
     # Use 1 degree snap point and "cellsize" to get 1x1 degree tiles
@@ -64,14 +58,14 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
     # Error checking
     if not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist' +
-             '\n  Try re-running "build_study_area_raster.py"').format(
+            '\nERROR: The zone raster {} does not exist'
+            '\n  Try re-running "build_study_area_raster.py"'.format(
                 zone_raster_path))
         sys.exit()
     if mask_flag and not os.path.isfile(zone_polygon_path):
         logging.error(
-            ('\nERROR: The zone polygon {} does not exist and mask_flag=True' +
-             '\n  Try re-running "build_study_area_raster.py"').format(
+            '\nERROR: The zone polygon {} does not exist and mask_flag=True'
+            '\n  Try re-running "build_study_area_raster.py"'.format(
                 zone_raster_path))
         sys.exit()
     if not os.path.isdir(tile_ws):
@@ -105,7 +99,7 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
 
         # Extent needed to select 1x1 degree tiles
         tile_extent.buffer_extent(tile_buffer)
-        tile_extent.adjust_to_snap('EXPAND', tile_x, tile_y, tile_cs)
+        tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('Tile Extent: {}'.format(tile_extent))
 
         # Get list of available tiles that intersect the extent
@@ -114,30 +108,58 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
             for lon in range(int(tile_extent.xmin), int(tile_extent.xmax))
             for lat in range(int(tile_extent.ymax), int(tile_extent.ymin), -1)])))
 
+    # Retrieve a list of files available on the FTP server (keyed by lat/lon)
+    zip_files = {
+        m.group(1): x
+        for x in util.ftp_file_list(site_url, site_folder)
+        for m in [re.search('[\w]*(n\d{2}w\d{3})[\w]*.zip', x)] if m}
+    # logging.debug(zip_files)
+
     # Attempt to download the tiles
     logging.debug('Downloading')
     for lat_lon in lat_lon_list:
         logging.info('  {}'.format(lat_lon))
-        zip_name = zip_fmt.format(*lat_lon)
-        zip_url = site_url + '/' + zip_name
+        lat_lon_key = 'n{:02d}w{:03d}'.format(*lat_lon)
+
+        try:
+            zip_name = zip_files[lat_lon_key]
+        except KeyError:
+            logging.exception('Error finding zip file for {}'.format(lat_lon))
+        zip_url = '/'.join([site_url, site_folder, zip_name])
         zip_path = os.path.join(tile_ws, zip_name)
-        tile_name = tile_fmt.format(*lat_lon)
-        tile_path = os.path.join(tile_ws, tile_name)
+
+        tile_path = os.path.join(tile_ws, '{}.img'.format(lat_lon_key))
 
         logging.debug(zip_url)
         logging.debug(zip_path)
-        if not os.path.isfile(tile_path) or overwrite_flag:
-            try:
-                urllib.urlretrieve(zip_url, zip_path)
-                zip_f = zipfile.ZipFile(zip_path)
-                zip_f.extract(tile_name, tile_ws)
-                zip_f.close()
-            except IOError:
-                logging.debug('  IOError, skipping')
+        logging.debug('  {}'.format(tile_path))
+        if os.path.isfile(tile_path):
+            if not overwrite_flag:
+                logging.debug('  Skipping')
+                continue
+            else:
+                logging.debug('  Removing')
+                os.remove(tile_path)
+
+        logging.debug('  Downloading')
+        util.ftp_download(site_url, site_folder, zip_name, zip_path)
+
+        logging.debug('  Extracting')
+        try:
+            zip_f = zipfile.ZipFile(zip_path)
+            img_name = [x for x in zip_f.namelist()
+                        if re.search('[\w]*(n\d{2}w\d{3})[\w]*.img$', x)][0]
+            img_path = os.path.join(tile_ws, img_name)
+            zip_f.extract(img_name, tile_ws)
+            zip_f.close()
+            os.rename(img_path, tile_path)
+        except Exception as e:
+            logging.info('  Unhandled exception: {}'.format(e))
+
         try:
             os.remove(zip_path)
-        except:
-            pass
+        except Exception as e:
+            logging.info('  Unhandled exception: {}'.format(e))
 
 
 def polygon_tiles(input_path, tile_osr=gdc.epsg_osr(4269),
@@ -165,7 +187,7 @@ def polygon_tiles(input_path, tile_osr=gdc.epsg_osr(4269),
 
         # Extent needed to select 1x1 degree tiles
         tile_extent.buffer_extent(tile_buffer)
-        tile_extent.adjust_to_snap('EXPAND', tile_x, tile_y, tile_cs)
+        tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('  Tile Extent: {}'.format(tile_extent))
 
         # Get list of available tiles that intersect the extent
@@ -209,6 +231,7 @@ def polygon_tiles(input_path, tile_osr=gdc.epsg_osr(4269),
         del input_fid, input_geom
         input_ftr = input_layer.GetNextFeature()
     del input_ds
+
     return sorted(list(set(lat_lon_list)))
 
 

@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         build_ag_soil_rasters.py
 # Purpose:      Extract soils data for agricultural CDL pixels
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -14,6 +11,7 @@ import subprocess
 import sys
 
 import numpy as np
+from osgeo import gdal
 
 import _gdal_common as gdc
 import _util as util
@@ -22,7 +20,7 @@ import _util as util
 def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
          block_size=16384, mask_flag=False,
          overwrite_flag=False, pyramids_flag=False, stats_flag=False):
-    """Mask DEM values for non-agricultural pixels
+    """Mask soil values for non-agricultural pixels
 
     Use CDL derived agmask (in CDL workspace) to define agricultural pixels
 
@@ -41,10 +39,12 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
 
     Returns:
         None
+
     """
     logging.info('\nExtracting Agriculatural Soil Values')
 
     input_soil_fmt = '{}_30m_albers.img'
+
     # cdl_format = '{0}_30m_cdls.img'
     cdl_ws = os.path.join(gis_ws, 'cdl')
     # input_soil_ws = os.path.join(gis_ws, 'statsgo')
@@ -53,47 +53,56 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+    output_nodata = -9999
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS folder {} ' +
-                       'does not exist\n').format(gis_ws))
+        logging.error('\nERROR: The GIS folder does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isdir(cdl_ws):
-        logging.error(('\nERROR: The CDL folder {} ' +
-                       'does not exist\n').format(cdl_ws))
+        logging.error('\nERROR: The CDL folder does not exist'
+                      '\n  {}'.format(cdl_ws))
         sys.exit()
     elif not os.path.isdir(input_soil_ws):
-        logging.error(('\nERROR: The input soil folder {} ' +
-                       'does not exist\n').format(input_soil_ws))
+        logging.error('\nERROR: The input soil folder does not exist'
+                      '\n  {}'.format(input_soil_ws))
         sys.exit()
     elif mask_flag and not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist\n' +
-             '  Try re-running "clip_cdl_raster.py"').format(zone_raster_path))
+            '\nERROR: The zone raster {} does not exist\n'
+            '  Try re-running "clip_cdl_raster.py"'.format(zone_raster_path))
         sys.exit()
     logging.info('\nGIS Workspace:   {}'.format(gis_ws))
     logging.info('CDL Workspace:   {}'.format(cdl_ws))
     logging.info('Input Soil Workspace:  {}'.format(input_soil_ws))
     logging.info('Output Soil Workspace: {}'.format(output_soil_ws))
 
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
-        logging.info('\n{0}'.format(cdl_year))
+        logging.info('\n{}'.format(cdl_year))
         # cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year))
-        output_soil_fmt = '{0}_{1}_30m_cdls.img'.format('{}', cdl_year)
+        output_soil_fmt = '{}_{}_30m_cdls.img'.format('{}', cdl_year)
         # agland_path = os.path.join(
         #     cdl_ws, 'agland_{}_30m_cdls.img'.format(cdl_year))
         agmask_path = os.path.join(
             cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
         if not os.path.isfile(agmask_path):
             logging.error(
-                ('\nERROR: The ag-mask raster {} does not exist\n' +
-                 '  Try re-running "build_ag_cdl_rasters.py"').format(
+                '\nERROR: The ag-mask raster {} does not exist\n' +
+                '  Try re-running "build_ag_cdl_rasters.py"'.format(
                     agmask_path))
             continue
 
@@ -107,7 +116,7 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
             input_soil_path = os.path.join(
                 input_soil_ws, input_soil_fmt.format(prop_str))
             output_soil_path = os.path.join(
-                output_soil_ws, output_soil_fmt.format(prop_str))
+                output_soil_ws, output_soil_fmt.format(prop_str.lower()))
             if not os.path.isfile(input_soil_path):
                 logging.error('\nERROR: The raster {} does not exist'.format(
                     input_soil_path))
@@ -115,14 +124,17 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
 
             # Create a copy of the input raster to modify
             if overwrite_flag and os.path.isfile(output_soil_path):
-                subprocess.call(['gdalmanage', 'delete', output_soil_path])
+                subprocess.check_output(
+                    ['gdalmanage', 'delete', '-f', output_format, output_soil_path],
+                    shell=shell_flag)
             if (os.path.isfile(input_soil_path) and
-                not os.path.isfile(output_soil_path)):
+                    not os.path.isfile(output_soil_path)):
                 logging.info('\nCopying soil raster')
                 logging.debug('{}'.format(input_soil_path))
-                subprocess.call(
-                    ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
-                     input_soil_path, output_soil_path])
+                subprocess.check_output(
+                    ['gdal_translate', '-of', output_format, '-co', 'COMPRESSED=YES',
+                     input_soil_path, output_soil_path],
+                    shell=shell_flag)
 
             # Get the size of the input raster
             input_rows, input_cols = gdc.raster_path_shape(input_soil_path)
@@ -144,26 +156,44 @@ def main(gis_ws, input_soil_ws, cdl_year='', prop_list=['all'],
                 if mask_flag and os.path.isfile(zone_raster_path):
                     zone_array = gdc.raster_to_block(
                         zone_raster_path, b_i, b_j, block_size)
-                    soil_array[zone_array == 0] = soil_nodata
+                    soil_array[zone_array == 0] = output_nodata
 
                 # Set soil values for non-ag pixels to nodata
-                soil_array[~agmask_array.astype(np.bool)] = soil_nodata
+                soil_array[~agmask_array.astype(np.bool)] = output_nodata
 
                 gdc.block_to_raster(
                     soil_array, output_soil_path, b_i, b_j, block_size)
+
                 del agmask_array, soil_array, soil_nodata
+
+            # Override the output raster nodata value
+            output_ds = gdal.Open(output_soil_path, 1)
+            output_band = output_ds.GetRasterBand(1)
+            output_band.SetNoDataValue(output_nodata)
+            output_ds = None
 
             if stats_flag and os.path.isfile(output_soil_path):
                 logging.info('Computing statistics')
                 logging.debug('  {}'.format(output_soil_path))
-                subprocess.call(
-                    ['gdalinfo', '-stats', '-nomd', output_soil_path])
+                subprocess.check_output(
+                    ['gdalinfo', '-stats', '-nomd', output_soil_path],
+                    shell=shell_flag)
 
             if pyramids_flag and os.path.isfile(output_soil_path):
                 logging.info('Building pyramids')
                 logging.debug('  {}'.format(output_soil_path))
-                subprocess.call(
-                    ['gdaladdo', '-ro', output_soil_path] + levels.split())
+                subprocess.check_output(
+                    ['gdaladdo', '-ro', output_soil_path] + levels.split(),
+                    shell=shell_flag)
+                # args = ['gdaladdo', '-ro']
+                # if output_soil_path.endswith('.img'):
+                #     args.extend([
+                #         '--config', 'USE_RRD YES',
+                #         '--config', 'HFA_USE_RRD YES',
+                #         '--config', 'HFA_COMPRESS_OVR YES'])
+                # args.append(output_soil_path)
+                # args.extend(levels.split())
+                # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():
@@ -213,6 +243,7 @@ def arg_parse():
         args.gis = os.path.abspath(args.gis)
     if args.soil and os.path.isdir(os.path.abspath(args.soil)):
         args.soil = os.path.abspath(args.soil)
+
     return args
 
 
