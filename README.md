@@ -54,7 +54,7 @@ optional arguments:
   -v, --verbose         Print info level comments (default: False)
   -c, --etcid		ET cell to run (default 'ALL')
   -mp [N], --multiprocessing [N]
-                        Number of processers to use (default: 1)
+                        Number of processors to use (default: 1)
 ```
 
 #### User manual
@@ -62,7 +62,7 @@ optional arguments:
 [View or download](docs/PythonETApplications.pdf)
 
 #### Configuration files
-Key parameters in configuration files are folder location of current project, static (meta) data file specifcatins and time series data specifications.  To set configuration file, use "-i" or "--ini" argument.
+Key parameters in configuration files are folder location of current project, static (meta) data file specifications and time series data specifications.  To set configuration file, use "-i" or "--ini" argument.
 ```
 > python run_cet.py -i cet_example.ini
 > python run_ret.py -i csv_ret_dri.ini
@@ -85,9 +85,9 @@ Plots of Crop ET-Demands paramters ET, ETo, Kc, growing season, irrigation, prec
 ```
 
 ## Dependencies
-The ET-Demands tools have only been tested using Python 2.7 but they may work with Python 3.X.
+The ET-Demands tools are being developed primarily for Python 3.6+ but should still be mostly backwards compatible with Python 2.7.
 
-Please see etdemands_env.yml file for details on versioning requirements.  Older versions of modules may work but have not been extensively tested.
+Please see environment.yml file for details on the versioning requirements.  Older versions of the modules may work but have not been extensively tested.
 
 #### RefET
 + [NumPy](http://www.numpy.org)
@@ -127,25 +127,37 @@ Following modules are only needed if making summary maps (tools/plot_crop_summar
 + [Descartes](https://bitbucket.org/sgillies/descartes)
 + [Shapely](https://github.com/Toblerity/Shapely)
 
-## Anaconda
+## Miniconda
 
-Easiest way to install required external Python modules is to use [Anaconda](https://www.continuum.io/downloads)
+The easiest way to install required external Python modules is to use [Miniconda](https://conda.io/miniconda.html) and create separate conda environments for each project.
 
-It is important to double check that you are calling Anaconda version, especially if you have two or more version of Python installed (e.g. Anaconda and ArcGIS).
+It is important to double check that you are calling Miniconda version, especially if you have two or more version of Python installed (e.g. Miniconda and ArcGIS).
 
 + Windows: "where python"
 + Linux/Mac: "which python"
 
 #### Conda Forge
 
-After installing Anaconda, add [conda-forge](https://conda-forge.github.io/) channel by entering following in command prompt or terminal:
+After installing Miniconda, [conda-forge](https://conda-forge.github.io/) should be added to the list of conda channels in order to have the most up to date python packages:
 ```
 > conda config --add channels conda-forge
 ```
 
+#### Conda Environment
+
+The "etdemands" conda environment can be created using the "environment.yml":
+```
+> conda env create -f environment.yml
+```
+
+After creating the environment, it then needs to be "activated":
+```
+conda activate etdemands
+```
+
 #### Installing Modules
 
-External modules can installed all at once (this is preferred approach):
+If you would prefer to not use the conda environment, external modules can installed/updated with conda all at once (this is preferred approach):
 ```
 > conda install numpy pandas gdal bokeh openpyxl>=2.4.7
 ```
@@ -164,15 +176,29 @@ or one at a time:
 After installing GDAL, you may need to manually set GDAL_DATA user environmental variable.
 
 ###### Windows
+
 You can check current value of variable by typing following in command prompt:
 ```
 echo %GDAL_DATA%
 ```
-If GDAL_DATA is set, this will return a folder path (something similar to C:\Anaconda2\Library\share\gdal)
+If GDAL_DATA is set, this will return a folder path (something similar to C:\Miniconda3\Library\share\gdal)
 
 If GDAL_DATA is not set, type following in command prompt (note, your path may vary):
 ```
-> setx GDAL_DATA "C:\Anaconda2\Library\share\gdal"
+> setx GDAL_DATA "C:\Miniconda3\Library\share\gdal"
 ```
 
-The GDAL_DATA environment variable can also be set through Windows Control Panel (System -> Advanced system settings -> Environment Variables).
+The GDAL_DATA environment variable can also be set through the Windows Control Panel (System -> Advanced system settings -> Environment Variables).
+
+###### Linux/Mac
+
+You can check current value of variable by typing following in command prompt:
+```
+echo $GDAL_DATA
+```
+If GDAL_DATA is set, this will return a folder path (something similar to /User/<USER>/Miniconda3/Library/share/gdal)
+
+If GDAL_DATA is not set, type the following in command prompt (note, your path may vary):
+```
+> export GDAL_DATA=/User/<USER>/Miniconda3/Library/share/gdal"
+```
