@@ -216,7 +216,7 @@ def ReadOneColumnSlot(file_path, header_lines, names_line, stationToRead,
     lc_param = parameterToRead.lower()
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-        data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+        data_skip = [i for i in range(header_lines) if i + 1 != names_line]
         input_df = pd.read_table(file_path, engine = 'python',
                 header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                 sep = valuesSeparator, na_values = mia_value)
@@ -364,7 +364,7 @@ def ReadOneTextRDB(file_path, header_lines, names_line, stationToRead,
             # dynamic column names and location
             
             # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+            data_skip = [i for i in range(header_lines) if i + 1 != names_line]
             input_df = pd.read_table(file_path, engine = 'python',
                     header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                     na_values = mia_value, sep = valuesSeparator)
@@ -511,7 +511,7 @@ def ReadOneExcelColumn(file_path, ws_name, header_lines, names_line, stationToRe
     lc_param = parameterToRead.lower()
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-        data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+        data_skip = [i for i in range(header_lines) if i + 1 != names_line]
         input_df = pd.read_excel(file_path, sheetname = ws_name, index_col = 0,
                     header = names_line  - len(data_skip) - 1, 
                     skiprows = data_skip, na_values = mia_value)
@@ -633,7 +633,7 @@ def ColumnSlotToDataframe(file_path, header_lines, names_line,
     return_df = None
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-        data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+        data_skip = [i for i in range(header_lines) if i + 1 != names_line]
         input_df = pd.read_table(file_path, engine = 'python', 
                 header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                 sep = valuesSeparator, na_values = mia_value)
@@ -745,7 +745,7 @@ def TextRDBToDataframe(file_path, header_lines, names_line,
             # dynamic column names and location
             
             # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+            data_skip = [i for i in range(header_lines) if i + 1 != names_line]
             input_df = pd.read_table(file_path, engine = 'python',
                     header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                     na_values = mia_value, sep = valuesSeparator)
@@ -886,7 +886,7 @@ def ExcelWorksheetToDataframe(file_path, ws_name, header_lines, names_line,
     return_df = None
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
-        data_skip = [i for i in range(header_lines) if i + 1 <> names_line]
+        data_skip = [i for i in range(header_lines) if i + 1 != names_line]
         input_df = pd.read_excel(file_path, sheetname = ws_name, index_col = 0,
             header = names_line - len(data_skip) - 1, skiprows = data_skip, na_values = mia_value)
         if input_df.empty:
