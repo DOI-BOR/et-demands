@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         merge_dem_rasters.py
 # Purpose:      Prepare NED DEM rasters
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -50,19 +47,33 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
     tile_buffer = 0.5
     tile_x, tile_y, tile_cs = 0, 0, 1
 
+    output_format = 'HFA'
+    output_nodata = float(np.finfo(np.float32).min)
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Input error checking
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {} ' +
-                       'does not exist').format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isdir(tile_ws):
-        logging.error(('\nERROR: The DEM tile workspace {} ' +
-                       'does not exist').format(tile_ws))
+        logging.error('\nERROR: The DEM tile workspace does not exist'
+                      '\n  {}'.format(tile_ws))
         sys.exit()
     elif not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist' +
-             '\n  Try re-running "build_study_area_raster.py"').format(
+            '\nERROR: The zone raster {} does not exist'
+            '\n  Try re-running "build_study_area_raster.py"'.format(
                 zone_raster_path))
         sys.exit()
     elif output_units not in ['FEET', 'METERS']:
@@ -74,16 +85,16 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
 
     # Input folder/files
     if dem_cs == 10:
-        tile_fmt = 'imgn{0:02d}w{1:03d}_13.img'
+        tile_fmt = 'n{0:02d}w{1:03d}_13.img'
     elif dem_cs == 30:
-        tile_fmt = 'imgn{0:02d}w{1:03d}_1.img'
+        tile_fmt = 'n{0:02d}w{1:03d}_1.img'
 
     # Output folder/files
     if not os.path.isdir(dem_ws):
         os.makedirs(dem_ws)
 
     # Output file names
-    dem_fmt = 'ned_{0}m{1}.img'
+    dem_fmt = 'ned_{}m{}.img'
     # dem_gcs = dem_fmt.format(dem_cs, '_nad83_meters')
     # dem_feet = dem_fmt.format(dem_cs, '_nad83_feet')
     # dem_proj = dem_fmt.format(dem_cs, '_albers')
@@ -92,14 +103,6 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
     dem_feet_path = os.path.join(dem_ws, dem_fmt.format(dem_cs, '_nad83_feet'))
     dem_proj_path = os.path.join(dem_ws, dem_fmt.format(dem_cs, '_albers'))
     dem_hs_path = os.path.join(dem_ws, dem_fmt.format(dem_cs, '_hs'))
-
-    #
-    f32_nodata = float(np.finfo(np.float32).min)
-
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
 
     # Reference all output rasters zone raster
     zone_raster_ds = gdal.Open(zone_raster_path)
@@ -120,7 +123,7 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
 
     # Extent needed to select 1x1 degree tiles
     tile_extent.buffer_extent(tile_buffer)
-    tile_extent.adjust_to_snap('EXPAND', tile_x, tile_y, tile_cs)
+    tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
     logging.debug('Tile Extent: {}'.format(tile_extent))
 
     # Get list of available tiles that intersect the extent
@@ -139,93 +142,108 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
         logging.info('Merging tiles')
         if os.path.isfile(dem_gcs_path) and overwrite_flag:
             util.remove_file(dem_gcs_path)
-            # subprocess.call(
-            #     'gdalmanage', 'delete', '-f', 'HFA', dem_gcs_path])
+            # subprocess.check_output(
+            #     'gdalmanage', 'delete', '-f', output_format, dem_gcs_path],
+            #     shell=shell_flag)
         if not os.path.isfile(dem_gcs_path):
             # gdal_merge.py was only working if shell=True
             # It would also work to add the scripts folder to the path (in Pythong)
             # Or the scripts folder could be added to the system PYTHONPATH?
             args_list = [
                 'python', '{}\scripts\gdal_merge.py'.format(sys.exec_prefix),
-                '-o', dem_gcs_path, '-of', 'HFA',
+                '-o', dem_gcs_path, '-of', output_format,
                 '-co', 'COMPRESSED=YES', '-a_nodata',
-                str(f32_nodata)] + input_path_list
+                str(output_nodata)] + input_path_list
             logging.debug(args_list)
             logging.debug('command length: {}'.format(len(' '.join(args_list))))
-            subprocess.call(args_list, cwd=tile_ws)
-            # subprocess.call(
+            subprocess.check_output(args_list, cwd=tile_ws, shell=shell_flag)
+            # subprocess.check_output(
             #     'set', 'GDAL_DATA={}\Lib\site-packages\osgeo\data\gdal'.format(sys.exec_prefix)],
-            #     =True)
-            # subprocess.call(
-            #     'gdal_merge.py', '-o', dem_gcs_path, '-of', 'HFA',
+            #     shell=shell_flag)
+            # subprocess.check_output(
+            #     'gdal_merge.py', '-o', dem_gcs_path, '-of', output_format,
             #     '-co', 'COMPRESSED=YES', '-a_nodata',
-            #     str(f32_nodata)] + input_path_list,
-            #     =True)
+            #     str(output_nodata)] + input_path_list,
+            #     shell=shell_flag)
 
     # Convert DEM from meters to feet
     if output_units == 'FEET':
         # DEADBEEF - This won't run when called through subprocess?
-        # subprocess.call(
+        # subprocess.check_output(
         #     'gdal_calc.py', '-A', dem_gcs_path,
         #     '--outfile={}'.format(dem_feet_path), '--calc="0.3048*A"',
-        #     '--format', 'HFA', '--co', 'COMPRESSED=YES',
-        #     '--NoDataValue={}'.format(str(f32_nodata)),
+        #     '--format', output_format, '--co', 'COMPRESSED=YES',
+        #     '--NoDataValue={}'.format(str(output_nodata)),
         #     '--type', 'Float32', '--overwrite'],
-        #     =dem_ws, shell=True)
+        #     =dem_ws, shell=shell_flag)
         # dem_gcs_path = dem_feet_path
         # Scale the values using custom function
         m2ft_func(dem_gcs_path)
 
     if os.path.isfile(dem_proj_path) and overwrite_flag:
-        subprocess.call(['gdalmanage', 'delete', '-f', 'HFA', dem_proj_path])
+        subprocess.check_output(
+            ['gdalmanage', 'delete', '-f', output_format, dem_proj_path],
+            shell=shell_flag)
     if os.path.isfile(dem_hs_path) and overwrite_flag:
-        subprocess.call(['gdalmanage', 'delete', '-f', 'HFA', dem_hs_path])
+        subprocess.check_output(
+            ['gdalmanage', 'delete', '-f', output_format, dem_hs_path],
+            shell=shell_flag)
 
     if (not os.path.isfile(dem_proj_path) and
         os.path.isfile(dem_gcs_path)):
-        subprocess.call(
+        subprocess.check_output(
             ['gdalwarp', '-r', 'bilinear',
              '-tr', str(output_cs), str(output_cs),
              '-s_srs', 'EPSG:4269', '-t_srs', output_wkt, '-ot', 'Float32'] +
             ['-te'] + str(output_extent).split() +
             # ['-srcnodata', 'None', '-dstnodata', str(f32_nodata),
-            ['-of', 'HFA', '-co', 'COMPRESSED=YES', '-overwrite',
+            ['-of', output_format, '-co', 'COMPRESSED=YES', '-overwrite',
              '-multi', '-wm', '1024', '-wo', 'NUM_THREADS=ALL_CPUS',
-             dem_gcs_path, dem_proj_path])
+             dem_gcs_path, dem_proj_path],
+            shell=shell_flag)
     if (not os.path.isfile(dem_hs_path) and
         os.path.isfile(dem_proj_path)):
-        subprocess.call(
+        subprocess.check_output(
             ['gdaldem', 'hillshade', dem_proj_path, dem_hs_path,
-             '-of', 'HFA', '-co', 'COMPRESSED=YES'])
+             '-of', output_format, '-co', 'COMPRESSED=YES'], shell=shell_flag)
 
     if stats_flag:
         logging.info('Computing statistics')
         if os.path.isfile(dem_proj_path):
             logging.debug('  {}'.format(dem_proj_path))
-            subprocess.call(['gdalinfo', '-stats', '-nomd', dem_proj_path])
+            subprocess.check_output(
+                ['gdalinfo', '-stats', '-nomd', dem_proj_path],
+                shell=shell_flag)
         if os.path.isfile(dem_hs_path):
             logging.debug('  {}'.format(dem_hs_path))
-            subprocess.call(['gdalinfo', '-stats', '-nomd', dem_hs_path])
+            subprocess.check_output(
+                ['gdalinfo', '-stats', '-nomd', dem_hs_path], shell=shell_flag)
 
     if pyramids_flag:
         logging.info('\nBuilding pyramids')
         if os.path.isfile(dem_proj_path):
             logging.debug('  {}'.format(dem_proj_path))
-            subprocess.call(
-                ['gdaladdo', '-ro', dem_proj_path] + levels.split())
+            subprocess.check_output(
+                ['gdaladdo', '-ro', dem_proj_path] + levels.split(),
+                shell=shell_flag)
         if os.path.isfile(dem_hs_path):
             logging.debug('  {}'.format(dem_hs_path))
-            subprocess.call(
-                ['gdaladdo', '-ro', dem_hs_path] + levels.split())
-        # subprocess.call(
-        #     'gdaladdo', '-ro', '--config', 'USE_RRD', 'YES',
-        #     '--config', 'HFA_USE_RRD', 'YES', dem_proj_path] + levels.split()])
-        # subprocess.call(
-        #     'gdaladdo', '-ro', '--config', 'USE_RRD', 'YES',
-        #     '--config', 'HFA_USE_RRD', 'YES', dem_hs_path] + levels.split()])
+            subprocess.check_output(
+                ['gdaladdo', '-ro', dem_hs_path] + levels.split(),
+                shell=shell_flag)
+        # subprocess.check_output(
+        #     ['gdaladdo', '-ro', '--config', 'USE_RRD', 'YES',
+        #      '--config', 'HFA_USE_RRD', 'YES', dem_proj_path] + levels.split(),
+        #     shell=shell_flag)
+        # subprocess.check_output(
+        #     ['gdaladdo', '-ro', '--config', 'USE_RRD', 'YES',
+        #      '--config', 'HFA_USE_RRD', 'YES', dem_hs_path] + levels.split(),
+        #     shell=shell_flag)
 
     if os.path.isfile(os.path.join(dem_ws, dem_gcs_path)):
-        subprocess.call(['gdalmanage', 'delete', '-f', 'HFA', dem_gcs_path])
+        subprocess.check_output(
+            ['gdalmanage', 'delete', '-f', output_format, dem_gcs_path],
+            shell=shell_flag)
 
 
 def m2ft_func(input_raster):

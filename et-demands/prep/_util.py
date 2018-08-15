@@ -1,12 +1,10 @@
 #--------------------------------
 # Name:         util.py
-# Purpose:      Utilitiy functions for ET-Demands prep scripts
-# Author:       Charles Morton
-# Created       2016-09-14
-# Python:       2.7
+# Purpose:      Utility functions for ET-Demands prep scripts
 #--------------------------------
 
-import ConfigParser
+import configparser
+from ftplib import FTP
 import glob
 from itertools import groupby
 import logging
@@ -14,12 +12,34 @@ import os
 import sys
 
 
-def remove_file(file_path):
-    """Remove a feature/raster and all of its anciallary files"""
-    file_ws = os.path.dirname(file_path)
-    for file_name in glob.glob(os.path.splitext(file_path)[0] + ".*"):
-        logging.debug('  Remove: {}'.format(os.path.join(file_ws, file_name)))
-        os.remove(os.path.join(file_ws, file_name))
+def ftp_download(site_url, site_folder, file_name, output_path):
+    """"""
+    try:
+        ftp = FTP()
+        ftp.connect(site_url)
+        ftp.login()
+        ftp.cwd('{}'.format(site_folder))
+        logging.debug('  Beginning download')
+        ftp.retrbinary('RETR %s' % file_name, open(output_path, 'wb').write)
+        logging.debug('  Download complete')
+        ftp.quit()
+    except Exception as e:
+        logging.info('  Unhandled exception: {}'.format(e))
+
+
+def ftp_file_list(site_url, site_folder):
+    """"""
+    try:
+        ftp = FTP()
+        ftp.connect(site_url)
+        ftp.login()
+        ftp.cwd('{}'.format(site_folder))
+        files = ftp.nlst()
+        ftp.quit()
+    except Exception as e:
+        logging.info('  Unhandled exception: {}'.format(e))
+        files = []
+    return files
 
 
 def is_valid_file(parser, arg):
@@ -49,7 +69,7 @@ def parse_int_set(nputstr=""):
     """
     selection = set()
     invalid = set()
-    # tokens are comma seperated values
+    # tokens are comma separated values
     tokens = [x.strip() for x in nputstr.split(',')]
     for i in tokens:
         try:
@@ -75,29 +95,49 @@ def parse_int_set(nputstr=""):
     return selection
 
 
-def read_ini(ini_path, section='CROP_ET'):
-    """Open the INI file and check for obvious errors"""
+def read_ini(ini_path, section):
+    """Open the INI file and check for obvious errors
+
+    Notes
+    -----
+
+    """
     logging.info('  INI: {}'.format(os.path.basename(ini_path)))
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     try:
-        ini = config.readfp(open(ini_path))
-    except:
-        logging.error('\nERROR: Config file could not be read, ' +
-                      'is not an input file, or does not exist\n')
+        config.read(ini_path)
+    except IOError:
+        logging.error('\nERROR: INI file does not exist'
+                      '\n  {}\n'.format(ini_path))
         sys.exit()
-    if section not in config.sections():
-        logging.error(('\nERROR: The input file must have ' +
-                       'a section: [{}]\n').format(section))
+    except configparser.MissingSectionHeaderError:
+        logging.error('\nERROR: INI file is missing a section header'
+                      '\n  Please make sure the following line is at the '
+                      'beginning of the file\n[{}]\n'.format(section))
         sys.exit()
+    except Exception as e:
+        logging.error('\nERROR: Unhandled exception reading INI file:'
+                      '\n  {}\n'.format(ini_path, e))
+        logging.error('{}\n'.format(e))
+        sys.exit()
+
     return config
 
 
 def ranges(i):
-    """"""
-    for a, b in groupby(enumerate(i), lambda (x, y): y - x):
+    """Join sequential values into ranges"""
+    for a, b in groupby(enumerate(sorted(i)), lambda t: t[1] - t[0]):
         b = list(b)
         if b[0][1] == b[-1][1]:
             yield str(b[0][1])
         else:
-            yield '{0}-{1}'.format(b[0][1], b[-1][1])
+            yield '{}-{}'.format(b[0][1], b[-1][1])
         # yield b[0][1], b[-1][1]
+
+
+def remove_file(file_path):
+    """Remove a feature/raster and all of its anciallary files"""
+    file_ws = os.path.dirname(file_path)
+    for file_name in glob.glob(os.path.splitext(file_path)[0] + ".*"):
+        logging.debug('  Remove: {}'.format(os.path.join(file_ws, file_name)))
+        os.remove(os.path.join(file_ws, file_name))

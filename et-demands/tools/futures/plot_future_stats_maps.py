@@ -434,7 +434,7 @@ def full_plot(output_path, data_df, caption, cmap_name, v_min, v_max,
 
     # Build the figure and subplots
     fig, axes = plt.subplots(1, 1, figsize=figure_size)
-    [i.set_linewidth(fig_border) for i in axes.spines.itervalues()]
+    [i.set_linewidth(fig_border) for i in axes.spines.values()]
 
     # Position the subplots in the figure
     plt.subplots_adjust(
@@ -502,7 +502,7 @@ def sub_plot(output_path, data_df, caption, cmap_name, v_min, v_max,
     # Build the figure and subplots
     fig, axes = plt.subplots(
         len(scenario_list), len(period_list), figsize=figure_size)
-    # [i.set_linewidth(fig_border) for i in axes.spines.itervalues()]
+    # [i.set_linewidth(fig_border) for i in axes.spines.values()]
 
     # Position the subplots in the figure
     plt.subplots_adjust(

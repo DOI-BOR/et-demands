@@ -1543,7 +1543,7 @@ class CropETData():
 
     def set_crop_co2(self):
         """Set crop CO2 type using values in INI"""
-        for crop_num, crop_param in self.crop_params.iteritems():
+        for crop_num, crop_param in self.crop_params.items():
             if not self.co2_flag:
                 crop_param.co2_type = None
             elif self.co2_grass_crops and crop_num in self.co2_grass_crops:
