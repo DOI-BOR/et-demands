@@ -257,7 +257,8 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
                         station_id_field))
 
             if station_id:
-                station_data = station_data_dict[station_id]
+                #STATION_ID can be either a str or int in the cells .shp
+                station_data = station_data_dict[str(station_id)]
                 station_lat = '{:>9.4f}'.format(station_data[station_lat_field])
                 station_lon = '{:>9.4f}'.format(station_data[station_lon_field])
                 station_elev = '{:.2f}'.format(station_data[station_elev_field])

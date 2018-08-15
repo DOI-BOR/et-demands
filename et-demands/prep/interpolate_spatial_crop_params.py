@@ -69,7 +69,7 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     # Check input folders
     if not os.path.exists(calibration_ws):
         logging.critical('\nERROR: The calibration folder does not exist. '
-                         '\n  Run build_spatial_crop_params_arcpy.py')
+                         '\n  Run build_spatial_crop_params.py')
         sys.exit()
 
     # Check input folders
