@@ -4,7 +4,7 @@ CropET Prep Example
 Clone the repository
 --------------------
 Ensure you have the latest version of the et-demands repository from GitHub. To get started, or for instructions on pulling
-the latest version see Getting Started.
+the latest version see Getting Started. (PEARSON TEST CHANGE)
 
 .. note::
    For this example, it is assumed that the repository was cloned directly to the C: drive (i.e. C:\\et-demands).
