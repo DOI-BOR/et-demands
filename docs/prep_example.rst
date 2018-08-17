@@ -3,14 +3,15 @@ CropET Prep Example
 
 Clone the repository
 --------------------
-If you already have a local copy of the et-demands repository, make sure to pull the latest version from GitHub.  If you don't already have a local copy of the repository, either clone the repository locally or download a zip file of the scripts from Github.
+Ensure you have the latest version of the et-demands repository from GitHub. To get started, or for instructions on pulling
+the latest version see Getting Started.
 
 .. note::
    For this example, it is assumed that the repository was cloned directly to the C: drive (i.e. C:\\et-demands).
 
 Command prompt / Terminal
 -------------------------
-All of the CropET prep scripts should be run from the command prompt or terminal window.  In Windows, to open the command prompt, press the "windows" key and "r" or click the "Start" button, "Accessories", and then "Command Prompt".
+All of the CropET prep scripts should be run from the command prompt or terminal window.  In Windows, to open the command prompt, press the "windows" key and "r" and type "cmd" or click the "Start" button, "Accessories", and then "Command Prompt".
 
 Within the command prompt or terminal, change to the target drive if necessary::
 
@@ -29,17 +30,15 @@ Building the Example
 .. note::
    For this example, all scripts and tools will be executed from the "example" folder.
 
-Build the example folder if it doesn't exist::
-
-    > mkdir example
-
 Change directory into the example folder::
 
     > cd example
 
 Cropland Data Layer (CDL)
 -------------------------
-Download the CONUS CDL raster.  The CONUS CDL rasters should be downloaded to the "common" folder so that they can be used for other projects.  For this example we will be using the 2010 CDL raster. ::
+The et-demands model requires information about the type and spatial extent of crops grown in the study area. A standard dataset containing this information is the Cropland Data Layer (CDL), a product of the USDA National Agricultural Statistics Service (NASS). The CDL is a crop-specific land cover classification product of more than 100 crop categories grown in the United States derived from remotely-sensed data (`Boryan et al. 2011 <https://doi.org/10.1080/10106049.2011.562309>`_). The CDL has been produced for every year from 1997-Present and is hosted on NASS's _`CropScape <https://nassgeodata.gmu.edu/CropScape/>`_. 
+
+Download the CONUS CDL raster. The CONUS CDL rasters should be downloaded to the "common" folder so that they can be used for other projects. For this example we will be using the 2010 CDL raster. ::
 
     > python ..\et-demands\prep\download_cdl_raster.py --cdl ..\common\cdl --years 2010
 
@@ -47,6 +46,8 @@ If the download script doesn't work, please try downloading the `2010_30m_cdls.z
 
 Study Area
 ----------
+The et-demands model requires a shapefile defining the study area. 
+
 For this example, the study area is a single HUC 8 watershed (12090105) in Texas that was extracted from the full `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase.
 
 .. image:: https://cfpub.epa.gov/surf/images/hucs/12090105l.gif
@@ -74,9 +75,12 @@ Mask the non-agricultural CDL pixels::
 
 Soils
 -----
+
 .. note::
    For this example, the soils shapefiles have already been converted to raster and are located in the example\\gis\\soils folder.  It is not necessary to run the "rasterize_soil_polygons.py step below.
 
+Optional:
+The following commands can be used to produce the required soils information from the soils data
 Rasterize the soil shapefiles to match the CDL grid size and spatial reference::
 
     > python ..\et-demands\prep\rasterize_soil_polygons.py --soil ..\common\statsgo -o --stats
