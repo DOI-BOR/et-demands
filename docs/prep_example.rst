@@ -1,9 +1,6 @@
 CropET Prep Example
 ===================
 
-.. note::
-   The following example was written assuming the user is running Microsoft Windows.  The last two steps of the example will not run on Linux or Mac because they rely on the ArcGIS ArcPy module.
-
 Clone the repository
 --------------------
 If you already have a local copy of the et-demands repository, make sure to pull the latest version from GitHub.  If you don't already have a local copy of the repository, either clone the repository locally or download a zip file of the scripts from Github.
