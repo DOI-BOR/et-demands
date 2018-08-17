@@ -100,3 +100,6 @@ Static Text Files
 Build the static text files from the templates in "et-demands\\static". ::
 
     > python ..\et-demands\prep\build_static_files.py --ini example.ini --zone huc8 --acres 10 -o
+
+Next Steps
+----------
