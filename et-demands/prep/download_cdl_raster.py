@@ -9,6 +9,8 @@ import logging
 import os
 import sys
 import zipfile
+import urllib.request
+import time
 
 import _util as util
 
@@ -23,7 +25,7 @@ def main(cdl_ws, cdl_year='', overwrite_flag=False):
 
     """
     logging.info('\nDownload and extract CONUS CDL rasters')
-    site_url = 'ftp.nass.usda.gov'
+    site_url = 'ftp://ftp.nass.usda.gov'
     site_folder = 'download/res'
 
     cdl_format = '{}_30m_cdls.{}'
@@ -35,18 +37,34 @@ def main(cdl_ws, cdl_year='', overwrite_flag=False):
         zip_path = os.path.join(cdl_ws, zip_name)
 
         cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year, 'img'))
+
+        zip_url_size = remote_size(zip_url)
+
+        if os.path.isfile(zip_path):
+            zip_path_size = local_size(zip_path)
+
+        if not os.path.isfile(zip_path):
+            zip_path_size = 0
+
+        if zip_url_size == zip_path_size:
+            size_flag = False
+
+        if zip_url_size != zip_path_size:
+            size_flag = True
+
         if not os.path.isdir(cdl_ws):
             os.makedirs(cdl_ws)
 
-        if os.path.isfile(cdl_path) and not overwrite_flag:
+        if os.path.isfile(cdl_path) and not overwrite_flag and not \
+            size_flag:
             logging.info('\nCDL raster already exists, skipping')
             continue
 
-        if not os.path.isfile(zip_path) or overwrite_flag:
+        if not os.path.isfile(zip_path) or overwrite_flag or size_flag:
             logging.info('\nDownload CDL files')
             logging.debug('  {}'.format(zip_url))
             logging.debug('  {}'.format(zip_path))
-            util.ftp_download(site_url, site_folder, zip_name, zip_path)
+            urllib.request.urlretrieve(zip_url, zip_path, reporthook)
         else:
             logging.info('\nCDL raster already downloaded')
 
@@ -82,6 +100,33 @@ def arg_parse():
     if args.cdl and os.path.isdir(os.path.abspath(args.cdl)):
         args.cdl = os.path.abspath(args.cdl)
     return args
+
+def reporthook(count, block_size, total_size):
+    global start_time
+    if count == 0:
+        start_time = time.time()
+        return
+    duration = time.time() - start_time
+    progress_size = int(count * block_size)
+    speed = int(progress_size / (1024 * duration))
+    percent = int(count * block_size * 100 / total_size)
+    sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
+                    (percent, progress_size / (1024 * 1024), speed, duration))
+    sys.stdout.flush()
+
+
+def remote_size(link):
+    site = urllib.request.urlopen(link)
+    meta = site.info()
+    size = int(meta.get("Content-Length"))
+    return size
+
+
+def local_size(path):
+    file = open(path, "rb")
+    size = len(file.read())
+    file.close()
+    return size
 
 
 if __name__ == '__main__':
