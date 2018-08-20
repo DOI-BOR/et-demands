@@ -1,14 +1,13 @@
 # ET Demands Model
 
-The ET Demands Model has been developed jointly by the [Bureau of Reclamation](https://www.usbr.gov/) and the [Desert Research Institute](https://www.dri.edu/). The model estimates crop evapotranspiration water consumption using the approach documented in [FAO-56](https://www.kimberly.uidaho.edu/water/fao56/fao56.pdf)
+The ET Demands Model has been developed jointly by the [Bureau of Reclamation](https://www.usbr.gov/) and the [Desert Research Institute](https://www.dri.edu/). The model estimates crop evapotranspiration water consumption using the approach documented in [FAO-56](https://www.kimberly.uidaho.edu/water/fao56/fao56.pdf).
 
-
-
-
-The model is written in and requires [Python 3](https://www.python.org/download/releases/3.0/) and also requires [GDAL](https://www.gdal.org/).
+## Documentation
+(https://usbr.github.io/et-demands/)
 
 ## Example
 A stand-alone example is packaged with the model. Please refer to the [documentation] for step by step instructions
+
 # CropET
 Crop ET Demands Model
 
@@ -123,7 +122,7 @@ Please see requirements.txt file for details on versioning requirements.  Older 
 #### Prep tools
 A combination of GDAL and ArcPy are currently used in data prep scripts.  Eventually all of ArcPy/ArcGIS dependent scripts will be converted to GDAL.
 + [GDAL](http://gdal.org/)
-+ ArcPy (ArcGIS)
+
 
 #### Spatial crop parameters
 + [PyShp](https://github.com/GeospatialPython/pyshp)
@@ -147,24 +146,6 @@ It is important to double check that you are calling Anaconda version, especiall
 
 + Windows: "where python"
 + Linux/Mac: "which python"
-
-#### ArcPy (Windows only)
-
-ArcPy is only needed for two of prep scripts, which will eventually be modified to use GDAL instead. Until ArcPy dependency is removed, it is important to install a version of Anaconda that will work with ArcGIS/ArcPy.  If you have standard 32-bit version of ArcGIS installed, make sure to download 32-bit Python 2.7 version of Anaconda.  You should install 64-bit Python 2.7 version of Anaconda if you have installed ArcGIS 64-bit background geoprocessing add-on.
-
-To access ArcPy modules from Anaconda, it is necessary to copy following file from ArcGIS Python site-packages folder into Anaconda site-packages folder. (the paths and file names may be slightly different depending on your installation of ArcGIS and Anaconda)
-
-From:
-+ (*32-bit*) C:\Python27\ArcGIS10.3\Lib\site-packages\Desktop10.3.pth
-+ (*64-bit*) C:\Python27\ArcGISx6410.3\Lib\site-packages\DTBGGP64.pth
-
-To:
-+ C:\Anaconda2\Lib\site-packages
-
-ArcPy can be imported if no errors are returned by following command:
-```
-> python -c "import arcpy"
-```
 
 #### Conda Forge
 
