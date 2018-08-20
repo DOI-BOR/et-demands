@@ -1,7 +1,14 @@
-#Chris Test Change
+# ET Demands Model
+
+The ET Demands Model has been developed jointly by the [Bureau of Reclamation](https://www.usbr.gov/) and the [Desert Research Institute](https://www.dri.edu/). The model estimates crop evapotranspiration water consumption using the approach documented in [FAO-56](https://www.kimberly.uidaho.edu/water/fao56/fao56.pdf)
 
 
 
+
+The model is written in and requires [Python 3](https://www.python.org/download/releases/3.0/) and also requires [GDAL](https://www.gdal.org/).
+
+## Example
+A stand-alone example is packaged with the model. Please refer to the [documentation] for step by step instructions
 # CropET
 Crop ET Demands Model
 
