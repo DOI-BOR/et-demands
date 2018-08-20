@@ -14,7 +14,6 @@ import sys
 import urllib
 import zipfile
 import time
-
 import _util as util
 
 
@@ -76,7 +75,7 @@ def main(cdl_ws, cdl_year='', overwrite_flag=False):
             with zipfile.ZipFile(zip_path) as zf:
                 zf.extractall(cdl_ws)
 
-
+                
 def arg_parse():
     """"""
     parser = argparse.ArgumentParser(
@@ -116,6 +115,7 @@ def reporthook(count, block_size, total_size):
                     (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
 
+    
 def remote_size(link):
     site = urllib.urlopen(link)
     meta = site.info()
