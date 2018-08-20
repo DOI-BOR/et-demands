@@ -1,45 +1,55 @@
+# --------------------------------
+# Name:         interpolate_spatial_crop_params_arcpy.py
+# Purpose:      Interpolate spatial parameter files for ET-Demands
+# Python:       2.7
+# --------------------------------
+
 import argparse
 import datetime as dt
 import logging
 import os
-import sys
-import arcpy
-import _util as util
 import re
+import sys
+
+import arcpy
+
+import _util as util
 
 
-def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True):
+def main(ini_path, zone_type='gridmet', overwrite_flag=False):
     """Interpolate Preliminary Calibration Zones to All Zones
 
     Args:
         ini_path (str): file path of the project INI file
         zone_type (str): Zone type (huc8, huc10, county, gridmet)
         overwrite_flag (bool): If True (default), overwrite existing files
-        cleanup_flag (bool): If True, remove temporary files
 
     Returns:
         None
     """
     logging.info('\nInterpolating Calibration Data from Subset Point Data')
+
     #  INI path
-    config = util.read_ini(ini_path, section='CROP_ET')
+    crop_et_sec = 'CROP_ET'
+    config = util.read_ini(ini_path, section=crop_et_sec)
+
     try:
-        project_ws = config.get('CROP_ET', 'project_folder')
+        project_ws = config.get(crop_et_sec, 'project_folder')
     except:
-        logging.error(
-            'project_folder parameter must be set in the INI file, exiting')
+        logging.error('project_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
-        gis_ws = config.get('CROP_ET', 'gis_folder')
+        gis_ws = config.get(crop_et_sec, 'gis_folder')
     except:
-        logging.error(
-            'gis_folder parameter must be set in the INI file, exiting')
+        logging.error('gis_folder parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
-        et_cells_path = config.get('CROP_ET', 'cells_path')
+        et_cells_path = config.get(crop_et_sec, 'cells_path')
     except:
-        logging.error(
-            'et_cells_path parameter must be set in the INI file, exiting')
+        logging.error('et_cells_path parameter must be set in the INI file, '
+                      'exiting')
         return False
     try:
         calibration_ws = config.get(crop_et_sec, 'spatial_cal_folder')
@@ -49,33 +59,37 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
     crop_params_path = os.path.join(static_ws, 'CropParams.txt')
-    crop_et_sec = 'CROP_ET'
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
     # Check input folders
     if not os.path.exists(calibration_ws):
-        logging.critical('ERROR: The calibration folder does not exist. Run build_spatial_crop_params_arcpy.py, exiting')
+        logging.critical(
+            'ERROR: The calibration folder does not exist. '
+            'Run build_spatial_crop_params_arcpy.py, exiting')
         sys.exit()
 
     # Check input folders
     if not os.path.isdir(project_ws):
-        logging.critical(('ERROR: The project folder ' +
-                          'does not exist\n  {}').format(project_ws))
+        logging.critical('ERROR: The project folder does not exist'
+                         '\n  {}'.format(project_ws))
         sys.exit()
     elif not os.path.isdir(gis_ws):
-        logging.critical(('ERROR: The GIS folder ' +
-                          'does not exist\n  {}').format(gis_ws))
+        logging.critical('ERROR: The GIS folder does not exist'
+                         '\n  {}'.format(gis_ws))
         sys.exit()
-    logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
-
+    logging.info('\nGIS Workspace:      {}'.format(gis_ws))
 
     # Check input zone type (GRIDMET ONLY FOR NOW!!!!)
     if zone_type == 'gridmet':
         station_zone_field = 'GRIDMET_ID'
         station_id_field = 'GRIDMET_ID'
-    else: 
-        print('FUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
+    # DEADBEEF - Added for testing
+    elif zone_type == 'huc8':
+        station_zone_field = 'HUC8'
+        station_id_field = 'STATION_ID'
+    else:
+        logging.error('\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME')
         sys.exit()
 
     arcpy.env.overwriteOutput = overwrite_flag
@@ -83,7 +97,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     
     cells_dd_path = os.path.join(gis_ws, 'ETCells_dd.shp')
     cells_ras_path = os.path.join(gis_ws, 'ETCells_ras.img')
-    arcpy.Project_management(et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
+    arcpy.Project_management(
+        et_cells_path, cells_dd_path, arcpy.SpatialReference('WGS 1984'))
 
     temp_path = os.path.join(calibration_ws, 'temp')
     if not os.path.exists(temp_path):
@@ -110,13 +125,14 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
 
     # Get Crop Names for each Crop in crop_number_list
     crop_name_list = []
-    logging.info('\nBuilding Crop Name List')
+    logging.debug('\nBuilding crop name list')
     for crop_num in crop_number_list:
         try:
             crop_param = crop_param_dict[crop_num]
         except:
             continue
-        logging.info('{0:>2d} {1}'.format(crop_num, crop_param))
+        # logging.info('{:>2d} {}'.format(crop_num, crop_param.name))
+        logging.debug('{}'.format(crop_param))
         # Replace other characters with spaces, then remove multiple spaces
         crop_name = re.sub('[-"().,/~]', ' ', str(crop_param.name).lower())
         crop_name = ' '.join(crop_name.strip().split()).replace(' ', '_')
@@ -126,23 +142,35 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
     arcpy.env.extent = cells_dd_path
     arcpy.env.outputCoordinateSystem = cells_dd_path
     
-    # Convert cells_dd to cells_ras (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
-    arcpy.FeatureToRaster_conversion(cells_dd_path, station_id_field, cells_ras_path, 0.041666667)
+    # Convert cells_dd to cells_ras
+    # (0.041666667 taken from GEE GRIDMET tiff) HARDCODED FOR NOW
+    arcpy.FeatureToRaster_conversion(
+        cells_dd_path, station_id_field, cells_ras_path, 0.041666667)
 
     # Location of preliminary calibration .shp files (ADD AS INPUT ARG?)
-    prelim_calibration_ws = os.path.join(calibration_ws, 'preliminary_calibration')
+    prelim_calibration_ws = os.path.join(
+        calibration_ws, 'preliminary_calibration')
 
+    logging.info('\nInterpolating calibration parameters')
     for crop_num, crop_name in zip(crop_number_list, crop_name_list):
         # Preliminary calibration .shp
-        subset_cal_file = os.path.join(prelim_calibration_ws, 'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
-        final_cal_file = os.path.join(calibration_ws, 'crop_{0:02d}_{1}{2}').format(crop_num, crop_name, '.shp')
+        subset_cal_file = os.path.join(
+            prelim_calibration_ws,
+            'crop_{0:02d}_{1}{2}'.format(crop_num, crop_name, '.shp'))
+        final_cal_file = os.path.join(
+            calibration_ws,
+            'crop_{0:02d}_{1}{2}'.format(crop_num, crop_name, '.shp'))
 
         if not arcpy.Exists(subset_cal_file):
-            print('\nCrop No: {} Preliminary Calibration File Not Found. Skipping.').format(crop_num)
+            logging.info(
+                '\nCrop No: {} preliminary calibration file not found. '
+                'Skipping.'.format(crop_num))
             continue
-        print('\nInterpolating Crop: {0:02d}').format(crop_num)
+        logging.info('\nInterpolating Crop: {:02d}'.format(crop_num))
+
         # Polygon to Point
-        arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file, "CENTROID")
+        arcpy.FeatureToPoint_management(subset_cal_file, temp_pt_file,
+                                        "CENTROID")
 
         # Change Processing Extent to match final calibration file
         # arcpy.env.extent = cells_dd_path
@@ -167,7 +195,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
         ras_list = []
         for param in param_list:
             outIDW_ras = arcpy.sa.Idw(temp_pt_file, param, cell_size)
-            outIDW_ras_path = os.path.join(temp_path, '{}{}').format(param, '.img')
+            outIDW_ras_path = os.path.join(
+                temp_path, '{}{}'.format(param, '.img'))
             outIDW_ras.save(outIDW_ras_path)
             ras_list.append(outIDW_ras_path)
 
@@ -179,7 +208,9 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False, cleanup_flag=True)
         def make_attribute_dict(fc, key_field, attr_list=['*']):
             attdict = {}
             fc_field_objects = arcpy.ListFields(fc)
-            fc_fields = [field.name for field in fc_field_objects if field.type != 'Geometry']
+            fc_fields = [
+                field.name for field in fc_field_objects
+                if field.type != 'Geometry']
             if attr_list == ['*']:
                 valid_fields = fc_fields
             else:
@@ -212,17 +243,16 @@ def arg_parse():
     parser.add_argument(
         '--zone', default='county', metavar='', type=str,
         choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
+        help='Zone type [{}]'.format(
+            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
     parser.add_argument(
         '-o', '--overwrite', default=False, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
+
     return args
 
 if __name__ == '__main__':
@@ -236,5 +266,4 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, zone_type=args.zone,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+    main(ini_path=args.ini, zone_type=args.zone, overwrite_flag=args.overwrite)

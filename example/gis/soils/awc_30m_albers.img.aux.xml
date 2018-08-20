@@ -1,7 +1,4 @@
 <PAMDataset>
-  <Metadata domain="Esri">
-    <MDI key="PyramidResamplingType">NEAREST</MDI>
-  </Metadata>
   <PAMRasterBand band="1">
     <Description>Layer_1</Description>
     <Metadata domain="IMAGE_STRUCTURE">
@@ -10,9 +7,9 @@
     <Metadata>
       <MDI key="LAYER_TYPE">athematic</MDI>
       <MDI key="STATISTICS_MAXIMUM">0.17000000178814</MDI>
-      <MDI key="STATISTICS_MEAN">0.13901908152898</MDI>
+      <MDI key="STATISTICS_MEAN">0.14082423949727</MDI>
       <MDI key="STATISTICS_MINIMUM">0.090000003576279</MDI>
-      <MDI key="STATISTICS_STDDEV">0.017635650326965</MDI>
+      <MDI key="STATISTICS_STDDEV">0.015862313911329</MDI>
     </Metadata>
   </PAMRasterBand>
 </PAMDataset>

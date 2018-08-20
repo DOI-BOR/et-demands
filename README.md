@@ -1,7 +1,3 @@
-#Chris Test Change
-
-
-
 # CropET
 Crop ET Demands Model
 
@@ -58,7 +54,7 @@ optional arguments:
   -v, --verbose         Print info level comments (default: False)
   -c, --etcid		ET cell to run (default 'ALL')
   -mp [N], --multiprocessing [N]
-                        Number of processers to use (default: 1)
+                        Number of processors to use (default: 1)
 ```
 
 #### User manual
@@ -66,7 +62,7 @@ optional arguments:
 [View or download](docs/PythonETApplications.pdf)
 
 #### Configuration files
-Key parameters in configuration files are folder location of current project, static (meta) data file specifcatins and time series data specifications.  To set configuration file, use "-i" or "--ini" argument.
+Key parameters in configuration files are folder location of current project, static (meta) data file specifications and time series data specifications.  To set configuration file, use "-i" or "--ini" argument.
 ```
 > python run_cet.py -i cet_example.ini
 > python run_ret.py -i csv_ret_dri.ini
@@ -89,9 +85,9 @@ Plots of Crop ET-Demands paramters ET, ETo, Kc, growing season, irrigation, prec
 ```
 
 ## Dependencies
-The ET-Demands tools have only been tested using Python 2.7 but they may work with Python 3.X.
+The ET-Demands tools are being developed primarily for Python 3.6+ but should still be mostly backwards compatible with Python 2.7.
 
-Please see requirements.txt file for details on versioning requirements.  Older versions of modules may work but have not been extensively tested.
+Please see environment.yml file for details on the versioning requirements.  Older versions of the modules may work but have not been extensively tested.
 
 #### RefET
 + [NumPy](http://www.numpy.org)
@@ -114,9 +110,8 @@ Please see requirements.txt file for details on versioning requirements.  Older 
 + [openpyxl](https://pypi.python.org/pypi/openpyxl/2.4.7)
 
 #### Prep tools
-A combination of GDAL and ArcPy are currently used in data prep scripts.  Eventually all of ArcPy/ArcGIS dependent scripts will be converted to GDAL.
 + [GDAL](http://gdal.org/)
-+ ArcPy (ArcGIS)
++ [NumPy](http://www.numpy.org)
 
 #### Spatial crop parameters
 + [PyShp](https://github.com/GeospatialPython/pyshp)
@@ -132,59 +127,48 @@ Following modules are only needed if making summary maps (tools/plot_crop_summar
 + [Descartes](https://bitbucket.org/sgillies/descartes)
 + [Shapely](https://github.com/Toblerity/Shapely)
 
-## Anaconda
+## Miniconda
 
-Easiest way to install required external Python modules is to use [Anaconda](https://www.continuum.io/downloads)
+The easiest way to install required external Python modules is to use [Miniconda](https://conda.io/miniconda.html) and create separate conda environments for each project.
 
-It is important to double check that you are calling Anaconda version, especially if you have two or more version of Python installed (e.g. Anaconda and ArcGIS).
+It is important to double check that you are calling Miniconda version, especially if you have two or more version of Python installed (e.g. Miniconda and ArcGIS).
 
 + Windows: "where python"
 + Linux/Mac: "which python"
 
-#### ArcPy (Windows only)
-
-ArcPy is only needed for two of prep scripts, which will eventually be modified to use GDAL instead. Until ArcPy dependency is removed, it is important to install a version of Anaconda that will work with ArcGIS/ArcPy.  If you have standard 32-bit version of ArcGIS installed, make sure to download 32-bit Python 2.7 version of Anaconda.  You should install 64-bit Python 2.7 version of Anaconda if you have installed ArcGIS 64-bit background geoprocessing add-on.
-
-To access ArcPy modules from Anaconda, it is necessary to copy following file from ArcGIS Python site-packages folder into Anaconda site-packages folder. (the paths and file names may be slightly different depending on your installation of ArcGIS and Anaconda)
-
-From:
-+ (*32-bit*) C:\Python27\ArcGIS10.3\Lib\site-packages\Desktop10.3.pth
-+ (*64-bit*) C:\Python27\ArcGISx6410.3\Lib\site-packages\DTBGGP64.pth
-
-To:
-+ C:\Anaconda2\Lib\site-packages
-
-ArcPy can be imported if no errors are returned by following command:
-```
-> python -c "import arcpy"
-```
-
 #### Conda Forge
 
-After installing Anaconda, add [conda-forge](https://conda-forge.github.io/) channel by entering following in command prompt or terminal:
+After installing Miniconda, [conda-forge](https://conda-forge.github.io/) should be added to the list of conda channels in order to have the most up to date python packages:
 ```
 > conda config --add channels conda-forge
 ```
 
+#### Conda Environment
+
+The "etdemands" conda environment can be created using the "environment.yml":
+```
+> conda env create -f environment.yml
+```
+
+After creating the environment, it then needs to be "activated":
+```
+conda activate etdemands
+```
+
 #### Installing Modules
 
-External modules can installed all at once (this is preferred approach):
+If you would prefer to not use the conda environment, external modules can installed/updated with conda all at once (this is preferred approach):
 ```
-> conda install numpy scipy pandas gdal bokeh
+> conda install numpy pandas gdal bokeh openpyxl>=2.4.7
 ```
 
 or one at a time:
 ```
 > conda install numpy
 > conda install pandas
+> conda install gdal
 > conda install bokeh
-```
-
-#### Out of date module
-
-Required openpylx (at least 2.4.7) is not yet installed with Anaconda. Install it as:
-```
-> pip install --upgrade openpyxl>=2.4.7
+> conda install openpyxl>=2.4.7
 ```
 
 #### GDAL_DATA
@@ -192,15 +176,29 @@ Required openpylx (at least 2.4.7) is not yet installed with Anaconda. Install i
 After installing GDAL, you may need to manually set GDAL_DATA user environmental variable.
 
 ###### Windows
+
 You can check current value of variable by typing following in command prompt:
 ```
 echo %GDAL_DATA%
 ```
-If GDAL_DATA is set, this will return a folder path (something similar to C:\Anaconda2\Library\share\gdal)
+If GDAL_DATA is set, this will return a folder path (something similar to C:\Miniconda3\Library\share\gdal)
 
 If GDAL_DATA is not set, type following in command prompt (note, your path may vary):
 ```
-> setx GDAL_DATA "C:\Anaconda2\Library\share\gdal"
+> setx GDAL_DATA "C:\Miniconda3\Library\share\gdal"
 ```
 
-The GDAL_DATA environment variable can also be set through Windows Control Panel (System -> Advanced system settings -> Environment Variables).
+The GDAL_DATA environment variable can also be set through the Windows Control Panel (System -> Advanced system settings -> Environment Variables).
+
+###### Linux/Mac
+
+You can check current value of variable by typing following in command prompt:
+```
+echo $GDAL_DATA
+```
+If GDAL_DATA is set, this will return a folder path (something similar to /User/<USER>/Miniconda3/Library/share/gdal)
+
+If GDAL_DATA is not set, type the following in command prompt (note, your path may vary):
+```
+> export GDAL_DATA=/User/<USER>/Miniconda3/Library/share/gdal"
+```

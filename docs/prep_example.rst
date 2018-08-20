@@ -6,7 +6,7 @@ Clone the repository
 If you already have a local copy of the et-demands repository, make sure to pull the latest version from GitHub.  If you don't already have a local copy of the repository, either clone the repository locally or download a zip file of the scripts from Github.
 
 .. note::
-   For this example, it is assumed that the repository was cloned directly to the D: drive (i.e. D:\\et-demands).
+   For this example, it is assumed that the repository was cloned directly to the C: drive (i.e. C:\\et-demands).
 
 Command prompt / Terminal
 -------------------------
@@ -14,11 +14,11 @@ All of the CropET prep scripts should be run from the command prompt or terminal
 
 Within the command prompt or terminal, change to the target drive if necessary::
 
-    > D:
+    > C:
 
 Then change directory to the et-demands folder::
 
-    > cd D:\et-demands
+    > cd C:\et-demands
 
 You may need to build the common folder if it doesn't exist::
 
@@ -89,10 +89,10 @@ Zonal Stats
 -----------
 Compute the soil properties and crop acreages for each feature/polygon. ::
 
-    > python ..\et-demands\prep\et_demands_zonal_stats_arcpy.py --year 2010 -o --zone huc8
+    > python ..\et-demands\prep\et_demands_zonal_stats.py --year 2010 -o --zone huc8
 
 Static Text Files
 -----------------
 Build the static text files from the templates in "et-demands\\static". ::
 
-    > python ..\et-demands\prep\build_static_files_arcpy.py --ini example.ini --zone huc8 --acres 10 -o
+    > python ..\et-demands\prep\build_static_files.py --ini example.ini --zone huc8 --acres 10 -o

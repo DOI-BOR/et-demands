@@ -7,11 +7,9 @@ Table of Contents:
 .. toctree::
    :maxdepth: 2
 
-   getting_started
    static
    structure
    data
-   Standard_data
    prep_tools
    prep_example
    spatial

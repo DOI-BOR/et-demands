@@ -79,16 +79,16 @@ def read_average_monthly_wb_data(wbname, wsname, skip_lines = 1):
     """
     d = {}
     try:
-        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None,
+        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None, 
                 skiprows = skip_lines, na_values = ['NaN'])
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-
+        
         # move data into a dictionary    (Unable to get df.to_dict to work)
-
+        
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except:
+    except: 
         logging.error('\nERROR: ' + sys.exc_info()[0] +  ' occurred reading average monthly data from worksheet ' +  wsname + ' of workbook ' +  wbname + '.\n')
         return False, d
 
@@ -104,16 +104,16 @@ def read_average_monthly_csv_data(fn, skip_lines = 1, delimiter = ","):
     """
     d = {}
     try:
-        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None,
+        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None, 
                 skiprows = skip_lines, sep = delimiter)
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-
+        
         # move data into a dictionary    (Unable to get df.to_dict to work)
-
+        
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except:
+    except: 
         logging.error('\nERROR: ' + sys.exc_info()[0] +  ' occurred reading average monthly delimited text data from ' +  fn + '\n')
         return False, d
 
@@ -138,7 +138,7 @@ def read_average_monthly__text_data(fn, skip_lines = 1, delimiter = ","):
     except: return False, d
 
 def fill_from_avg_monthly(daily_value, avg_monthly_value):
-    """fill daily values from average monthly values
+    """file daily values from average monthly values
     Args:
         daily_value: existing daily value
         avg_monthly_value: average monthly value
@@ -156,7 +156,7 @@ def is_winter(et_cell, foo_day):
     Args:
         et_cell (): ETCell object
         foo_day (): Placeholder object
-
+        
     Returns:
         boolean that is True if input day is in winter month
     """
@@ -181,7 +181,7 @@ def calculate_ratios(c1, c2):
         return 1.0
     else:
         return c1 / c2
-
+    
 def avg_two_arrays(c1, c2):
     """Computes average of two NumPy arrays or df columns
 
@@ -193,7 +193,7 @@ def avg_two_arrays(c1, c2):
         NumPy array of average values
     """
     return 0.5 * (c1 + c2)
-
+    
 def pair_from_elev(elevation):
     """Calculates air pressure as function of elevation using ASCE 2005 equation 3
 
@@ -245,16 +245,16 @@ def parse_int_set(nputstr = ""):
     selection = set()
     invalid = set()
     # tokens are comma seperated values
-
+    
     tokens = [x.strip() for x in nputstr.split(',')]
     for i in tokens:
         try:
             # typically tokens are plain old integers
-
+            
             selection.add(int(i))
         except:
             # if not, then it might be range
-
+            
             try:
                 token = [int(k.strip()) for k in i.split('-')]
                 if len(token) > 1:

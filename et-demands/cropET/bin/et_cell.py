@@ -44,7 +44,8 @@ class ETCellData():
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            skiprows = [i for i in range(data.cell_properties_header_lines) if i + 1 <> data.cell_properties_names_line]
+            skiprows = [i for i in range(data.cell_properties_header_lines)
+                        if (i + 1) != data.cell_properties_names_line]
             if '.xls' in data.cell_properties_path.lower(): 
                 df = pd.read_excel(data.cell_properties_path, 
                         sheetname = data.cell_properties_ws, 
@@ -179,7 +180,8 @@ class ETCellData():
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            skiprows = [i for i in range(data.cell_cuttings_header_lines) if i + 1 <> data.cell_cuttings_names_line]
+            skiprows = [i for i in range(data.cell_cuttings_header_lines)
+                        if i + 1 != data.cell_cuttings_names_line]
             if '.xls' in data.cell_cuttings_path.lower(): 
                 df = pd.read_excel(data.cell_cuttings_path, sheetname = data.cell_cuttings_ws, 
                         header = data.cell_cuttings_names_line- len(skiprows)  - 1, 
@@ -257,7 +259,7 @@ class ETCellData():
 
             cell.crop_flags = {
                 c: f and c in cell.crop_num_list
-                for c, f in cell.crop_flags.iteritems()}
+                for c, f in cell.crop_flags.items()}
             logging.info('  CellID: {1:{0}s}: {2}'.format(
                 cell_id_len, cell_id,
                 ', '.join(map(str, cell.crop_num_list))))
@@ -499,10 +501,12 @@ class ETCell():
             return False
         if 'elevation' in columns:
             self.elevation = float(row[columns.index('elevation')])
+            if elev_units == 'feet' or elev_units == 'ft':
+                self.elevation *= 0.3048
         else:
             logging.error('Unable to read elevation')
             return False
-	if elev_units == 'feet' or elev_units == 'ft': self.elevation *= 0.3048
+
 	
         # Compute air pressure of station/cell
         
@@ -1324,17 +1328,16 @@ class ETCell():
         # Extend to support historic (constant) phenology
         
         if data.phenology_option > 0:
-	    self.climate_df['maxt'] = self.hist_temps_df['maxt'].values
-	    self.climate_df['mint'] = self.hist_temps_df['mint'].values
-	    del self.hist_temps_df
-	else:
-	    self.climate_df['maxt'] = self.weather_df['tmax'].values
-	    self.climate_df['mint'] = self.weather_df['tmin'].values
-        del self.weather_df
+            self.climate_df['maxt'] = self.hist_temps_df['maxt'].values
+            self.climate_df['mint'] = self.hist_temps_df['mint'].values
+            del self.hist_temps_df
+        else:
+            self.climate_df['maxt'] = self.weather_df['tmax'].values
+            self.climate_df['mint'] = self.weather_df['tmin'].values
+            del self.weather_df
         
         # pick up reference et
-
-	self.climate_df['etref'] = self.refet_df['etref'].values
+        self.climate_df['etref'] = self.refet_df['etref'].values
 	
         # Adjust T's downward if station is arid
         

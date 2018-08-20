@@ -29,7 +29,7 @@ def main(ini_path, verbose_flag = False,
     # Crop ET demands python function
 
     script_path = os.path.join(bin_ws, 'mod_crop_et.py')
-    print script_path
+    print(script_path)
 
     # Check input folder/path
     

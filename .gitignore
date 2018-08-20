@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *.bak
 
+# Shapefiles
+*.lock
+*.cpg
+
 # Temporary microsoft files
 ~$*
 
@@ -11,4 +15,16 @@ __pycache__/
 
 # Common Data
 common
-example/gis/cdl/2010_30m_cdls.img
+
+# Example folders/files
+example/calibration
+example/gis/ETCells*
+example/gis/cdl
+example/gis/scratch
+example/gis/soils
+example/gis/zone_tables
+example/static
+example/annual_stats
+example/daily_stats
+example/monthly_stats
+example/growing_season_stats

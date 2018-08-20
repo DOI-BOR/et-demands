@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         rasterize_soil_polygons.py
 # Purpose:      Convert soil polygons to raster
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -13,7 +10,6 @@ import os
 import subprocess
 import sys
 
-import numpy as np
 from osgeo import gdal
 
 import _gdal_common as gdc
@@ -41,7 +37,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
     """
     logging.info('\nRasterizing Soil Polygons')
 
-    folder_fmt = 'statsgo_{}'
+    # folder_fmt = 'statsgo_{}'
     polygon_fmt = '{}_WTA_0to152cm_statsgo.shp'
     output_soil_ws = os.path.join(gis_ws, 'soils')
 
@@ -58,7 +54,8 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
 
     output_format = 'HFA'
     output_type = 'Float32'
-    output_nodata = float(np.finfo(np.float32).min)
+    output_nodata = -9999
+    # output_nodata = float(np.finfo(np.float32).min)
     # output_type = 'Byte'
     # output_nodata = 255
 
@@ -66,6 +63,12 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
 
     logging.info('Soil Property:   {}'.format(', '.join(prop_list)))
     if prop_list == ['all']:
@@ -73,17 +76,17 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
 
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error('\nERROR: The GIS workspace {} ' +
-                      'does not exist\n'.format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isdir(input_soil_ws):
-        logging.error(('\nERROR: The input soil workspace {} ' +
-                       'does not exist').format(input_soil_ws))
+        logging.error('\nERROR: The input soil workspace does not exist'
+                      '\n  {}'.format(input_soil_ws))
         sys.exit()
     elif not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist' +
-             '\n  Try re-running "build_study_area_raster.py"').format(
+            '\nERROR: The zone raster {} does not exist'
+            '\n  Try re-running "build_study_area_raster.py"'.format(
                 zone_raster_path))
         sys.exit()
     if not os.path.isdir(output_soil_ws):
@@ -94,8 +97,9 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
     temp_polygon_path = os.path.join(output_soil_ws, 'temp_polygon.shp')
     if os.path.isfile(temp_polygon_path):
         util.remove_file(temp_polygon_path)
-        # subprocess.call(
-        #     ['gdalmanage', 'delete', '-f', '', temp_polygon_path])
+        # subprocess.check_output(
+        #     ['gdalmanage', 'delete', '-f', '', temp_polygon_path],
+        #     shell=shell_flag)
 
     # Reference all output rasters zone raster
     zone_raster_ds = gdal.Open(zone_raster_path)
@@ -113,17 +117,19 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
     # Process each soil property
     for prop_str in prop_list:
         input_polygon_path = os.path.join(
-            input_soil_ws,
-            folder_fmt.format(prop_str), polygon_fmt.format(prop_str))
+            input_soil_ws, polygon_fmt.format(prop_str))
+            # folder_fmt.format(prop_str), polygon_fmt.format(prop_str))
         output_raster_path = os.path.join(
-            output_soil_ws, raster_fmt.format(prop_str))
+            output_soil_ws, raster_fmt.format(prop_str.lower()))
 
         if not os.path.isfile(input_polygon_path):
-            logging.info(('The soil polygon {} does not ' +
-                          'exist').format(input_polygon_path))
+            logging.info('The soil polygon {} does not exist'.format(
+                input_polygon_path))
             continue
         elif os.path.isfile(output_raster_path) and overwrite_flag:
-            subprocess.call(['gdalmanage', 'delete', output_raster_path])
+            subprocess.check_output(
+                ['gdalmanage', 'delete', '-f', output_format, output_raster_path],
+                shell=shell_flag)
 
         if not os.path.isfile(output_raster_path):
             soil_field = field_fmt.format(prop_str.upper())
@@ -133,37 +139,51 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
             input_extent = gdc.project_extent(
                 output_extent, output_osr, input_osr)
             logging.debug('Input Extent: {}'.format(input_extent))
-            subprocess.call(
-                ['ogr2ogr', '-overwrite', '-preserve_fid',
-                 '-t_srs', str(output_wkt),
-                 '-spat', str(input_extent.xmin), str(input_extent.ymin),
-                 str(input_extent.ymax), str(input_extent.ymax),
-                 temp_polygon_path, input_polygon_path])
+            subprocess.check_output(
+                ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite',
+                    '-unsetFieldWidth', '-t_srs', str(output_wkt),
+                    '-spat', str(input_extent.xmin), str(input_extent.ymin),
+                    str(input_extent.ymax), str(input_extent.ymax),
+                    temp_polygon_path, input_polygon_path],
+                shell=shell_flag)
 
             logging.info('Rasterizing shapefile')
-            subprocess.call(
+            subprocess.check_output(
                 ['gdal_rasterize', '-of', output_format, '-a', soil_field,
                  '-a_nodata', str(output_nodata),
                  '-init', str(output_nodata), '-co', 'COMPRESSED=YES'] +
                 ['-te'] + str(output_extent).split() +
                 ['-tr', str(output_cs), str(output_cs), '-ot', output_type,
-                 temp_polygon_path, output_raster_path])
+                 temp_polygon_path, output_raster_path],
+                shell=shell_flag)
 
         if os.path.isfile(temp_polygon_path):
             util.remove_file(temp_polygon_path)
-            # subprocess.call(['gdalmanage', 'delete', temp_polygon_path])
+            # subprocess.check_output(
+            #   ['gdalmanage', 'delete', temp_polygon_path], shell=shell_flag)
 
         if stats_flag and os.path.isfile(output_raster_path):
             logging.info('Computing statistics')
             logging.debug('  {}'.format(output_raster_path))
-            subprocess.call(
-                ['gdalinfo', '-stats', '-nomd', output_raster_path])
+            subprocess.check_output(
+                ['gdalinfo', '-stats', '-nomd', output_raster_path],
+                shell=shell_flag)
 
         if pyramids_flag and os.path.isfile(output_raster_path):
             logging.info('Building pyramids')
             logging.debug('  {}'.format(output_raster_path))
-            subprocess.call(
-                ['gdaladdo', '-ro', output_raster_path] + levels.split())
+            subprocess.check_output(
+                ['gdaladdo', '-ro', output_raster_path] + levels.split(),
+                shell=shell_flag)
+            # args = ['gdaladdo', '-ro']
+            # if output_raster_path.endswith('.img'):
+            #     args.extend([
+            #         '--config', 'USE_RRD YES',
+            #         '--config', 'HFA_USE_RRD YES',
+            #         '--config', 'HFA_COMPRESS_OVR YES'])
+            # args.append(output_raster_path)
+            # args.extend(levels.split())
+            # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():
@@ -202,6 +222,7 @@ def arg_parse():
         args.gis = os.path.abspath(args.gis)
     if args.soil and os.path.isdir(os.path.abspath(args.soil)):
         args.soil = os.path.abspath(args.soil)
+
     return args
 
 

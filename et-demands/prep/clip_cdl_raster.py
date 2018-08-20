@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         clip_cdl_raster.py
 # Purpose:      Clip CDL rasters in order to build agland rasters
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -36,25 +33,33 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
         None
     """
 
-    cdl_format = '{0}_30m_cdls.img'
+    cdl_format = '{}_30m_cdls.img'
     cdl_output_ws = os.path.join(gis_ws, 'cdl')
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
+
+    output_format = 'HFA'
 
     if pyramids_flag:
         levels = '2 4 8 16 32 64 128'
         # gdal.SetConfigOption('USE_RRD', 'YES')
         # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
 
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {} ' +
-                       'does not exist').format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist' +
-             '\n  Try re-running "build_study_area_raster.py"').format(
+            '\nERROR: The zone raster {} does not exist'
+            '\n  Try re-running "build_study_area_raster.py"'.format(
                 zone_raster_path))
         sys.exit()
     if not os.path.isdir(cdl_output_ws):
@@ -67,15 +72,15 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
 
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
-        logging.info('{0}'.format(cdl_year))
+        logging.debug('\nCDL Year: {}'.format(cdl_year))
         cdl_input_path = os.path.join(
             cdl_input_ws, cdl_format.format(cdl_year))
         cdl_output_path = os.path.join(
             cdl_output_ws, cdl_format.format(cdl_year))
         if not os.path.isfile(cdl_input_path):
             logging.error(
-                ('\nERROR: The input CDL raster {} ' +
-                 'does not exist').format(cdl_input_path))
+                '\nERROR: The input CDL raster does not exist'
+                '\n  {}'.format(cdl_input_path))
             continue
 
         # Reference all output rasters zone raster
@@ -83,7 +88,7 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
         output_osr = gdc.raster_ds_osr(zone_raster_ds)
         # output_wkt = gdc.raster_ds_proj(zone_raster_ds)
         output_cs = gdc.raster_ds_cellsize(zone_raster_ds)[0]
-        output_x, output_y = gdc.raster_ds_origin(zone_raster_ds)
+        # output_x, output_y = gdc.raster_ds_origin(zone_raster_ds)
         output_extent = gdc.raster_ds_extent(zone_raster_ds)
         output_ullr = output_extent.ul_lr_swap()
         zone_raster_ds = None
@@ -95,29 +100,36 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
 
         # Overwrite
         if os.path.isfile(cdl_output_path) or overwrite_flag:
-            subprocess.call(['gdalmanage', 'delete', cdl_output_path])
+            logging.info('\nDeleting existing raster')
+            logging.debug('  {}'.format(cdl_output_path))
+            subprocess.check_output(
+                ['gdalmanage', 'delete', '-f', output_format, cdl_output_path],
+                shell=shell_flag)
             # remove_file(cdl_output_path)
 
         # Clip
         if not os.path.isfile(cdl_output_path):
-            subprocess.call(
-                ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES'] +
+            logging.info('\nClipping CDL raster')
+            logging.debug('  {}\n  {}'.format(cdl_input_path, cdl_output_path))
+            subprocess.check_output(
+                ['gdal_translate', '-of', output_format, '-co', 'COMPRESSED=YES'] +
                 ['-projwin'] + str(output_ullr).split() +
                 ['-a_ullr'] + str(output_ullr).split() +
-                [cdl_input_path, cdl_output_path])
+                [cdl_input_path, cdl_output_path],
+                shell=shell_flag)
             if os.path.isfile(cdl_input_path.replace('.img', '.img.vat.dbf')):
                 shutil.copyfile(
                     cdl_input_path.replace('.img', '.img.vat.dbf'),
                     cdl_output_path.replace('.img', '.img.vat.dbf')
                 )
             # , '-a_srs', 'output_proj'
-            # subprocess.call(
-            #     'gdalwarp', '-overwrite', '-of', 'HFA']+
+            # subprocess.check_output(
+            #     'gdalwarp', '-overwrite', '-of', output_format]+
             #     '-te'] + str(output_extent).split() +
             #     '-tr', '{}'.format(input_cs), '{}'.format(input_cs),
-            #     _cdl_path, cdl_output_path])
+            #     _cdl_path, cdl_output_path], shell=shell_flag)
 
-            #Trying copying vat.dbf file from original cdl instead of copying class names during clip
+            # Try copying vat.dbf file from original cdl instead of copying class names during clip
             # # Get class names from CDL raster
             # logging.info('Read RAT')
             # input_ds = gdal.Open(cdl_input_path, 0)
@@ -171,16 +183,27 @@ def main(gis_ws, cdl_input_ws, cdl_year='', overwrite_flag=False,
         if stats_flag and os.path.isfile(cdl_output_path):
             logging.info('Computing statistics')
             logging.debug('  {}'.format(cdl_output_path))
-            subprocess.call(
+            subprocess.check_output(
                 ['gdalinfo', '-stats', '-nomd', '-noct', '-norat',
-                 cdl_output_path])
+                 cdl_output_path],
+                shell=shell_flag)
 
         # Pyramids
         if pyramids_flag and os.path.isfile(cdl_output_path):
-            logging.info('Building statistics')
+            logging.info('Building pyramids')
             logging.debug('  {}'.format(cdl_output_path))
-            subprocess.call(
-                ['gdaladdo', '-ro', cdl_output_path] + levels.split())
+            subprocess.check_output(
+                ['gdaladdo', '-ro', cdl_output_path] + levels.split(),
+                shell=shell_flag)
+            # args = ['gdaladdo', '-ro']
+            # if cdl_output_path.endswith('.img'):
+            #     args.extend([
+            #         '--config', 'USE_RRD YES',
+            #         '--config', 'HFA_USE_RRD YES',
+            #         '--config', 'HFA_COMPRESS_OVR YES'])
+            # args.append(cdl_output_path)
+            # args.extend(levels.split())
+            # subprocess.check_output(args, shell=shell_flag)
 
 
 def arg_parse():
@@ -218,6 +241,7 @@ def arg_parse():
         args.gis = os.path.abspath(args.gis)
     if args.cdl and os.path.isdir(os.path.abspath(args.cdl)):
         args.cdl = os.path.abspath(args.cdl)
+
     return args
 
 
