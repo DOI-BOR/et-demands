@@ -2,11 +2,27 @@
 
 ## Weather Data
 
-The user must provide weather and reference ET data for each weather station.
+The user must provide daily weather and reference ET data for each weather station. This includes:
 
-* Format - **.csv**
+* Date
+* TMax - Daily maximum temperature
+* TMin - Daily minimum temperature
+* Precip - Daily total precipitation
+* Snow - Daily total snowfall
+* SDep - Daily snow depth
+* EstRs - Daily incoming solar radiation
+* EsTDew - Daily dewpoint
+* Penm48 - Daily reference ET from Pennman
+* PreTay - Daily reference ET from Priestley–Taylor
+* ASCEr - Daily reference ET from Penman–Monteith
+* ASCEg - Daily reference ET from Penman–Monteith
+* 85Harg - Daily reference ET from Hargreaves (1985)
 
-* Structure -
+#### File Format
+
+* Format: **.csv**
+
+* Structure:
 
 | Date   | TMax   | TMin   | Precip   | Snow     | SDep | EstRs   | EsWind | EsTDew | Penm48   | PreTay   | ASCEr    | ASCEg    | 85Harg   |
 | -------| ------ | ------ | -------- | -------- | ---- | ------- | ------ | ------ | -------- | -------- | -------- | -------- | -------- |
@@ -22,9 +38,11 @@ A shapefile containing the locations of eath weather station is also required an
 * LON - Weather station longitude
 * [*optional*] *ELEV* [ELEV_FT; ELEV_M] - Weather station elevation in feet or meters. This field is optional and only required if running the RefET model to estimate reference ET.
 
-* Format - **.shp**
+#### File Format
 
-* Attribute Table Structure -
+* Format: **.shp**
+
+* Attribute Table Structure:
 
 | STATION_ID   | *ZONE_ID* [HUC8; HUC10; COUNTRYNAME; GRIDMET_ID]   | LAT   | LON   | *ELEV* [ELEV_FT; ELEV_M]   |
 | ------------ | -------------------------------------------------- | ----- | ----- | -------------------------- |
@@ -53,7 +71,3 @@ The AWC, percent clay, and percent sand data cannot (currently) be directly down
 *Add additional details about which options were used in the Soil Data Viewer*
 
 To use the soil prep tools, the soils data must be provided as separate shapefiles for each product.  The names of the soil shapefiles are hard coded in the rasterize_soil_polygons.py script as "{}_WTA_0to152cm_statsgo.shp", where {} can be "AWC", "Clay", or "Sand" (see [Model Structure](structure.md)).  For each shapefile, the value field name is hardcoded as the upper case of the property (i.e. "AWC", "CLAY", or "SAND").
-
-
-| STATION_ID   | *ZONE_ID* [HUC8; HUC10; COUNTRYNAME; GRIDMET_ID]   | LAT   | LON   | *ELEV* [ELEV_FT; ELEV_M]   |
-| ------------ | -------------------------------------------------- | ----- | ----- | -------------------------- |
