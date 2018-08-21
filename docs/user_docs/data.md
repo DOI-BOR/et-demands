@@ -9,8 +9,9 @@ The user must provide weather and reference ET data for each weather station.
 * Structure -
 
 | Date   | TMax   | TMin   | Precip   | Snow     | SDep | EstRs   | EsWind | EsTDew | Penm48   | PreTay   | ASCEr    | ASCEg    | 85Harg   |
-| Units  | [C]    | [C]    | [In*100] | [In*100] | [In] | [MJ/m2] | [m/s]  | [C]    | [mm/day] | [mm/day] | [mm/day] | [mm/day] | [mm/day] |
 | -------| ------ | ------ | -------- | -------- | ---- | ------- | ------ | ------ | -------- | -------- | -------- | -------- | -------- |
+| Units  | [C]    | [C]    | [In*100] | [In*100] | [In] | [MJ/m2] | [m/s]  | [C]    | [mm/day] | [mm/day] | [mm/day] | [mm/day] | [mm/day] |
+
 
 ### Location Shapefile
 A shapefile containing the locations of eath weather station is also required and is used to generate the static input files. The shapefile must contain the following attributes:
