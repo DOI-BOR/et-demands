@@ -20,7 +20,8 @@ import _util
 
 
 def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
-         overwrite_flag=False, cleanup_flag=False):
+         overwrite_flag=False, cleanup_flag=False,
+         cross_input='cdl_crosswalk_usbrmod.csv'):
     """Calculate zonal statistics needed to run ET-Demands model
 
     Args:
@@ -30,6 +31,7 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
         zone_type (str): Zone type (huc8, huc10, county)
         overwrite_flag (bool): If True, overwrite existing files
         cleanup_flag (bool): If True, remove temporary files
+        cross_input (str): CDL Crosswalk Filename (default: cdl_crosswalk_usbrmod.csv)
 
     Returns:
         None
@@ -120,9 +122,16 @@ def main(gis_ws, input_soil_ws, cdl_year, zone_type='huc8',
     # Key is CDL number, value is crop number, comment is CDL class name
     # Crosswalk values are coming from cdl_crosswalk.csv and being upacked into a dictionary
     # Allows user to modify crosswalk in excel
-    # Pass in crosswalk file as an input argument
+    logging.info('Applying CDL Crosswalk File: {}'.format(cross_input))
+
     crosswalk_file = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'cdl_crosswalk_usbrmod.csv')
+        os.path.dirname(os.path.abspath(__file__)), cross_input)
+    # Check if crosswalk file exists
+    if not os.path.isfile(crosswalk_file):
+        logging.error('\nERROR: The CDL Crosswalk file does not exist.'
+                      ' Check the filename:'
+                      '\n  {}'.format(crosswalk_file))
+        sys.exit()
     cross = pd.read_csv(crosswalk_file)
 
     # Add Try and Except for header names, unique crop numbers, etc.
@@ -543,6 +552,9 @@ def arg_parse():
         '--clean', default=None, action='store_true',
         help='Remove temporary datasets')
     parser.add_argument(
+        '--crosswalk', default='cdl_crosswalk_usbrmod.csv', type=str,
+        help='CDL Crop Crosswalk Filename')
+    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     # parser.add_argument(
@@ -574,4 +586,4 @@ if __name__ == '__main__':
 
     main(gis_ws=args.gis, input_soil_ws=args.soil,
          cdl_year=args.year, zone_type=args.zone,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+         overwrite_flag=args.overwrite, cleanup_flag=args.clean, cross_input=args.crosswalk)
