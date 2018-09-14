@@ -1483,7 +1483,7 @@ class CropETData():
             # Check units
         
             units_list = (['c', 'k', 'f'])
-            for k, v in self.hist_temps['units'].iteritems():
+            for k, v in self.hist_temps['units'].items():
                 if v is not None and v.lower() not in units_list:
                     logging.error(
                         ('  ERROR: {0} units {1} are not ' +
@@ -1526,7 +1526,7 @@ class CropETData():
             non_crop_list = [44]
             # non_crop_list = [44,45,46,55,56,57]
             self.crop_params = {
-                k: v for k, v in self.crop_params.iteritems()
+                k: v for k, v in self.crop_params.items()
                 if ((self.crop_skip_list and k not in self.crop_skip_list) or
                     (self.crop_test_list and k in self.crop_test_list) or
                     (k in non_crop_list))}
