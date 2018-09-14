@@ -332,7 +332,8 @@ class ETCellData():
             # return False
   
           # Filter the file list based on the "active" crops
-        for crop_num in crop_dbf_dict.keys():
+        # for crop_num in crop_dbf_dict.keys():
+        for crop_num in list(crop_dbf_dict):
             if crop_num not in self.crop_num_list:
                 try:
                     del crop_dbf_dict[crop_num]
