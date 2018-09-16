@@ -1,3 +1,15 @@
+.. image:: https://readthedocs.org/projects/et-demands/badge/?version=latest
+    :target: https://readthedocs.org/projects/et-demands/?badge=latest
+
+.. image:: https://travis-ci.org/usbr/et-demands.svg?branch=master
+    :target: https://travis-ci.org/usbr/et-demands
+
+.. image:: https://coveralls.io/repos/usbr/et-demands/badge.png
+    :target: https://coveralls.io/r/usbr/et-demands
+
+.. image:: https://landscape.io/github/usbr/et-demands/master/landscape.svg
+    :target: https://landscape.io/github/usbr/et-demands/master
+    
 # CropET
 Crop ET Demands Model
 
