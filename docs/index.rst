@@ -20,6 +20,7 @@ Table of Contents:
    refet
    cropet
    areaet
+   modeldescription
 
 Indices and tables
 ==================

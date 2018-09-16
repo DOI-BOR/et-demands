@@ -2,6 +2,7 @@
 
 ## Weather Data
 
+### Timeseries Data
 The user must provide daily weather and reference ET data for each weather station. This includes:
 
 * Date
@@ -12,11 +13,8 @@ The user must provide daily weather and reference ET data for each weather stati
 * SDep - Daily snow depth
 * EstRs - Daily incoming solar radiation
 * EsTDew - Daily dewpoint
-* Penm48 - Daily reference ET from Pennman
-* PreTay - Daily reference ET from Priestley–Taylor
 * ASCEr - Daily reference ET from Penman–Monteith
 * ASCEg - Daily reference ET from Penman–Monteith
-* 85Harg - Daily reference ET from Hargreaves (1985)
 
 #### File Format
 
@@ -51,19 +49,15 @@ A shapefile containing the locations of eath weather station is also required an
 ## Study Area
 The user must provide a study area polygon shapefile with at least one feature.  Each feature in the study area shapefile will become a separate ET cell/unit.  Currently, only HUC8, HUC10, county, and gridmet cell shapefiles are fully supported by the prep tools.
 
-HUC8 and HUC10 features can be extracted from the full - [USGS Watershed Boundary Dataset](http://nhd.usgs.gov/wbd.html) (WBD) geodatabase. A subset of the WBD HUC polygons can downloaded using the [USDA Geospatial Data Gateway](https://gdg.sc.egov.usda.gov/) or the full dataset can be downloaded using the [USGS FTP](ftp://rockyftp.cr.usgs.gov/vdelivery/Datasets/Staged/WBD/).
 
-County features can be downloaded from the [USDA Geospatial Data Gateway](https://gdg.sc.egov.usda.gov/). For the zonal stats prep tool to work, the shapefile must have a field called "COUNTYNAME".  Other county features (such as the [US Census Cartographic Boundary Shapefiles](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) could eventually be supported (or the name field could be manually changed to COUNTYNAME).
 
-The GRIDMET grid cells can be constructed how?
-
-## Cropland Data Layer (CDL)
+## Crop Type Data
 
 The CDL raster is used to determine the acreage of crops in each ET cell/unit.  Crops with very low acreages (that were likely misclassified) can be excluded in the zonal stats prep tool.  A single CDL raster is used since the CropET module can only be run for a static set of crops.  Active crops will be set to 1 in the ETCellsCrops.txt static input file.
 
 The CDL raster is also used to mask out non-agricultural areas when computing the average soil conditions.  The CDL raster is used as the "snap raster" or reference raster for all subsequent operations.  This means that the prep tools will project, clip and align the study area raster and soil rasters to the CDL raster.
 
-## Soils
+## Soils Data
 The average agricultural area available water capacity (AWC) and hydrologic soils group are needed for each ET cell/unit.  The hydrologic soils group can be estimated based on the percent sand and clay for each ET cell/unit.
 
 The AWC, percent clay, and percent sand data cannot (currently) be directly downloaded. The easiest way to obtain these soils data is to download the [STATSGO] (http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053629) database for the target state(s) using the [USDA Geospatial Data Gateway](https://gdg.sc.egov.usda.gov/).  Shapefiles of the soil properties can be extracted using the [NRCS Soil Data Viewer](http://www.nrcs.usda.gov/wps/portal/nrcs/detailfull/soils/home/?cid=nrcs142p2_053620) The [SURGO](http://www.nrcs.usda.gov/wps/portal/nrcs/detail/soils/survey/geo/?cid=nrcs142p2_053627) databases can also be used, but these typically cover a smaller area and may have areas of missing data.  It may also be possible to used the gridded SSRUGO data, but this has not been tested.

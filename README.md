@@ -1,3 +1,15 @@
+.. image:: https://readthedocs.org/projects/et-demands/badge/?version=latest
+    :target: https://readthedocs.org/projects/et-demands/?badge=latest
+
+.. image:: https://travis-ci.org/usbr/et-demands.svg?branch=master
+    :target: https://travis-ci.org/usbr/et-demands
+
+.. image:: https://coveralls.io/repos/usbr/et-demands/badge.png
+    :target: https://coveralls.io/r/usbr/et-demands
+
+.. image:: https://landscape.io/github/usbr/et-demands/master/landscape.svg
+    :target: https://landscape.io/github/usbr/et-demands/master
+
 # ET Demands Model
 
 The ET Demands Model has been developed jointly by the [Bureau of Reclamation](https://www.usbr.gov/) and the [Desert Research Institute](https://www.dri.edu/). The model estimates crop evapotranspiration water consumption using the approach documented in [FAO-56](https://www.kimberly.uidaho.edu/water/fao56/fao56.pdf).
