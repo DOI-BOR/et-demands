@@ -49,10 +49,11 @@ Air Pressure
 
 .. math::
 :label: airpressure
+
    \begin{array}{1}
    P = 101.3 \times \left(\frac{293.15 - 0.0065z}{ 293.15} \right)^{(9.80665 / (0.0065 \times 286.9)}
    \end{array}
-   
+
 where:
 
 P = mean atmospheric pressure at station elevation (kPa)
