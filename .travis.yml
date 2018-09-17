@@ -1,0 +1,12 @@
+language: python
+
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+
+install:
+  - pip install numpy pandas gdal bokeh openpyxl pyshp matplotlib fiona descartes shapley pytest pytz 
+
+script:
+  - python -m pytest
