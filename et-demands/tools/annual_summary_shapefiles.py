@@ -6,7 +6,7 @@ import logging
 import sys
 import arcpy
 #Eventually rename util.py to _util.py
-import util as util
+import util_arcpy as util
 import datetime as dt
 
 def main(ini_path, overwrite_flag=True, cleanup_flag=True , year_filter=''):

@@ -6,7 +6,7 @@ import logging
 import sys
 import arcpy
 #Eventually rename util.py to _util.py
-import util as util
+import util_arcpy as util
 import datetime as dt
 
 
@@ -98,10 +98,11 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
     data_re = re.compile('(?P<CELLID>\w+)_crop_(?P<CROP>\d+).csv$', re.I)
     #data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
     
-    #testing
-    monthly_ws = r"D:\upper_co_full\monthly_stats"
-    et_cells_path = os.path.join('D:\upper_co_full\gis','ETCells.shp')
-    etref_field = 'ETr_ASCE'
+    # testing
+    # monthly_ws = r"D:\upper_co_full\monthly_stats"
+    # et_cells_path = os.path.join('D:\upper_co_full\gis','ETCells.shp')
+    # etref_field = 'ETr_ASCE'
+
     # Build list of all data files
     data_file_list = sorted(
         [os.path.join(monthly_ws, f_name) for f_name in os.listdir(monthly_ws)
@@ -112,7 +113,7 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True, year_filter=''):
             '  ERROR: Check the folder_name parameters\n')
         sys.exit()
 
-    #make sure lists are empty
+    # Start with empty lists
     stations = []
     crop_nums = []
 
