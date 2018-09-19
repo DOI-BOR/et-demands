@@ -26,8 +26,8 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     Returns:
         None
     """
-    print('SCRIPT STILL IN DEVELOPMENT (SEE CODE). EXITING')
-    sys.exit()
+    # print('SCRIPT STILL IN DEVELOPMENT (SEE CODE). EXITING')
+    # sys.exit()
 
     logging.info('\nCreating Crop Area Weighted Shapefiles')
     #  INI path
@@ -121,6 +121,10 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     var_list = ['ETact', 'NIWR']
 
     logging.info('\n Creating Crop Area Weighted Shapefiles')
+    if year_filter:
+        logging.info('\nFiltering by Year: {}'.format(year_filter))
+    if growing_season:
+        logging.info('\nFiltering stats to Growing Season, Apr-Oct')
 
     for crop in unique_crop_nums:
         logging.info('\n Processing Crop: {:02d}'.format(crop))
@@ -141,12 +145,14 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
             # Filter data based on year_filter
             if year_filter:
                 daily_df = daily_df[daily_df['Year']== year_filter]
+                logging.info('\nFiltering by Year: {}'.format(year_filter))
 
             # Remove all non-growing season data if growing season flag = True
             # UPDATE TO USE SEASON FLAG IN DAILY CSV FILES (0 or 1)
             if growing_season:
                 daily_df = daily_df[
                     (daily_df['Month'] >= 4) & (daily_df['Month'] <= 10)]
+                logging.info('\nFiltering stats to Growing Season, Apr-Oct')
             # if growing_season:
             #     daily_df = daily_df[(daily_df['Season'] == 1)]
 
@@ -188,13 +194,11 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     # Change Ag_Acres cells with zero area to nan (Avoid ZeroDivisionError)
     cells[cells['AG_ACRES'] == 0] = np.nan
 
-    print(cells.head())
-
     # Calculate CropArea Weighted ETact and NIWR for each cell
     # List Comprehension (All combinations of var_list and stat)
     # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch01s15.html
     for var, stat in [(var, stat) for var in var_list for stat in ['mn', 'md']]:
-        # initialize empty columns (zeros)
+        # nitialize empty columns (zeros)
         cells['CW{0}_{1}'.format(var, stat)] = 0
         for crop in unique_crop_nums:
             # reset temp
