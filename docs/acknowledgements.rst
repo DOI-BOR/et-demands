@@ -1,11 +1,13 @@
 ================
 Acknowledgements
 ================
+The basis for the ET Demands model is the dual crop coefficient method presented in FAO-56 `(Allen et al., 1998) <https://www.kimberly.uidaho.edu/water/fao56/fao56.pdf>`_. Original model code was developed by
+
 
 -------
 History
 -------
-
+This methods used in this model were used to evaluate evapotranspiration and consumptive use irrigation water requirements for the state of Idaho `(Allen et al., 1998) <http://data.kimberly.uidaho.edu/ETIdaho/ETIdaho_Report_April_2007_with_supplement.pdf>`_.
 
 Subsection 1
 ^^^^^^^^^^^^
