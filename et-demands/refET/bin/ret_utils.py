@@ -39,16 +39,16 @@ def read_average_monthly_wb_data(wbname, wsname, skip_lines = 1):
     """
     d = {}
     try:
-        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None, 
+        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None,
                 skiprows = skip_lines, na_values = ['NaN'])
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-        
+
         # move data into a dictionary    (Unable to get df.to_dict to work)
-        
+
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except: 
+    except:
         logging.error('\nERROR: ' + str(sys.exc_info()[0]) + ' occurred reading average monthly data from worksheet ' +  wsname + ' of workbook ' + wbname + '\n')
         return False, d
 
@@ -64,16 +64,16 @@ def read_average_monthly_csv_data(fn, skip_lines = 1, delimiter = ","):
     """
     d = {}
     try:
-        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None, 
+        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None,
                 skiprows = skip_lines, sep = delimiter)
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-        
+
         # move data into a dictionary    (Unable to get df.to_dict to work)
-        
+
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except: 
+    except:
         logging.error('\nERROR: ' + str(sys.exc_info()[0]) + ' occurred reading average delimited text data from ' + fn + '\n')
         return False, d
 
@@ -116,7 +116,7 @@ def is_winter(et_cell, foo_day):
     Args:
         et_cell (): ETCell object
         foo_day (): Placeholder object
-        
+
     Returns:
         boolean that is True if input day is in winter month
     """
@@ -150,8 +150,8 @@ def avg_two_arrays(c1, c2):
         NumPy array of average values
     """
     return 0.5 * (c1 + c2)
-    
-def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2): 
+
+def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2):
     """ Compute estimated incident solar radiation
 
     Args:
@@ -169,7 +169,7 @@ def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, 
     Returns:
         Rs: incident solar radiation
     """
-    TAvg = 0.5 * (TMax + TMin)
+    tmean = 0.5 * (TMax + TMin)
 
     # compute extraterrestial radiation and other data needed to compute incident solar radiation
 
@@ -178,7 +178,7 @@ def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, 
     pressure = pair_from_elev(elevm)
 
     # Estimate clear sky radiation (Rso)
-        
+
     Rso = 0.0
     Rso = estimate_clear_sky_radiation(Ra, pressure, ed, latitude, doy)
     Rs = estimate_incident_radiation(Rso, TMax, TMin, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2)
@@ -186,34 +186,34 @@ def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, 
 
 def extraterrestrial_radiation(doy, lat):
     """ Compute extraterresttrial radiaton in MG/M2/day
-        
+
     Args:
         doy: day of year
         lat: latitude
-        
+
     Returns:
         etr: extraterresttrial radiaton
     """
     Gsc = 0.08202 # MJ/m2/min
     latRad = lat * math.pi / 180.0  # Lat is station latitude in degrees
     decl = 0.4093 * math.sin(2.0 * math.pi * (284.0 + doy) / 365.0)
-    omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) / 
+    omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) /
             (1.0 - math.tan(decl) * math.tan(decl) * math.tan(latRad) * math.tan(latRad)) ** 0.5)
     Dr = 1.0 + 0.033 * math.cos(2.0 * math.pi * doy / 365.0)
-    etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) + 
+    etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) +
             math.cos(latRad) * math.cos(decl) * math.sin(omega))
     return etr
 
 def estimate_clear_sky_radiation(extRa, pressure, ed, latDeg, doy):
     """ Estimate clear sky radiation (Rso) using Appendix D method of ASCE-EWRI (2005)
-        
+
     Args:
         extRa: extraterresttrial radiaton
         pressure: air pressure
         ed: saturation vapor pressure
         latDeg: latitude
         doy: day of year
-        
+
     Returns:
         csRSo: clear sky radiaton
     """
@@ -231,7 +231,7 @@ def estimate_clear_sky_radiation(extRa, pressure, ed, latDeg, doy):
 
 def estimate_incident_radiation(csRSo, maxT, minT, monMaxT, monMinT, TR_b0, TR_b1, TR_b2):
     """ Estimate incident radiation using equation 14
-        
+
     Args:
         csRSo: clear sky radiaton
         maxT: maximum temperature
@@ -241,7 +241,7 @@ def estimate_incident_radiation(csRSo, maxT, minT, monMaxT, monMinT, TR_b0, TR_b
         TR_b0: Thronton and Running b0 coefficient
         TR_b1: Thronton and Running b1 coefficient
         TR_b2: Thronton and Running b2 coefficient
-        
+
     Returns:
         incRs: incident radiaton
     """
@@ -273,16 +273,16 @@ def pair_from_elev(elevation):
         NumPy array of air pressures [kPa]
     """
     # version converted from vb.net
-    
+
     # return 101.3 * ((293. - 0.0065 * elevm) / 293.) ** (9.8 / (0.0065 * 286.9)) # kPa ' standardized by ASCE 2005
-    
+
     # version from from DRI
-    
+
     # return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.26)
 
     # version extended to better match vb.net version
     # 5.255114352 = 9.8 / (0.0065 * 286.9
-    
+
     return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.255114352)
 
 def tdew_from_avg_monthly_Ko(daily_tdew, daily_tmin, avg_monthly_Ko):
@@ -338,25 +338,25 @@ def tdew_from_ea(ea):
 def es_from_t(t):
     """ Tetens (1930) equation for sat. vap pressure, kPa, (T in C)
         Eq. 7 for saturation vapor pressure from dewpoint temperature
-        
+
     Args:
         t (float): temperature [C]
-        
+
     Returns:
         float of saturated vapor pressure [kPa]
     """
-    return 0.6108 * np.exp((17.27 * t) / (t + 237.3)) 
+    return 0.6108 * np.exp((17.27 * t) / (t + 237.3))
 
 def es_ice_from_t(t):
     """ Murray (1967) equation for sat. vap pressure over ice, kPa, (T in C)
 
     Args:
         t (float): temperature [C]
-        
+
     Returns:
         float of saturated vapor pressure over ice [kPa]
     """
-    return 0.6108 * np.exp((21.87 * t) / (t + 265.5)) 
+    return 0.6108 * np.exp((21.87 * t) / (t + 265.5))
 
 def file_logger(logger = logging.getLogger(''), log_level = logging.DEBUG,
                 output_ws = os.getcwd()):
@@ -387,16 +387,16 @@ def parse_int_set(nputstr = ""):
     selection = set()
     invalid = set()
     # tokens are comma seperated values
-    
+
     tokens = [x.strip() for x in nputstr.split(',')]
     for i in tokens:
         try:
             # typically tokens are plain old integers
-            
+
             selection.add(int(i))
         except:
             # if not, then it might be range
-            
+
             try:
                 token = [int(k.strip()) for k in i.split('-')]
                 if len(token) > 1:
@@ -412,5 +412,3 @@ def parse_int_set(nputstr = ""):
 
                 invalid.add(i)
     return selection
-
-
