@@ -1,11 +1,3 @@
-#--------------------------------
-# Name:         compute_growing_season.py
-# Purpose:      Extract growing season data from daily output files
-# Author:       Charles Morton
-# Created       2015-12-08
-# Python:       2.7
-#--------------------------------
-
 import argparse
 import csv
 import datetime as dt
@@ -19,7 +11,7 @@ import pandas as pd
 import util
 
 def main(ini_path, start_date = None, end_date = None, crop_str = ''):
-    """Compuate Growing Season Statistics
+    """Compute Growing Season Statistics
 
     Args:
         ini_path (str): file path of project INI file
@@ -97,7 +89,8 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
         # name_format = '%s_daily_crop_%c.csv'
         name_format = '%s_crop_%c.csv'
     if '%s' not in name_format or '%c' not in name_format:
-        logging.error("crop et file name format requires '%s' and '%c' wildcards.")
+        logging.error("crop et file name format requires"
+                      " '%s' and '%c' wildcards.")
         sys.exit()
     swl = name_format.index('%s')
     cwl = name_format.index('%c')
@@ -204,7 +197,8 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
 
         # Read data from file into record array (structured array)
 
-        daily_df = pd.read_table(file_path, header = 0, comment = '#', sep = sep)
+        daily_df = pd.read_table(file_path, header = 0, comment = '#',
+                                 sep = sep)
         logging.debug('    Fields: {0}'.format(
             ', '.join(daily_df.columns.values)))
         daily_df[date_field] = pd.to_datetime(daily_df[date_field])
@@ -248,7 +242,8 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
         if year_end:
             daily_df = daily_df[daily_df[year_field] <= year_end]
 
-        year_sub_array = np.sort(np.unique(np.array(daily_df[year_field]).astype(np.int)))
+        year_sub_array = np.sort(np.unique(np.array(daily_df[year_field])
+                                           .astype(np.int)))
         logging.debug('    Data Years: {0}'.format(
             ', '.join(list(util.ranges(year_sub_array.tolist())))))
         # logging.debug('    Data Years: {0}'.format(
@@ -268,7 +263,7 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
 
         season_array = np.array(daily_df[season_field])
 
-        # # Original code from growing_season script
+        # Original code from growing_season script
         # Initialize mean annual growing season length variables
 
         gs_sum, gs_cnt, gs_mean = 0, 0, 0
@@ -276,37 +271,40 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
         end_sum, end_cnt, end_mean = 0, 0, 0
 
         # Process each year
-
         for year_i, year in enumerate(year_sub_array):
             year_crop_str = "Crop: {0:2d} {1:32s}  Year: {2}".format(
                 crop_num, crop_name, year)
             logging.debug(year_crop_str)
-            # print(year_crop_str)
-            # print(year)    
-            # Extract data for target year
 
+            # Extract data for target year
             year_mask = (year_array == year)
             date_sub_array = date_array[year_mask]
             doy_sub_array = doy_array[year_mask]
             season_sub_mask = season_array[year_mask]
             field_names=list(daily_df.columns.values)
-            # print(field_names)
-            # sys.exit()
-            #Only Run if Cutting in field_names else fill with blanks (max of 6 cuttings?)
-            #Initial arrays with nans (is np.full better?)
+
+            # Only Run if Cutting in field_names else fill with blanks
+            # Max of 6 cuttings?
+            # Initial arrays with nans (is np.full better?)
             if 'Cutting' in field_names :
-                cutting_dates=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                cutting_dates_doy=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                cutting_sub_array=daily_df.Cutting[year_mask]
-                cutting_number=len(cutting_sub_array[cutting_sub_array>0])
-                cutting_dates[0:cutting_number]=date_sub_array[cutting_sub_array>0]
-                cutting_dates_doy[0:cutting_number]=doy_sub_array[cutting_sub_array>0]
+                cutting_dates = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+                cutting_dates_doy = [np.nan, np.nan, np.nan, np.nan, np.nan,
+                                     np.nan]
+                cutting_sub_array = daily_df.Cutting[year_mask]
+                cutting_number = len(cutting_sub_array[cutting_sub_array>0])
+                cutting_dates[0:cutting_number] = \
+                    date_sub_array[cutting_sub_array>0]
+                cutting_dates_doy[0:cutting_number] = \
+                    doy_sub_array[cutting_sub_array>0]
             else:
                 cutting_dates=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
                 cutting_number=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                cutting_sub_array=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-                cutting_dates_doy=[np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
-            #Track all cutting doy for mean annual by crop (each column is different cutting 1-6)
+                cutting_sub_array=[np.nan, np.nan, np.nan, np.nan, np.nan,
+                                   np.nan]
+                cutting_dates_doy=[np.nan, np.nan, np.nan, np.nan, np.nan,
+                                   np.nan]
+            # Track all cutting doy for mean annual by crop
+            # Each column is different cutting 1-6)
             cutting_dates_temp=pd.DataFrame(cutting_dates_doy).transpose()
             all_cuttings=all_cuttings.append(cutting_dates_temp)
 
@@ -356,7 +354,8 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
                 start_date = date_sub_array[0].isoformat()
                 end_date = date_sub_array[-1].isoformat()
             else:
-                start_doy, end_doy = doy_sub_array[start_i], doy_sub_array[end_i]
+                start_doy, end_doy = doy_sub_array[start_i],\
+                                     doy_sub_array[end_i]
                 start_date = date_sub_array[start_i].isoformat()
                 end_date = date_sub_array[end_i].isoformat()
             gs_length = sum(season_sub_mask)
@@ -437,21 +436,24 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
     baddata_file.close()
 
     # Build output record array file
-
-    gs_summary_csv = csv.writer(open(gs_summary_path, 'wb'))
+    # https://stackoverflow.com/questions/3348460/
+    # csv-file-written-with-python-has-blank-lines-between-each-row/3348664
+    gs_summary_csv = csv.writer(open(gs_summary_path, 'w', newline=''))
     gs_summary_csv.writerow(
         ['STATION', 'CROP_NUM', 'CROP_NAME', 'YEAR',
          'START_DOY', 'END_DOY', 'START_DATE', 'END_DATE', 'GS_LENGTH',
-         'CUTTING_1','CUTTING_2','CUTTING_3','CUTTING_4','CUTTING_5','CUTTING_6'])
+         'CUTTING_1','CUTTING_2','CUTTING_3','CUTTING_4','CUTTING_5',
+         'CUTTING_6'])
     gs_summary_csv.writerows(gs_summary_data)
 
     # Build output record array file
 
-    gs_mean_annual_csv = csv.writer(open(gs_mean_annual_path, 'wb'))
+    gs_mean_annual_csv = csv.writer(open(gs_mean_annual_path, 'w', newline=''))
     gs_mean_annual_csv.writerow(
         ['STATION', 'CROP_NUM', 'CROP_NAME', 'MEAN_START_DOY', 'MEAN_END_DOY',
          'MEAN_START_DATE', 'MEAN_END_DATE', 'MEAN_GS_LENGTH',
-         'MEAN_CUTTING_1','MEAN_CUTTING_2','MEAN_CUTTING_3','MEAN_CUTTING_4','MEAN_CUTTING_5','MEAN_CUTTING_6'])
+         'MEAN_CUTTING_1','MEAN_CUTTING_2','MEAN_CUTTING_3','MEAN_CUTTING_4',
+         'MEAN_CUTTING_5','MEAN_CUTTING_6'])
     gs_mean_annual_csv.writerows(gs_mean_annual_data)
 
     # Cleanup
@@ -505,7 +507,8 @@ if __name__ == '__main__':
     # Try using current working directory if there is only one INI
     # Could look for daily_stats folder, run_basin.py, and/or ini file
 
-    elif len([x for x in os.listdir(os.getcwd()) if x.lower().endswith('.ini')]) == 1:
+    elif len([x for x in os.listdir(os.getcwd()) if x.lower().
+            endswith('.ini')]) == 1:
         ini_path = [
             os.path.join(os.getcwd(), x) for x in os.listdir(os.getcwd())
             if x.lower().endswith('.ini')][0]

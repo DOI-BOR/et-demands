@@ -7,24 +7,24 @@
 #--------------------------------
 
 import argparse
-import ConfigParser
+import configparser
 import datetime as dt
 from itertools import groupby
 import logging
 import os
-import Tkinter
-import tkFileDialog
+# import Tkinter
+# import tkFileDialog
 import sys
 
 
-def get_path(workspace, title_str, file_types=[('INI files', '.ini')]):
-    """"""
-    root = Tkinter.Tk()
-    path = tkFileDialog.askopenfilename(
-        initialdir=workspace, parent=root, filetypes=file_types,
-        title=title_str)
-    root.destroy()
-    return path
+# def get_path(workspace, title_str, file_types=[('INI files', '.ini')]):
+#     """"""
+#     root = Tkinter.Tk()
+#     path = tkFileDialog.askopenfilename(
+#         initialdir=workspace, parent=root, filetypes=file_types,
+#         title=title_str)
+#     root.destroy()
+#     return path
 
 
 # def get_directory(workspace, title_str):
@@ -114,31 +114,43 @@ def parse_int_set(nputstr=""):
     return selection
 
 
-def read_ini(ini_path, section='CROP_ET'):
-    """Open the INI file and check for obvious errors"""
+def read_ini(ini_path, section):
+    """Open the INI file and check for obvious errors
+
+    Notes
+    -----
+
+    """
     logging.info('  INI: {}'.format(os.path.basename(ini_path)))
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     try:
-        ini = config.readfp(open(ini_path))
-    except:
-        logging.error('\nERROR: Config file could not be read, ' +
-                      'is not an input file, or does not exist\n')
+        config.read(ini_path)
+    except IOError:
+        logging.error('\nERROR: INI file does not exist'
+                      '\n  {}\n'.format(ini_path))
         sys.exit()
-    if section not in config.sections():
-        logging.error(('\nERROR: The input file must have ' +
-                       'a section: [{}]\n').format(section))
+    except configparser.MissingSectionHeaderError:
+        logging.error('\nERROR: INI file is missing a section header'
+                      '\n  Please make sure the following line is at the '
+                      'beginning of the file\n[{}]\n'.format(section))
         sys.exit()
+    except Exception as e:
+        logging.error('\nERROR: Unhandled exception reading INI file:'
+                      '\n  {}\n'.format(ini_path, e))
+        logging.error('{}\n'.format(e))
+        sys.exit()
+
     return config
 
 
 def ranges(i):
-    """"""
-    for a, b in groupby(enumerate(i), lambda (x, y): y - x):
+    """Join sequential values into ranges"""
+    for a, b in groupby(enumerate(sorted(i)), lambda t: t[1] - t[0]):
         b = list(b)
         if b[0][1] == b[-1][1]:
             yield str(b[0][1])
         else:
-            yield '{0}-{1}'.format(b[0][1], b[-1][1])
+            yield '{}-{}'.format(b[0][1], b[-1][1])
         # yield b[0][1], b[-1][1]
 
 

@@ -1,16 +1,11 @@
 #--------------------------------
 # Name:         gdal_common.py
 # Purpose:      Common GDAL Support Functions
-# Author:       Charles Morton & Andrew Vitale
-# Created       2016-07-25
-# Python:       2.7
 #--------------------------------
 
 import glob
-import itertools
 import math
 import os
-import random
 import sys
 
 import numpy as np
@@ -32,24 +27,14 @@ class Extent:
     def __iter__(self):
         return iter((self.xmin, self.ymin, self.xmax, self.ymax))
 
-    def __init__(self, (xmin, ymin, xmax, ymax), ndigits=10):
+    def __init__(self, extent, ndigits=10):
         """Round values to avoid Float32 rounding errors"""
-        self.xmin = round(xmin, ndigits)
-        self.ymin = round(ymin, ndigits)
-        self.xmax = round(xmax, ndigits)
-        self.ymax = round(ymax, ndigits)
+        self.xmin = round(extent[0], ndigits)
+        self.ymin = round(extent[1], ndigits)
+        self.xmax = round(extent[2], ndigits)
+        self.ymax = round(extent[3], ndigits)
 
-    def adjust_to_snap(self, method='EXPAND', snap_x=None, snap_y=None,
-                       cs=None):
-        if snap_x is None and env.snap_x is not None:
-            snap_x = env.snap_x
-        if snap_y is None and env.snap_y is not None:
-            snap_y = env.snap_y
-        if cs is None:
-            if env.cellsize:
-                cs = env.cellsize
-            else:
-                raise SystemExit('Cellsize was not set')
+    def adjust_to_snap(self, snap_x, snap_y, cs, method='EXPAND'):
         if method.upper() == 'ROUND':
             self.xmin = math.floor((self.xmin - snap_x) / cs + 0.5) * cs + snap_x
             self.ymin = math.floor((self.ymin - snap_y) / cs + 0.5) * cs + snap_y
@@ -112,26 +97,19 @@ class Extent:
         return ((self.xmin + 0.5 * (self.xmax - self.xmin)),
                 (self.ymin + 0.5 * (self.ymax - self.ymin)))
 
-    def shape(self, cs=None):
+    def shape(self, cs):
         """Return number of rows and columns of the extent
         Args:
             cs: cellsize (default to env.cellsize if not set)
         Returns:
             tuple of raster rows and columns
         """
-        if cs is None and env.cellsize:
-            cs = env.cellsize
         cols = int(round(abs((self.xmin - self.xmax) / cs), 0))
         rows = int(round(abs((self.ymax - self.ymin) / -cs), 0))
         return rows, cols
 
-    def geo(self, cs=None):
+    def geo(self, cs):
         """Geo-tranform of the extent"""
-        if cs is None:
-            if env.cellsize:
-                cs = env.cellsize
-            else:
-                raise SystemExit('Cellsize was not set')
         return (self.xmin, abs(cs), 0., self.ymax, 0., -abs(cs))
 
     def geometry(self):
@@ -155,20 +133,7 @@ class Extent:
             return True
 
 
-class env:
-    """"Generic enviornment parameters used in gdal_common"""
-    snap_proj, snap_osr, snap_geo = None, None, None
-    snap_gcs_proj, snap_gcs_osr = None, None
-    # snap_extent = Extent((0, 0, 1, 1))
-    cellsize, snap_x, snap_y = None, None, None
-    mask_geo, mask_path, mask_array = None, None, None
-    mask_extent = Extent((0, 0, 1, 1))
-    mask_gcs_extent = Extent((0, 0, 1, 1))
-    mask_rows, mask_cols = 0, 0
-    cloud_mask_ws = ''
-
-
-def raster_driver(raster_path):
+def get_gdal_driver(raster_path):
     """Return the GDAL driver from a raster path
 
     Currently supports ERDAS Imagine format, GeoTiff,
@@ -329,6 +294,7 @@ def gdal_to_numpy_type(gdal_type):
     elif gdal_type == gdal.GDT_Float64:
         numpy_type = np.float64
     # elif gdal_type == gdal.GDT_CInt16:
+    #     numpy_type = np.complex64
     #     numpy_type = np.complex64
     # elif gdal_type == gdal.GDT_CInt32:
     #     numpy_type = np.complex64
@@ -854,14 +820,12 @@ def project_extent(input_extent, input_osr, output_osr, cellsize=None):
         input_osr (): OSR spatial reference of the input extent
         output_osr (): OSR spatial reference of the desired output
         cellsize (): the cellsize used to calculate the new extent.
-            If None, will attempt to use gdal_common.environmente
-            This cellsize is in the input spatial reference
+            If None, function will place 1000 points between corners.
+            This cellsize is in the input spatial reference.
 
     Returns:
         tuple: :class:`gdal_common.extent` in the desired projection
     """
-    if cellsize is None and env.cellsize:
-        cellsize = env.cellsize
     # Build an in memory feature to project to
     mem_driver = ogr.GetDriverByName('Memory')
     output_ds = mem_driver.CreateDataSource('')
@@ -898,7 +862,7 @@ def project_extent(input_extent, input_osr, output_osr, cellsize=None):
     return feature_lyr_extent(output_lyr)
 
 
-def block_gen(rows, cols, bs=64, random_flag=False):
+def block_gen(rows, cols, bs=64):
     """Generate block indices for reading rasters/arrays as blocks
 
     Return the row (y/i) index, then the column (x/j) index
@@ -907,40 +871,14 @@ def block_gen(rows, cols, bs=64, random_flag=False):
         rows (int): number of rows in raster/array
         cols (int): number of columns in raster/array
         bs (int): gdal_common block size (produces square block)
-        random (boolean): randomize the order or yielded blocks
 
     Yields:
         block_i and block_j indices of the raster using the specified block size
 
-    Example:
-        from osgeo import gdal, ogr, osr
-        import gdal_common as gis
-
-        ds = gdal.Open('/home/vitale232/Downloads/ndvi.img')
-        rows = ds.RasterYSize
-        cols = ds.RasterXSize
-
-        generator = gis.block_gen(rows, cols)
-        for row, col in generator:
-            print('Row: {0}'.format(row))
-            print('Col: {0}\\n'.format(col))
-
-        random_generator = gis.block_gen(rows, cols, random_flag=True)
-        for row, col in random_generator:
-            print('Row/Col: {0} {1}\n'.format(row, col))
-
     """
-    if random_flag:
-        # DEADBEEF - Is this actually a generator?
-        block_ij_list = list(itertools.product(
-            range(0, rows, bs), range(0, cols, bs)))
-        random.shuffle(block_ij_list)
-        for b_i, b_j in block_ij_list:
-            yield b_i, b_j
-    else:
-        for block_i in xrange(0, rows, bs):
-            for block_j in xrange(0, cols, bs):
-                yield block_i, block_j
+    for block_i in range(0, rows, bs):
+        for block_j in range(0, cols, bs):
+            yield block_i, block_j
 
 
 def block_shape(input_rows, input_cols, block_i=0, block_j=0, bs=64):
@@ -966,12 +904,14 @@ def raster_to_block(input_raster, block_i=0, block_j=0, bs=64, band=1,
     Returns:
         output_array: The array of the raster values
         output_nodata: No data value of the raster file
+
     """
     input_raster_ds = gdal.Open(input_raster, 0)
     output_array, output_nodata = raster_ds_to_block(
         input_raster_ds, block_i, block_j, bs, band,
         fill_value, return_nodata=True)
     input_raster_ds = None
+
     if return_nodata:
         return output_array, output_nodata
     else:
@@ -993,6 +933,7 @@ def raster_ds_to_block(input_raster_ds, block_i=0, block_j=0, bs=64, band=1,
     Returns:
         output_array: The array of the raster values
         output_nodata: No data value of the raster file
+
     """
     # Array is read from upper left corner
     # input_extent = raster_ds_extent(input_raster_ds)
@@ -1001,7 +942,9 @@ def raster_ds_to_block(input_raster_ds, block_i=0, block_j=0, bs=64, band=1,
     input_rows, input_cols = raster_ds_shape(input_raster_ds)
     input_band = input_raster_ds.GetRasterBand(band)
     input_type = input_band.DataType
+    numpy_type = gdal_to_numpy_type(input_type)
     input_nodata = input_band.GetNoDataValue()
+
     # Use fill_value as the raster nodata value if raster doesn't have a
     #   nodata value set
     if input_nodata is None and fill_value is not None:
@@ -1009,8 +952,8 @@ def raster_ds_to_block(input_raster_ds, block_i=0, block_j=0, bs=64, band=1,
     # If raster doesn't have a nodata value and fill value isn't set
     #   use default nodata value for raster data type
     elif input_nodata is None and fill_value is None:
-        input_nodata = numpy_type_nodata(input_type)
-    #
+        input_nodata = numpy_type_nodata(numpy_type)
+
     int_rows, int_cols = block_shape(
         input_rows, input_cols, block_i, block_j, bs)
     output_array = input_band.ReadAsArray(block_j, block_i, int_cols, int_rows)
@@ -1020,6 +963,7 @@ def raster_ds_to_block(input_raster_ds, block_i=0, block_j=0, bs=64, band=1,
         output_array[output_array == input_nodata] = output_nodata
     else:
         output_nodata = int(input_nodata)
+
     if return_nodata:
         return output_array, output_nodata
     else:
@@ -1041,6 +985,7 @@ def block_to_raster(input_array, output_raster, block_i=0, block_j=0,
 
     Returns:
         None. Operates on disk.
+
     """
     try:
         output_raster_ds = gdal.Open(output_raster, 1)
@@ -1069,11 +1014,6 @@ def block_to_raster(input_array, output_raster, block_i=0, block_j=0,
                        'See gdal_common.build_empty_raster()'))
 
 
-def build_empty_raster_mp(args):
-    """Wrapper for calling build_empty_raster"""
-    build_empty_raster(*args)
-
-
 def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
                        output_nodata=None, output_proj=None,
                        output_cs=None, output_extent=None,
@@ -1093,20 +1033,17 @@ def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
 
     Returns:
         Bool: True if raster was successfully written. Otherwise, False.
+
     """
     if output_dtype is None:
         output_dtype = np.float32
     output_gtype = numpy_to_gdal_type(output_dtype)
+
     # Only get the numpy nodata value if one was not passed to function
     if output_nodata is None and output_dtype:
         output_nodata = numpy_type_nodata(output_dtype)
-    if output_proj is None and env.snap_proj:
-        output_proj = env.snap_proj
-    if output_cs is None and env.cellsize:
-        output_cs = env.cellsize
-    if output_extent is None and env.mask_extent:
-        output_extent = env.mask_extent
-    output_driver = raster_driver(output_raster)
+
+    output_driver = get_gdal_driver(output_raster)
     remove_file(output_raster)
     # output_driver.Delete(output_raster)
     output_rows, output_cols = output_extent.shape(output_cs)
@@ -1114,23 +1051,29 @@ def build_empty_raster(output_raster, band_cnt=1, output_dtype=None,
         output_ds = output_driver.Create(
             output_raster, output_cols, output_rows, band_cnt, output_gtype,
             ['COMPRESSED=YES', 'BLOCKSIZE={}'.format(output_bs)])
+    elif output_raster.upper().endswith('TIF'):
+        output_ds = output_driver.Create(
+            output_raster, output_cols, output_rows, band_cnt, output_gtype,
+            ['COMPRESS=LZW', 'TILED=YES'])
     else:
         output_ds = output_driver.Create(
             output_raster, output_cols, output_rows,
             band_cnt, output_gtype)
     output_ds.SetGeoTransform(output_extent.geo(output_cs))
     output_ds.SetProjection(output_proj)
-    for band in xrange(band_cnt):
+
+    for band in range(band_cnt):
         output_band = output_ds.GetRasterBand(band + 1)
         if output_fill_flag:
             output_band.Fill(output_nodata)
         output_band.SetNoDataValue(output_nodata)
+
     output_ds = None
     return True
 
 
 def remove_file(file_path):
-    """Remove a feature/raster and all of its anciallary files"""
+    """Remove a feature/raster and all of its ancillary files"""
     file_ws = os.path.dirname(file_path)
     for file_name in glob.glob(os.path.splitext(file_path)[0]+".*"):
         os.remove(os.path.join(file_ws, file_name))

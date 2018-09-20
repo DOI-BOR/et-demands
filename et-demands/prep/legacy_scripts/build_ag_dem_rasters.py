@@ -1,9 +1,6 @@
 #--------------------------------
 # Name:         build_ag_dem_rasters.py
 # Purpose:      Extract DEM data for agricultural CDL pixels
-# Author:       Charles Morton
-# Created       2017-01-11
-# Python:       2.7
 #--------------------------------
 
 import argparse
@@ -34,35 +31,50 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         pyramids_flag (bool): If True, build pyramids/overviews
             for the output rasters
         stats_flag (bool): If True, compute statistics for the output rasters
+
     Returns:
         None
+
     """
     logging.info('\nExtracting Agriculatural DEM Values')
 
     input_dem_name = 'ned_30m_albers.img'
-    cdl_format = '{0}_30m_cdls.img'
+    cdl_format = '{}_30m_cdls.img'
     dem_ws = os.path.join(gis_ws, 'dem')
     cdl_ws = os.path.join(gis_ws, 'cdl')
     scratch_ws = os.path.join(gis_ws, 'scratch')
     zone_raster_path = os.path.join(scratch_ws, 'zone_raster.img')
 
+    output_format = 'HFA'
+
+    if pyramids_flag:
+        levels = '2 4 8 16 32 64 128'
+        # gdal.SetConfigOption('USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
+        # gdal.SetConfigOption('HFA_COMPRESS_OVR', 'YES')
+
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
     # Check input folders
     if not os.path.isdir(gis_ws):
-        logging.error(('\nERROR: The GIS workspace {} ' +
-                       'does not exist\n').format(gis_ws))
+        logging.error('\nERROR: The GIS workspace does not exist'
+                      '\n  {}'.format(gis_ws))
         sys.exit()
     elif not os.path.isdir(cdl_ws):
-        logging.error(('\nERROR: The CDL workspace {} ' +
-                       'does not exist\n').format(cdl_ws))
+        logging.error('\nERROR: The CDL workspace does not exist'
+                      '\n  {}'.format(cdl_ws))
         sys.exit()
     elif not os.path.isdir(dem_ws):
-        logging.error(('\nERROR: The DEM workspace {} ' +
-                       'does not exist\n').format(dem_ws))
+        logging.error('\nERROR: The DEM workspace does not exist'
+                      '\n  {}'.format(dem_ws))
         sys.exit()
     elif mask_flag and not os.path.isfile(zone_raster_path):
         logging.error(
-            ('\nERROR: The zone raster {} does not exist\n' +
-             '  Try re-running "clip_cdl_raster.py"').format(zone_raster_path))
+            '\nERROR: The zone raster {} does not exist\n'
+            '  Try re-running "clip_cdl_raster.py"'.format(zone_raster_path))
         sys.exit()
     logging.info('\nGIS Workspace:   {}'.format(gis_ws))
     logging.info('CDL Workspace:   {}'.format(cdl_ws))
@@ -75,17 +87,12 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
             input_dem_path))
         sys.exit()
 
-    if pyramids_flag:
-        levels = '2 4 8 16 32 64 128'
-        # gdal.SetConfigOption('USE_RRD', 'YES')
-        # gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-
     # Process existing dem rasters (from merge_dems.py)
     input_rows, input_cols = gdc.raster_path_shape(input_dem_path)
 
     # Process each CDL year separately
     for cdl_year in list(util.parse_int_set(cdl_year)):
-        logging.info('\n{0}'.format(cdl_year))
+        logging.info('\n{}'.format(cdl_year))
         # cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year))
         output_dem_path = os.path.join(
             dem_ws, 'dem_{}_30m_cdls.img'.format(cdl_year))
@@ -95,21 +102,25 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
             cdl_ws, 'agmask_{}_30m_cdls.img'.format(cdl_year))
         if not os.path.isfile(agmask_path):
             logging.error(
-                ('\nERROR: The ag-mask raster {} does not exist\n' +
-                 '  Try re-running "build_ag_cdl_rasters.py"').format(
+                '\nERROR: The ag-mask raster {} does not exist\n'
+                '  Try re-running "build_ag_cdl_rasters.py"'.format(
                     agmask_path))
             continue
 
         # Copy input DEM
         if overwrite_flag and os.path.isfile(output_dem_path):
-            subprocess.call(['gdalmanage', 'delete', output_dem_path])
+            subprocess.check_output(
+                ['gdalmanage', 'delete', '-f', output_format, output_dem_path],
+                shell=shell_flag)
         if (os.path.isfile(input_dem_path) and
             not os.path.isfile(output_dem_path)):
             logging.info('\nCopying DEM raster')
             logging.debug('{}'.format(input_dem_path))
-            subprocess.call(
-                ['gdal_translate', '-of', 'HFA', '-co', 'COMPRESSED=YES',
-                 input_dem_path, output_dem_path])
+            subprocess.check_output(
+                ['gdal_translate', '-of', output_format,
+                 '-co', 'COMPRESSED=YES',
+                 input_dem_path, output_dem_path],
+                shell=shell_flag)
 
         # Set non-ag areas to nodata value
         logging.debug('Processing by block')
@@ -139,13 +150,16 @@ def main(gis_ws, cdl_year='', block_size=16384, mask_flag=False,
         if stats_flag and os.path.isfile(output_dem_path):
             logging.info('Computing statistics')
             logging.debug('  {}'.format(output_dem_path))
-            subprocess.call(['gdalinfo', '-stats', '-nomd', output_dem_path])
+            subprocess.check_output(
+                ['gdalinfo', '-stats', '-nomd', output_dem_path],
+                shell=shell_flag)
 
         if pyramids_flag and os.path.isfile(output_dem_path):
             logging.info('Building pyramids')
             logging.debug('  {}'.format(output_dem_path))
-            subprocess.call(
-                ['gdaladdo', '-ro', output_dem_path] + levels.split())
+            subprocess.check_output(
+                ['gdaladdo', '-ro', output_dem_path] + levels.split(),
+                shell=shell_flag)
 
 
 def arg_parse():
@@ -183,6 +197,7 @@ def arg_parse():
     # Convert input file to an absolute path
     if args.gis and os.path.isdir(os.path.abspath(args.gis)):
         args.gis = os.path.abspath(args.gis)
+
     return args
 
 

@@ -1,7 +1,20 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.bak
+*$py.class
+
+# Distribution / packaging
+dist/
+.eggs/
+*.egg-info/
+
+# Unit test / coverage reports
+.cache
+.coverage
+
+# Shapefiles
+*.lock
+*.cpg
 
 # Temporary microsoft files
 ~$*
@@ -9,5 +22,21 @@ __pycache__/
 # PyCharm
 .idea
 
+# Miscellaneous files
+*.bak
+
 # Common Data
 common
+
+# Example folders/files
+example/calibration
+example/gis/ETCells*
+example/gis/cdl
+example/gis/scratch
+example/gis/soils
+example/gis/zone_tables
+example/static
+example/annual_stats
+example/daily_stats
+example/monthly_stats
+example/growing_season_stats

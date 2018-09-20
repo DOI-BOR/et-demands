@@ -11,14 +11,12 @@ The ET-Demands scripts and tools are assuming that the user will use a folder st
     |   |       2010_30m_cdls.zip
     |   +---huc8
     |   |       wbdhu8_albers.shp
-    |   +---nldas_4km
+    |   +---gridmet_4km
+    |   |       gridmet_4km_albers_full.shp
     |   \---soils
-    |       +---gsmsoil_awc
-    |       |       gsmsoilmu_a_us_awc_albers.shp
-    |       +---gsmsoil_clay
-    |       |       gsmsoilmu_a_us_clay_albers.shp
-    |       \---gsmsoil_sand
-    |               gsmsoilmu_a_us_sand_albers.shp
+    |           AWC_WTA_0to152cm_statsgo.shp
+    |           Clay_WTA_0to152cm_statsgo.shp
+    |           Sand_WTA_0to152cm_statsgo.shp
     |
     +---et-demands
     |   +---cropET
@@ -50,6 +48,6 @@ The ET-Demands scripts and tools are assuming that the user will use a folder st
         |   |       clay_30m_albers.img
         |   |       sand_30m_albers.img
         |   \---stations
-        |           nldas_4km_dd_pts.shp
+        |           gridmet_4km_dd_pts.shp
         +---monthly_stats
         \---static

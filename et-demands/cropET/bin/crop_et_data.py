@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ConfigParser
+import configparser
 import datetime as dt
 import logging
 import os
@@ -27,7 +27,7 @@ class CropETData():
 
         # Check that INI file can be read
         
-        config = ConfigParser.ConfigParser()
+        config = configparser.RawConfigParser()
         try:
             ini = config.readfp(open(ini_path))
         except:
@@ -1336,7 +1336,7 @@ class CropETData():
         units_list = (
             ['c', 'mm', 'mm/d', 'mm/day', 'm/d', 'm', 'meter', 'in*100', 'in', 'in/day', 'inches/day'] +
             ['kg/kg', 'k', 'f', 'm/s', 'mps', 'mpd', 'miles/day', 'miles/d'])
-        for k, v in self.weather['units'].iteritems():
+        for k, v in self.weather['units'].items():
             if v is not None and v.lower() not in units_list:
                 logging.error(('  ERROR: {0} units {1} are not currently supported').format(k, v))
                 sys.exit()
@@ -1483,7 +1483,7 @@ class CropETData():
             # Check units
         
             units_list = (['c', 'k', 'f'])
-            for k, v in self.hist_temps['units'].iteritems():
+            for k, v in self.hist_temps['units'].items():
                 if v is not None and v.lower() not in units_list:
                     logging.error(
                         ('  ERROR: {0} units {1} are not ' +
@@ -1495,7 +1495,7 @@ class CropETData():
             logging.warning('\nRefET Type does not match crop_coefs file name. Check the ini')
             logging.info('  refet_type = {}'.format(self.refet['type']))
             logging.info('  crop_coefs_name = {}'.format(self.crop_coefs_path))
-            raw_input('ENTER')     
+            input('Press ENTER to continue or Ctrl+C to exit')
 
 
 
@@ -1526,7 +1526,7 @@ class CropETData():
             non_crop_list = [44]
             # non_crop_list = [44,45,46,55,56,57]
             self.crop_params = {
-                k: v for k, v in self.crop_params.iteritems()
+                k: v for k, v in self.crop_params.items()
                 if ((self.crop_skip_list and k not in self.crop_skip_list) or
                     (self.crop_test_list and k in self.crop_test_list) or
                     (k in non_crop_list))}
@@ -1543,7 +1543,7 @@ class CropETData():
 
     def set_crop_co2(self):
         """Set crop CO2 type using values in INI"""
-        for crop_num, crop_param in self.crop_params.iteritems():
+        for crop_num, crop_param in self.crop_params.items():
             if not self.co2_flag:
                 crop_param.co2_type = None
             elif self.co2_grass_crops and crop_num in self.co2_grass_crops:

@@ -289,8 +289,8 @@ def main(ini_path, show_flag=False, save_flag=True, label_flag=False,
     # Plot CELL_ID
     logging.info('\nPlotting total crop acreage')
     cell_id_dict = {
-        k: k.replace(' ', '\n') for k in cell_data_dict.iterkeys()}
-    # cell_id_dict = {k:k for k in cell_data_dict.iterkeys()}
+        k: k.replace(' ', '\n') for k in cell_data_dict.keys()}
+    # cell_id_dict = {k:k for k in cell_data_dict.keys()}
     cell_plot_func(
         os.path.join(output_ws, 'cell_id.png'),
         cell_geom_dict, cell_id_dict, cmap=None,
@@ -300,9 +300,9 @@ def main(ini_path, show_flag=False, save_flag=True, label_flag=False,
     # Plot total CDL crop acreages
     logging.info('\nPlotting total crop acreage')
     crop_area_dict = {
-        k: v[crop_area_field] for k, v in cell_data_dict.iteritems()}
+        k: v[crop_area_field] for k, v in cell_data_dict.items()}
     # crop_area_dict = {
-    #     :v[crop_area_field] for k,v in cell_data_dict.iteritems()
+    #     :v[crop_area_field] for k,v in cell_data_dict.items()
     #      v[crop_area_field] > area_threshold}
     cell_plot_func(
         os.path.join(output_ws, 'total_crop_acreage.png'),
@@ -313,7 +313,7 @@ def main(ini_path, show_flag=False, save_flag=True, label_flag=False,
     # Plot PMETo
     # pmeto_dict = {
     #     :v[crop_area_field]
-    #      k,v in cell_data_dict.iteritems()}
+    #      k,v in cell_data_dict.items()}
     # cell_plot_func(
     #     .path.join(output_ws, 'eto.png'),
     #     , pmeto_dict, cmap=cm.YlGn,
@@ -338,11 +338,11 @@ def main(ini_path, show_flag=False, save_flag=True, label_flag=False,
         # First threshold CDL crop areas
         # Check all cell_id's against crop_area_dict keys
         crop_area_dict = {
-            k: v[crop_column] for k, v in cell_data_dict.iteritems()
+            k: v[crop_column] for k, v in cell_data_dict.items()
             if (k in daily_path_dict[crop_num].keys() and
                 v[crop_column] > area_threshold)}
         # crop_area_dict = {
-        #     k: v[crop_column] for k,v in cell_data_dict.iteritems()
+        #     k: v[crop_column] for k,v in cell_data_dict.items()
         #     if k in daily_path_dict[crop_num].keys()}
 
         # Build an empty dataframe to write to
