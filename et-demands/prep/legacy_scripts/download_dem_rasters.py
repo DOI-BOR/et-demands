@@ -94,11 +94,11 @@ def main(gis_ws, tile_ws, dem_cs, mask_flag=False, overwrite_flag=False):
     else:
         # Keep tiles that intersect zone raster extent
         # Project study area extent to DEM tile coordinate system
-        tile_extent = gdc.project_extent(output_extent, output_osr, tile_osr)
+        tile_extent = output_extent.project(output_osr, tile_osr)
         logging.debug('Output Extent: {}'.format(tile_extent))
 
         # Extent needed to select 1x1 degree tiles
-        tile_extent.buffer_extent(tile_buffer)
+        tile_extent.buffer(tile_buffer)
         tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('Tile Extent: {}'.format(tile_extent))
 
@@ -182,11 +182,11 @@ def polygon_tiles(input_path, tile_osr=gdc.epsg_osr(4269),
         logging.debug('  Feature Extent: {}'.format(input_extent))
 
         # Project feature extent to the DEM tile coordinate system
-        tile_extent = gdc.project_extent(input_extent, input_osr, tile_osr)
+        tile_extent = input_extent.project(input_osr, tile_osr)
         logging.debug('  Feature Extent: {}'.format(tile_extent))
 
         # Extent needed to select 1x1 degree tiles
-        tile_extent.buffer_extent(tile_buffer)
+        tile_extent.buffer(tile_buffer)
         tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
         logging.debug('  Tile Extent: {}'.format(tile_extent))
 

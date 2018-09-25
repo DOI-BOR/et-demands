@@ -136,8 +136,7 @@ def main(gis_ws, input_soil_ws, prop_list=['all'], overwrite_flag=False,
             logging.info('Projecting shapefile')
             # Project study area extent to the input/soil spatial reference
             input_osr = gdc.feature_path_osr(input_polygon_path)
-            input_extent = gdc.project_extent(
-                output_extent, output_osr, input_osr)
+            input_extent = output_extent.project(output_osr, input_osr)
             logging.debug('Input Extent: {}'.format(input_extent))
             subprocess.check_output(
                 ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite',
