@@ -56,6 +56,40 @@ def copy(input_path, output_path):
     #     shell=shell_flag, stderr=subprocess.DEVNULL)
 
 
+def delete(input_path):
+    """Delete a raster dataset
+
+    Parameters
+    ----------
+    input_path : str
+
+    """
+    if os.name == 'posix':
+        shell_flag = False
+    else:
+        shell_flag = True
+
+    # TODO: Add a format type function to gdal_common
+    if input_path.upper().endswith('.IMG'):
+        input_format = 'HFA'
+        input_type = 'raster'
+    elif input_path.upper().endswith('.TIF'):
+        input_format = 'GTiff'
+        input_type = 'raster'
+    elif input_path.upper().endswith('.TIFF'):
+        input_format = 'GTiff'
+        input_type = 'raster'
+
+    if input_type == 'raster':
+        # subprocess.run(
+        subprocess.check_output(
+            ['gdalmanage', 'delete', '-f', input_format, input_path],
+            shell=shell_flag)
+    # elif input_type == 'vector':
+    else:
+        raise ValueError('unsupported format for delete')
+
+
 def project(input_path, output_path, output_wkt):
     """Project a feature dataset to a new projection
 

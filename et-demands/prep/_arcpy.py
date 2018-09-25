@@ -386,30 +386,38 @@ def project(input_path, output_path, output_osr):
     output_path : str
     output_osr :
 
+    Returns
+    -------
+    None
+
     """
     driver = get_ogr_driver(input_path)
 
     input_ds = driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     input_osr = input_lyr.GetSpatialRef()
+    output_tx = osr.CoordinateTransformation(input_osr, output_osr)
     output_ds = driver.CopyDataSource(input_ds, output_path)
     output_ds = None
     input_ds = None
     del input_ds, output_ds
 
-    tx = osr.CoordinateTransformation(input_osr, output_osr)
-
     # Project the geometry of each feature
     output_ds = driver.Open(output_path, 1)
     output_lyr = output_ds.GetLayer()
+    output_lyr_name = output_lyr.GetName()
     for output_ftr in output_lyr:
-        output_fid = output_ftr.GetFID()
+        # output_fid = output_ftr.GetFID()
         # logging.debug('  FID: {}'.format(output_fid))
         output_geom = output_ftr.GetGeometryRef()
-        proj_geom = output_geom.Clone()
-        proj_geom.Transform(tx)
-        output_ftr.SetGeometry(proj_geom)
-        input_lyr.SetFeature(output_ftr)
+        output_geom.Transform(output_tx)
+        output_ftr.SetGeometry(output_geom)
+        output_lyr.SetFeature(output_ftr)
+
+    # If you modify the geometries, the extent must be recomputed
+    # This should happen automatically as of 2.2
+    output_ds.ExecuteSQL("RECOMPUTE EXTENT ON {}".format(output_lyr_name))
+    # output_ds.FlushCache()
     output_ds = None
     del output_ds
 
