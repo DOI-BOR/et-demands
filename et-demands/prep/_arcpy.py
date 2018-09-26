@@ -423,11 +423,10 @@ def project(input_path, output_path, output_osr):
 
     # Write projection/spatial reference to prj file
     # Format OSR as ESRI WKT
-    polygon_osr = output_osr.Clone()
-    polygon_osr.MorphToESRI()
-    polygon_proj = polygon_osr.ExportToWkt()
+    prj_osr = output_osr.Clone()
+    prj_osr.MorphToESRI()
     with open(output_path.replace('.shp', '.prj'), 'w') as prj_f:
-        prj_f.write(polygon_proj)
+        prj_f.write(prj_osr.ExportToWkt())
 
 
 def search_cursor(input_path, fields):

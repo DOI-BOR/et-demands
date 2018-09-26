@@ -37,9 +37,9 @@ def main(ini_path, overwrite_flag=False):
 
     logging.debug('INI: {}'.format(ini_path))
     config = util.read_ini(ini_path, 'CROP_ET')
-    zones_path = config.get('CROP_ET', 'cells_path')
-    crops_path = config.get('CROP_ET', 'crops_path')
-    temp_path = crops_path.replace('.shp', '_temp.shp')
+    zone_path = config.get('CROP_ET', 'cells_path')
+    crop_path = config.get('CROP_ET', 'crop_path')
+    temp_path = crop_path.replace('.shp', '_temp.shp')
 
     cdl_ws = config.get('CROP_ET', 'cdl_folder')
     cdl_year = int(config.get('CROP_ET', 'cdl_year'))
@@ -51,19 +51,19 @@ def main(ini_path, overwrite_flag=False):
     cdl_path = os.path.join(cdl_ws, cdl_format.format(cdl_year, 'img'))
 
     # Output field name in the crops shapefile
-    crops_field = config.get('CROP_ET', 'crops_field')
+    crop_field = config.get('CROP_ET', 'crop_field')
 
     shp_driver = ogr.GetDriverByName('ESRI Shapefile')
-    if os.path.isfile(crops_path):
+    if os.path.isfile(crop_path):
         if overwrite_flag:
-            shp_driver.DeleteDataSource(crops_path)
+            shp_driver.DeleteDataSource(crop_path)
         else:
             return True
 
-    if not os.path.isfile(zones_path):
+    if not os.path.isfile(zone_path):
         logging.error(
             '\nERROR: The ET zone shapefile doesn\'t exist, exiting\n'
-            '  {}'.format(zones_path))
+            '  {}'.format(zone_path))
         sys.exit()
     elif not os.path.isfile(cdl_path):
         logging.error(
@@ -71,7 +71,7 @@ def main(ini_path, overwrite_flag=False):
             '  {}'.format(cdl_path))
         sys.exit()
 
-    logging.debug('Zones: {}'.format(zones_path))
+    logging.debug('Zones: {}'.format(zone_path))
 
     # CDL Raster Properties
     cdl_ds = gdal.Open(cdl_path)
@@ -94,20 +94,24 @@ def main(ini_path, overwrite_flag=False):
     # logging.debug('  Extent: {}'.format(zones_extent))
 
     # ET Zones Properties
-    zones_ds = shp_driver.Open(zones_path, 0)
-    zones_lyr = zones_ds.GetLayer()
-    zones_osr = zones_lyr.GetSpatialRef()
-    zones_wkt = gdc.osr_proj(zones_osr)
-    zones_extent = gdc.feature_lyr_extent(zones_lyr)
+    zone_ds = shp_driver.Open(zone_path, 0)
+    zone_lyr = zone_ds.GetLayer()
+    zone_osr = zone_lyr.GetSpatialRef()
+    zone_wkt = gdc.osr_proj(zone_osr)
+    zone_extent = gdc.feature_lyr_extent(zone_lyr)
     logging.debug('\nET Zones Shapefile Properties')
-    logging.debug('  Extent:     {}'.format(zones_extent))
-    logging.debug('  Projection: {}'.format(zones_osr.ExportToWkt()))
+    logging.debug('  Extent:     {}'.format(zone_extent))
+    logging.debug('  Projection: {}'.format(zone_osr.ExportToWkt()))
     # logging.debug('  OSR: {}'.format(zones_osr))
+    if zone_osr.IsGeographic():
+        logging.error('\nERROR: The ET zones shapefile must be in a projected '
+                      'coordinate system, exiting')
+        sys.exit()
 
     # Subset/clip properties
     # Project the extent to the CDL spatial reference
     logging.debug('\nClip Subset')
-    clip_extent = zones_extent.project(zones_osr, cdl_osr)
+    clip_extent = zone_extent.project(zone_osr, cdl_osr)
     logging.debug('  Projected:  {}'.format(clip_extent))
     # Adjust the clip extent to the CDL snap point and cell size
     clip_extent.buffer(10 * cdl_cs)
@@ -126,35 +130,35 @@ def main(ini_path, overwrite_flag=False):
     # Build a raster mask was a little more efficient than selecting
     # touching features later on
     logging.debug('\nBuilding ET Zones mask')
-    zones_count = zones_lyr.GetFeatureCount()
-    if zones_count < 255:
-        zones_mask_gtype = gdal.GDT_Byte
-        zones_mask_nodata = 255
-    elif zones_count < 65535:
-        zones_mask_gtype = gdal.GDT_UInt16
-        zones_mask_nodata = 65535
+    zone_count = zone_lyr.GetFeatureCount()
+    if zone_count < 255:
+        zone_mask_gtype = gdal.GDT_Byte
+        zone_mask_nodata = 255
+    elif zone_count < 65535:
+        zone_mask_gtype = gdal.GDT_UInt16
+        zone_mask_nodata = 65535
     else:
-        zones_mask_gtype = gdal.GDT_UInt32
-        zones_mask_nodata = 4294967295
+        zone_mask_gtype = gdal.GDT_UInt32
+        zone_mask_nodata = 4294967295
 
     memory_driver = gdal.GetDriverByName('GTiff')
     # zones_mask_ds = memory_driver.Create(
     #     os.path.join(os.path.dirname(zones_path), 'zones_mask.tiff'),
     #     clip_cols, clip_rows, 1,  zones_mask_gtype)
     memory_driver = gdal.GetDriverByName('MEM')
-    zones_mask_ds = memory_driver.Create(
-        '', clip_cols, clip_rows, 1,  zones_mask_gtype)
-    zones_mask_ds.SetProjection(cdl_proj)
-    zones_mask_ds.SetGeoTransform(clip_geo)
-    zones_mask_band = zones_mask_ds.GetRasterBand(1)
-    zones_mask_band.Fill(zones_mask_nodata)
-    zones_mask_band.SetNoDataValue(zones_mask_nodata)
-    gdal.RasterizeLayer(zones_mask_ds, [1], zones_lyr, burn_values=[1])
+    zone_mask_ds = memory_driver.Create(
+        '', clip_cols, clip_rows, 1,  zone_mask_gtype)
+    zone_mask_ds.SetProjection(cdl_proj)
+    zone_mask_ds.SetGeoTransform(clip_geo)
+    zone_mask_band = zone_mask_ds.GetRasterBand(1)
+    zone_mask_band.Fill(zone_mask_nodata)
+    zone_mask_band.SetNoDataValue(zone_mask_nodata)
+    gdal.RasterizeLayer(zone_mask_ds, [1], zone_lyr, burn_values=[1])
     # zones_mask_ds = None
     # zones_mask_band = zones_mask_ds.GetRasterBand(1)
-    zones_mask = zones_mask_band.ReadAsArray(0, 0, clip_cols, clip_rows)
-    zones_mask = (zones_mask != zones_mask_nodata)
-    zones_mask_ds = None
+    zone_mask = zone_mask_band.ReadAsArray(0, 0, clip_cols, clip_rows)
+    zone_mask = (zone_mask != zone_mask_nodata)
+    zone_mask_ds = None
 
     logging.debug('\nBuilding initial CDL polygon shapefile')
     if os.path.isfile(temp_path):
@@ -162,7 +166,7 @@ def main(ini_path, overwrite_flag=False):
     polygon_ds = shp_driver.CreateDataSource(temp_path)
     polygon_lyr = polygon_ds.CreateLayer(
         'OUTPUT_POLY', geom_type=ogr.wkbPolygon)
-    field_defn = ogr.FieldDefn(crops_field, ogr.OFTInteger)
+    field_defn = ogr.FieldDefn(crop_field, ogr.OFTInteger)
     polygon_lyr.CreateField(field_defn)
 
     # TODO: Process CDL by tile
@@ -180,8 +184,8 @@ def main(ini_path, overwrite_flag=False):
     cdl_ds = None
 
     # Apply the zones mask
-    if np.any(zones_mask):
-        cdl_array[~zones_mask] = cdl_nodata
+    if np.any(zone_mask):
+        cdl_array[~zone_mask] = cdl_nodata
 
     # Set non-agricultural pixels to nodata
     logging.debug('\nMasking non-crop pixels')
@@ -228,19 +232,18 @@ def main(ini_path, overwrite_flag=False):
     memory_ds = None
     polygon_lyr = None
     polygon_ds = None
-    del cdl_array, nodata_mask, zones_mask
+    del cdl_array, nodata_mask, zone_mask
 
     # Write projection/spatial reference
-    polygon_osr = gdc.proj_osr(cdl_proj)
-    polygon_osr.MorphToESRI()
-    polygon_proj = polygon_osr.ExportToWkt()
+    prj_osr = gdc.proj_osr(cdl_proj)
+    prj_osr.MorphToESRI()
     with open(temp_path.replace('.shp', '.prj'), 'w') as prj_f:
-        prj_f.write(polygon_proj)
+        prj_f.write(prj_osr.ExportToWkt())
 
     # Project crops to zones spatial reference
     logging.debug('\nProjecting crops to ET zones spatial reference')
-    # ogr2ogr.project(temp_path, crops_path, zones_wkt)
-    arcpy.project(temp_path, crops_path, zones_osr)
+    # ogr2ogr.project(temp_path, crop_path, zones_wkt)
+    arcpy.project(temp_path, crop_path, zone_osr)
 
     logging.debug('\nRemoving temporary crops shapefile')
     arcpy.delete(temp_path)
