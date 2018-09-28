@@ -29,8 +29,8 @@ def add_field(input_path, name, type, width=None, precision=None):
     """
     input_driver = get_ogr_driver(input_path)
 
-    fields = list_fields(input_path)
-    if name in fields:
+    fields = [x.upper() for x in list_fields(input_path)]
+    if name.upper() in fields:
         logging.debug('The field already exists')
 
     input_ds = input_driver.Open(input_path, 1)
