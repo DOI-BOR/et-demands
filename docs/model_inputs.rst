@@ -118,7 +118,7 @@ RefET requires the timeseries weather data to be in delimited columns with heade
 +-----------------+----------------+----------------------------------------+--------------------------------------------------------------------------+
 | Solar Radiation | R\ :sub:`n`    | MJ m\ :sup:`-2` d\ :sup:`-1`           | mj/m2, mj/m^2, mj/m2/d, mj/m^2/d, mj/m2/day, mj/m^2/day                  |
 |                 |                |                                        |                                                                          |
-|                 |                | W m\ :sup:`-2` d\ :sup:`-1`            | w/m2, w/m^2                 |
+|                 |                | W m\ :sup:`-2` d\ :sup:`-1`            | w/m2, w/m^2                                                              |
 |                 |                |                                        |                                                                          |
 |                 |                | cal cm\ :sup:`-2` d\ :sup:`-1`         | cal/cm2', cal/cm2, cal/cm2/d, cal/cm^2/d, cal/cm2/day, cal/cm^2/day      |
 |                 |                |                                        |                                                                          |
