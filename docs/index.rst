@@ -16,7 +16,8 @@ Table of Contents:
    model_outputs
    model_run
    model_description
-
+   data_sources
+   cdl_crop_types
 Indices and tables
 ==================
 
