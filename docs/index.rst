@@ -17,7 +17,7 @@ Table of Contents:
    model_run
    model_description
    data_sources
-   cdl_crop_types
+   appendix
 Indices and tables
 ==================
 

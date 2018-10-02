@@ -226,7 +226,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   (master_doc, 'et-demands.tex', u'et-demands Documentation',
-   u'Charles Morton', 'manual'),
+   u'Dan Broman', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
