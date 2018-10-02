@@ -6,7 +6,8 @@ Table of Contents:
 
 .. toctree::
    :maxdepth: 2
-
+   introduction
+   quickstart
    static
    structure
    data

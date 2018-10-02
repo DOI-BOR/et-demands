@@ -32,7 +32,7 @@ and one of two reference ET values:
 
 | Date   | TMax   | TMin   | Precip   | Snow     | SDep | EstRs   | EsWind | EsTDew | *ETRef* [ASCEr; ASCEg] |
 | -------| ------ | ------ | -------- | -------- | ---- | ------- | ------ | ------ | ---------------------- |
-| Units  | [C]    | [C]    | [In]     | [In]     | [In] | [MJ/m2] | [m/s]  | [C]    | [mm/day]               | 
+| Units  | [C]    | [C]    | [In]     | [In]     | [In] | [MJ/m2] | [m/s]  | [C]    | [mm/day]               |
 
 
 ### Location Shapefile
