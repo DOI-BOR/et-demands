@@ -6,12 +6,14 @@ Table of Contents:
 
 .. toctree::
    :maxdepth: 2
+
    introduction
    quickstart
    static
    structure
    model-inputs
    model-outputs
+   data-sources
    prep_tools
    prep_example
    spatial
@@ -27,6 +29,8 @@ Table of Contents:
 
 Indices and tables
 ==================
+
+   cdl-crop-types
 
 * :ref:`genindex`
 * :ref:`modindex`

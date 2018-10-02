@@ -14,12 +14,12 @@ will estimate solar radiation and dew point temperature, and gap fill meteorolog
 Meteorology Metadata
 ^^^^^^^^^^^^^^^^^^^^
 
-:ref:`Stuff about Linking Pages <linking-pages>`
 
 Meteorology Data
 ^^^^^^^^^^^^^^^^
 The RefET module requires hourly or daily meteorological data representative of agricultural conditions (if running the CropET module).
 These data can be obtained from
+
 Timeseries Data
 """""""""""""""
 
@@ -181,7 +181,10 @@ Ancillary Data
   * TR\ :sub:`b2`
 
 Thornton and Running coefficients are used to estimate solar radiation from meteorological data. These coefficients
-are location-specific and should be calibrated using :ref:`Stuff about Linking Pages <linking-pages>`
+are location-specific and should be calibrated using measured solar radiation data from a representative location. The
+calibration approach is described in detail :ref:`here <model-calibration-refet-tr>`
+
+
 
 * Wind Measurement Height (in meters)
 
