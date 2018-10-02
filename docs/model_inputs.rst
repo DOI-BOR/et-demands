@@ -14,11 +14,12 @@ will estimate solar radiation and dew point temperature, and gap fill meteorolog
 Meteorology Metadata
 ^^^^^^^^^^^^^^^^^^^^
 
-
 Meteorology Data
 ^^^^^^^^^^^^^^^^
-The RefET module requires hourly or daily meteorological data representative of agricultural conditions (if running the CropET module).
-These data can be obtained from
+The RefET module requires hourly or daily meteorological data. If the calculated reference ET will be used
+in the CropET module, care should be taken to ensure this meteorological data is representative of agricultural conditions.
+Meteorological data can be obtained from :ref:`agricultural weather networks <data-sources-ag-met>`, or :ref:`adjustments <model-description-cropet-aridfctr>`
+reference ET can be made within the CropET module.
 
 Timeseries Data
 """""""""""""""
@@ -78,7 +79,7 @@ RefET requires the timeseries weather data to be in delimited columns with heade
 +===========+================+
 | Comma     | ,              |
 +-----------+----------------+
-| Tab        | /t            |
+| Tab       | /t             |
 +-----------+----------------+
 
 * Format: **.csv**, **.txt**, **.dat**
@@ -88,7 +89,7 @@ RefET requires the timeseries weather data to be in delimited columns with heade
 * Structure:
 
 +--------------+---------------+---------------+-------------+-------------+-------------+
-| Date         | T\ :sub:`max` | T\ :sub:`min` | u\ :sub:`x` | R\ :sub:`n` | T\ :sub:`d` |
+| Date         | Tmax          | Tmin          | ux          | Rn          | Tdew        |
 +==============+===============+===============+=============+=============+=============+
 | 2017-10-01   | 9.34          | 3.70          | 3.95        | 120.93      | 3.21        |
 +--------------+---------------+---------------+-------------+-------------+-------------+
@@ -135,7 +136,7 @@ RefET requires the timeseries weather data to be in delimited columns with heade
 |                 |                |                                        |                                                                          |
 |                 |                | mm  d\ :sup:`-1`                       | mm/d, mm/day                                                             |
 +-----------------+----------------+----------------------------------------+--------------------------------------------------------------------------+
-| Snow Depth      | S\ :sub:`g`    | in                                     | in, inches, in*100                                                       |
+| Snow Depth      | S\ :sub:`g`    | in                                     | in, inches, `in*100`                                                     |
 |                 |                |                                        |                                                                          |
 |                 |                | mm                                     | mm                                                                       |
 +-----------------+----------------+----------------------------------------+--------------------------------------------------------------------------+

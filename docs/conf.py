@@ -49,8 +49,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'et-demands'
-copyright = u'2015, Charles Morton'
-author = u'Charles Morton'
+copyright = u'2018, Dan Broman'
+author = u'Dan Broman'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

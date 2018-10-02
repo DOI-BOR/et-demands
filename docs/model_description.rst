@@ -193,7 +193,8 @@ T\ :sub:`avg` = mean daily air temperature [°C]
 
 Thornton and Running Solar Radiation Estimate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The calculation of ET\ :sub:`sz` requires net radiation at the crop surface. When this is not available, net radiation can be estimated using the approach presented by Thornton and Running `(Thornton and Running, 1999) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_.
+The calculation of ET\ :sub:`sz` requires net radiation at the crop surface. When this is not available, net radiation can be estimated using the
+approach presented by Thornton and Running `(Thornton and Running, 1999) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_.
 
 The calculation of clear sky radiation
 
@@ -224,7 +225,8 @@ b\ :sub:`0`, b\ :sub:`1`, and b\ :sub:`2` are provided by the user. [DISCUSSION 
 
 Windspeed Adjustment
 ^^^^^^^^^^^^^^^^^^^^
-The standardized reference crop evapotranspiration equation assumes a 2-m height windspeed. Windspeed measured at different heights can be approximated as
+The standardized reference crop evapotranspiration equation assumes a 2-m height windspeed.
+Windspeed measured at different heights can be approximated as
 
 .. math::
 
@@ -243,32 +245,51 @@ Other Potential ET Estimates
 The RefET module code can also calculate potential evapotranspiration using several different approaches. This provides a comparison with reference ET.
 
 
-""""""
 Penman
 """"""
 
+.. math::
+
+   ET_o = W \cdot R_n + (1-W) \cdot f(ur) \cdot (e_a - e_d)
+
+where:
+
+ET\ :sub:`o` = grass reference evapotranspiration [mm d\ :sup:`-1`]
+
+W = weighting factor (depends on temperature and altitude)
+
+R\ :sub:`n` = net radiation in equivalent evaporation [mm d\ :sup:`-1`]
+
+f(ur) = wind-related function
+
+(e\ :sub:`a` - e\ :sub:`d`) = difference between saturation vapor pressure at mean
+air temperature and the mean actual vapor pressure of the air [hPa]
+
+.. math::
+
+   f(ur) = 0.27 (1+(ur_2 / 100))
+
+where:
+
+f(ur) = wind-related function
+
+ur\ :sub:`2` = daily  wind run at 2-m height [km d\ :sup:`-1`]
+
 `(Penman, 1948) <https://doi.org/10.1098/rspa.1948.0037>`_.
 
-"""""""""""""""""""""
 Kimberly Penman 1982
 """""""""""""""""""""
 
-
-"""""""""""""""""
 Hargreaves-Samani
 """""""""""""""""
 
 `(Hargreaves and Samani, 1985) <https://doi.org/10.13031/2013.26773>`_.
 
-""""""""""""""""
 Priestley-Taylor
 """"""""""""""""
 
 `(Priestley and Taylor, 1972) <https://doi.org/10.1175/1520-0493(1972)100//<0081:OTAOSH//>2.3.CO;2>`_ .
 
-
-
-""""""""""""""
 Blaney-Criddle
 """"""""""""""
 [THIS CURRENTLY ISN'T SUPPORTED]
@@ -277,9 +298,11 @@ Blaney-Criddle
 
 .. _model-description-cropet:
 
-------
+.. _model-description-cropet:
+
 CropET
 ------
+
 The CropET module of the ET Demands model is the FAO-56 dual crop coefficient model
 `(Allen et al., 1998) <http://www.fao.org/docrep/X0490E/X0490E00.htm>`_ .
 
@@ -297,9 +320,69 @@ K\ :sub:`e` = coefficient representing bare soil evaporation
 
 ET\ :sub:`o` = reference crop evapotranspiration from a grass reference surface
 
+.. _model-description-cropet-aridfctr:
+
+Aridity Rating
+^^^^^^^^^^^^^^
+Allen and Brockway `(1983) <https://idwr.idaho.gov/files/publications/1983-MISC-Est-Consumptive-Use-08-1983.pdf>`_
+estimated consumptive irrigation requirements for crops in Idaho, and developed an aridity rating for each
+meteorological weather station used to adjust temperature data. The aridity rating ranges from 0 (fully irrigated)
+to 100 (arid) and reflects conditions affecting the aridity of the site. The aridity rating was based on station
+metadata information, questionnaires, and phone conversations, and includes conditions close to the station (within a 50m radius),
+the area around the station (within a 1600m radius in the upwind direction),and the region around the
+station (within a 48km radius in the upwind direction).
+
+.. math::
+
+   AR_{cum} = 0.4AR_{St} + 0.5AR_{Ar} + 0.1AR_{Reg}
+
+Allen and Brockway (1983) used empirical data from Allen and Brockway `(1982) <http://digital.lib.uidaho.edu/cdm/ref/collection/idahowater/id/379>`_
+to develop monthly aridity effect values (A\ :sub:`e`). These values were used as adjustment factors for the temperature data based on the aridity rating.
+Stations with an aridity rating of 100 applied the adjustment factor directly, while stations with aridity ratings less than 100, weighted the
+adjustment factor by the aridity rating.
+
+.. math::
+
+   T_{adj} = \frac{AR_{cum}}{100} \cdot A_{e}
+
+The empirical temperature data and aridity effect values used are show in the table below. These data are
+the average monthly departure of air temperatures over arid areas from air temperatures
+over irrigated areas in southern Idaho during 1981, and the aridity effect.
+
+
++-------------+---------------+---------------+---------------+-------------+
+| Month       | T\ :sub:`max` | T\ :sub:`min` | T\ :sub:`mean` | A\ :sub:`e` |
++=============+===============+===============+===============+=============+
+| April       | 2.7           | 2.4           | 2.5           | 1.0         |
++-------------+---------------+---------------+---------------+-------------+
+| May         | 1.3           | 0.6           | 0.9           | 1.5         |
++-------------+---------------+---------------+---------------+-------------+
+| June        | 2.4           | 1.8           | 2.1           | 2.0         |
++-------------+---------------+---------------+---------------+-------------+
+| July        | 4.8           | 2.9           | 3.8           | 3.5         |
++-------------+---------------+---------------+---------------+-------------+
+| August      | 5.2           | 4.3           | 4.7           | 4.5         |
++-------------+---------------+---------------+---------------+-------------+
+| September   | 3.3           | 2.7           | 3.0           | 3.0         |
++-------------+---------------+---------------+---------------+-------------+
+| October     | 0.3           | 1.6           | 0.9           | 0.0         |
++-------------+---------------+---------------+---------------+-------------+
+
+HOW WAS THE ARIDITY EFFECT DETERMINED. ARE THESE DATA GENERAL ENOUGH TO USE
+AT OTHER LOCATIONS IF AN ARIDITY RATING IS DEVELOPED? IF NOT, CAN WE GENERALIZE
+THE APPROACH TO DEVELOPING AN ARIDITY RATING, AND ASSOCIATED ARIDITY EFFECT ADJUSTMENTS?
+ALSO, THE 'CropET' MODULE HAS A WAY OF PULLING IN ARIDITY EFFECT VALUES, HOWEVER,
+THE 'RefET' MODULE DOES NOT. THIS MEANS THAT WHILE TEMPERATURES USED IN THE
+CropET MODULE ARE ADJUSTED, TEMPERATURES USED TO CALCUATE REFERENCE ET ARE NOT.
+IF WE WANT TO CONTINUE TO SUPPORT THE ARIDITY RATING, THIS SHOULD BE ADDRESSED.
+WOULD ALSO REQUIRE PASSING THE MODEL THE ARIDITY EFFECT ADJUSTMENT FACTORS.
+
 -----------
 References
 -----------
+Allen, R. G., & Brockway, C. E. (1982). Weather and Consumptive Use in the Bear River Basin, Idaho During 1982.
+
+Allen, R. G., & Brockway, C. E. (1983). Estimating Consumptive Irrigation Requiremenlts for Crops in Idaho.
 
 Allen, R. G., Pereira, L. S., Smith, M., Raes, D., & Wright, J. L. (2005). FAO-56 Dual Crop Coefficient Method for Estimating Evaporation from Soil and Application Extensions. Journal of Irrigation and Drainage Engineering, 131(1), 2–13. https://doi.org/10.1061/(ASCE)0733-9437(2005)131:1(2)
 
