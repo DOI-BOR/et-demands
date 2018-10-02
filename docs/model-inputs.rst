@@ -44,7 +44,7 @@ Daily Variables
 
 \ :sup:`c` If R\ :sub:`n` is not provided it will be estimated using the approach described in Thornton and Running
 `(1998) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_. The three Thornton and Running
-coefficients must be provided in the *ini* file. (LINK TO TR section in model description) (also LINK to TR calibration section)
+coefficients must be provided in the *ini* file.
 
 Hourly Variables
 ~~~~~~~~~~~~~~~~~
@@ -65,9 +65,7 @@ Hourly Variables
 
 \ :sup:`c` If R\ :sub:`n` is not provided it will be estimated using the approach described in Thornton and Running
 `(1998) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_. The three Thornton and Running coefficients must be provided
-in the *ini* file. (LINK TO TR section in model description) (also LINK to TR calibration section)
-
-If net radiation is estimated, the elevation corresponding to the weather data must also be provided
+in the *ini* file.
 
 # HOW IS THE SNOW OR SNOW DEPTH USED?
 
@@ -181,6 +179,9 @@ Ancillary Data
   * TR\ :sub:`b0`
   * TR\ :sub:`b1`
   * TR\ :sub:`b2`
+
+Thornton and Running coefficients are used to estimate solar radiation from meteorological data. These coefficients
+are location-specific and should be calibrated using :ref:`Stuff about Linking Pages <linking-pages>`
 
 * Wind Measurement Height (in meters)
 

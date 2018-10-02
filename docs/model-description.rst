@@ -189,6 +189,8 @@ where:
 
 T\ :sub:`avg` = mean daily air temperature [°C]
 
+.. _model-description-refet-tr:
+
 Thornton and Running Solar Radiation Estimate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The calculation of ET\ :sub:`sz` requires net radiation at the crop surface. When this is not available, net radiation can be estimated using the approach presented by Thornton and Running `(Thornton and Running, 1999) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_.

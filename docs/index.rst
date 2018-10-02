@@ -10,7 +10,8 @@ Table of Contents:
    quickstart
    static
    structure
-   data
+   model-inputs
+   model-outputs
    prep_tools
    prep_example
    spatial
@@ -18,10 +19,11 @@ Table of Contents:
    run_cet
    run_aet
    tools
+   model-calibration
    refet
    cropet
    areaet
-   modeldescription
+   model-description
 
 Indices and tables
 ==================
