@@ -1,7 +1,7 @@
 .. _model-calibration:
 
-Model Inputs
-============
+Model Calibration
+=================
 
 .. _model-calibration-refet:
 
@@ -11,7 +11,7 @@ RefET
 .. _model-calibration-refet-tr:
 
 Thornton and Running Coefficients
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _model-calibration-cropet:
 

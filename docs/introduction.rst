@@ -21,7 +21,6 @@ Model Version History
 
 v0.1.0
 ^^^^^^
-
 Initial model release
 
 
