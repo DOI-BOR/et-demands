@@ -106,7 +106,7 @@ For a grass reference surface (ET\ :sub:`o`),
 
 C\ :sub:`n` = 37.0
 
-At night, when R\ :sub:`n`< 0,
+At night, when R\ :sub:`n` < 0,
 
 C\ :sub:`d` = 0.96
 
@@ -116,7 +116,7 @@ For an alfalfa reference surface (ET\ :sub:`r`),
 
 C\ :sub:`n` = 66.0
 
-At night, when R\ :sub:`n`< 0,
+At night, when R\ :sub:`n` < 0,
 
 C\ :sub:`d` = 1.7
 
@@ -292,7 +292,7 @@ Hourly and daily calculations require solar declination (δ), sunset hour angle
 .. math::
 
   \delta=23.45 \cdot \frac{\pi}{180} \cdot \sin\left(\frac{2\pi}{365}
-  \cdot(\textrm{DOY + 284})\right)
+  \cdot(\textrm{DOY} + 284)\right)
 
 where:
 
@@ -300,7 +300,7 @@ where:
 
 DOY = day of year
 
-**Sunset Hour Angle (ω\ :sub:`s`)**
+**Sunset Hour Angle** (ω\ :sub:`s`)
 
 .. math::
 
@@ -321,7 +321,7 @@ Day-of-Year Fraction (DOY\ :sub:`frac`)
 
 .. math::
 
-  \textrm{DOY}_{\textrm{frac}} = DOY \cdot \left(\frac{2\pi}{365}\right)
+  \textrm{DOY}_{\textrm{frac}} = \textrm{DOY} \cdot \left(\frac{2\pi}{365}\right)
 
 where:
 
@@ -329,7 +329,7 @@ DOY\ :sub:`frac` = day-of-year fraction
 
 DOY = day-of-year
 
-**Inverse Square of the Earth-Sun Distance (d\ :sub:`r`)**
+**Inverse Square of the Earth-Sun Distance** (d\ :sub:`r`)
 
 .. math::
 
@@ -436,26 +436,31 @@ Checks on ω\ :sub:`1` and ω\ :sub:`2`
 
    \textrm{if } \omega_{1} > \omega_{2} \textrm{ then } \omega_{1} = \omega_{2}
 
+.. math::
+
    \theta = (\omega_{2} - \omega_{1}) \cdot \sin(\textrm{lat}) \cdot \sin(\delta)
    + \cos(\textrm{lat}) \cdot \cos(\delta) \cdot \sin(\omega_{2} - \omega_{1})
+
+.. math::
 
    R_{a} = \frac{24}{\pi} \cdot (1367 \cdot 0.0036) \cdot d_{r} \cdot \theta
 
 where:
-
-ω\ :sub:`s` = sunset hour angle [radians]
-
-t = UTC time at the midpoint of the period [hours]
-
-lat = Latitude [radians]
-
 ω\ :sub:`1` = solar time angle at the beginning of the period [radians]
 
 ω\ :sub:`2` = solar time angle at the end of the period [radians]
 
-R\ :sub:`a` = hourly extraterrestrial radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
+ω = solar hour angle [radians]
+
+t = UTC time at the midpoint of the period [hours]
+
+ω\ :sub:`s` = sunset hour angle [radians]
+
+lat = Latitude [radians]
 
 δ = solar declination [radians]
+
+R\ :sub:`a` = hourly extraterrestrial radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
 
 d\ :sub:`r` = inverse square of the earth-sun distance [d\ :sup:`-2`]
 

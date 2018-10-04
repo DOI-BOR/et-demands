@@ -23,7 +23,6 @@ v0.1.0
 ^^^^^^
 Initial model release
 
-
 Model License
 -------------
 
