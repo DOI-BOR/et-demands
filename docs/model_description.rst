@@ -3,6 +3,7 @@
 =================
 Model Description
 =================
+
 The ET-Demands package
 
 .. _model-description-refet:
@@ -19,6 +20,7 @@ Gap Filling and QA/QC
 
 Missing Data
 """"""""""""
+
 Missing values of maximum air temperature (T\ :sub:`max`), minimum air temperature
 (T\ :sub:`min`), and mean wind speed (u\ :sub:`x`), up to six timesteps, are first
 filled through linear interpolation. Additional missing values not handled by the linear
@@ -27,20 +29,19 @@ interpolation are filled using mean monthly values. Missing values of precipitat
 
 Maximum and Minimum Air Temperature
 """""""""""""""""""""""""""""""""""
+
 Maximum air temperature (T\ :sub:`max`) values greater than 120°F are set to 120°F.
 Minimum air temperature (T\ :sub:`min`) values greater than 90°F are set to 90°F.
 Maximum air temperature is checked against minimum air temperature at every time step.
 If minimum air temperature is greater than maximum air temperature, maximum air
 temperature is set to minimum air temperature.
 
-
-
-
 ASCE Standardized Reference Evapotranspiration Equation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Daily
-"""""
+Daily Reference Evapotranspiration
+""""""""""""""""""""""""""""""""""
+
 .. math::
 
    ET_{sz} =\frac{0.408 \Delta (R_n-G) + \gamma \frac{C_n}{T_{mean} + 273}u_2
@@ -96,8 +97,9 @@ R\ :sub:`n`. For daily calculations it is ignored,
 
 G = 0
 
-Hourly
-""""""
+Hourly Reference Evapotranspiration
+"""""""""""""""""""""""""""""""""""
+
 The equation for ET\ :sub:`sz` is the same as daily, with
 
 For a grass reference surface (ET\ :sub:`o`),
@@ -123,33 +125,30 @@ G = 0.2
 
 # UNIT CONVERSION
 
-# CALCULATE MEAN AIR TEMPERATURE
-
 Mean Air Temperature (T\ :sub:`mean`)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ASCE-EWRI (2005) advises to use the mean of daily minimum and daily maximum
 \temperature to calculate mean daily temperature as opposed to the mean of
 hourly temperatures.
 
 .. math::
 
-   T_{mean} = \frac{T_{min} + T_{max}}{2}
+   T_{mean} = \frac{T_{max} + T_{min}}{2}
 
 where:
 
 T\ :sub:`mean` = mean daily air temperature [°C]
 
-T\ :sub:`min` = minimum daily air temperature [°C]
-
 T\ :sub:`max` = maximum daily air temperature [°C]
+
+T\ :sub:`min` = minimum daily air temperature [°C]
 
 Ultimately, the ET\ :sub:`sz` equation requires actual vapor pressure
 (e\ :sub:`a`). This can be calculated from dew point temperature (T\ :sub:`d`),
 specific humidity (q), or relative humidity (RH). If needed, dew point
 temperature can be calculated from minimum air temperature (T\ :sub:`min`) and
 mean monthly dew point depression values (K\ :sub:`0`).
-
-# CALCULATE DEW POINT TEMPERATURE FROM MINIMUM TEMPERATURE AND DEW POINT DEPRESSION
 
 Dew Point Temperature
 ^^^^^^^^^^^^^^^^^^^^^
@@ -165,8 +164,6 @@ T\ :sub:`d` = mean hourly or daily dew point temperature [°C]
 T\ :sub:`min` = mean hourly or daily minimum daily air temperature [°C]
 
 K\ :sub:`0` =  mean monthly dew point depression [°C]
-
-# CALCULATE ACTUAL VAPOR PRESSURE FROM DEW POINT TEMPERATURE
 
 Actual Vapor Pressure (e\ :sub:`a`) from Dew Point Temperature (T\ :sub:`d`)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -196,8 +193,6 @@ RH = relative humidity [%]
 
 e\ :sub:`s` = saturation vapor pressure [kPa]
 
-# CALCULATE ACTUAL VAPOR PRESSURE FROM SPECIFIC HUMIDITY
-
 Actual Vapor Pressure (e\ :sub:`a`) from Specific Humidity (q)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -211,8 +206,6 @@ e\ :sub:`a` = actual vapor pressure [kPa]
 q = specific humidity [kg/kg]
 
 P = mean atmospheric pressure at station elevation [kPa]
-
-# CALCULATE AIR PRESSURE FROM ELEVATION
 
 Atmospheric Pressure (P)
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -229,8 +222,6 @@ z = station elevation above mean sea level [m]
 
 This equation differs slightly from ASCE 2005 as it reflects full precision per Dr. Allen (pers. comm.).
 
-# CALCULATE PSYCHROMETRIC CONSTANT
-
 Psychrometric Constant (γ)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -243,8 +234,6 @@ where:
 γ = psychrometric constant [kPa °C\ :sup:`-1`]
 
 P = mean atmospheric pressure at station elevation [kPa]
-
-# CALCULATE SLOPE OF THE VAPOR PRESSURE TEMPERATURE CURVE
 
 Slope of the Saturation Vapor Pressure-Temperature Curve (Δ)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -259,8 +248,6 @@ where:
 
 T\ :sub:`mean` = mean daily air temperature [°C]
 
-# CALCULATE SATURATION VAPOR PRESSURE FROM TEMPERATURE
-
 Saturation Vapor Pressure (e\ :sub:`s`)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -273,8 +260,6 @@ where:
 e\ :sub:`s` = saturation vapor pressure
 
 Tetens (1930)
-
-# CALCULATE VAPOR PRESSURE DEFECIT FROM ES AND EA
 
 Vapor Pressure Deficit (VPD)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -290,10 +275,9 @@ e\ :sub:`s` = saturation vapor pressure [kPa]
 
 e\ :sub:`a` = actual vapor pressure [kPa]
 
-# CALCULATE EXTRATERRESTRIAL RADIATION
-
 Extraterrestrial Radiation (R\ :sub:`a`)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The calculations for hourly and daily extraterrestrial radiation (R\ :sub:`a`)
 differ slightly as the hourly calculations require hourly solar time angles (ω)
 in addition to the sunset hour angle  (ω\ :sub:`s`) while the daily calculations
@@ -307,7 +291,8 @@ Hourly and daily calculations require solar declination (δ), sunset hour angle
 
 .. math::
 
-  \delta=23.45 \cdot \frac{\pi}{180} \cdot \sin\left(\frac{2\pi}{365}\cdot(\textrm{DOY + 284})\right)
+  \delta=23.45 \cdot \frac{\pi}{180} \cdot \sin\left(\frac{2\pi}{365}
+  \cdot(\textrm{DOY + 284})\right)
 
 where:
 
@@ -329,8 +314,8 @@ lat = Latitude [radians]
 
 δ = solar declination [radians]
 
-To calcuate the inverse quare of the earth-sun distance, the day-of-year fraction
-(DOY\ :sub:`frac`) is needed
+To calcuate the inverse quare of the earth-sun distance, the day-of-year
+fraction (DOY\ :sub:`frac`) is needed
 
 Day-of-Year Fraction (DOY\ :sub:`frac`)
 
@@ -362,10 +347,11 @@ lat = Latitude [radians]
 
 Daily Extraterrestrial Radiation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. math::
 
-  \theta = \omega_{s} \cdot \sin(\textrm{lat}) \cdot \sin(\delta) + \cos(\textrm{lat})
-  \cdot \cos(\delta) \cdot \sin(\omega_{s})
+  \theta = \omega_{s} \cdot \sin(\textrm{lat}) \cdot \sin(\delta)
+  + \cos(\textrm{lat})\cdot \cos(\delta) \cdot \sin(\omega_{s})
 
    R_{a} = \frac{24}{\pi} \cdot (1367 \cdot 0.0036) \cdot d_{r} \cdot \theta
 
@@ -388,7 +374,6 @@ Hourly calculations also require the calculation hourly solar time angles (ω),
 which requires the calculation of solar time (t\ :sub:`s`).
 
 **Seasonal Correction (sc)**
-
 
 .. math::
 
@@ -474,8 +459,6 @@ R\ :sub:`a` = hourly extraterrestrial radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
 
 d\ :sub:`r` = inverse square of the earth-sun distance [d\ :sup:`-2`]
 
-# CALCULATE CLEAR-SKY RADIATION
-
 Clear-Sky Radiation (R\ :sub:`so`)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -483,7 +466,8 @@ Clear-Sky Radiation (R\ :sub:`so`)
 
 .. math::
 
-   \sin_{\beta24} = \sin(0.85 + 0.3 \cdot \textrm{lat} \cdot \sin(\textrm{DOY}_{\textrm{frac}})
+   \sin_{\beta24} = \sin(0.85 + 0.3 \cdot \textrm{lat} \cdot
+   \sin(\textrm{DOY}_{\textrm{frac}})
     - 1.39)) - 0.42 \cdot \textrm{lat}^2
 
     \sin_{\beta24} = \max(\sin_{\beta24}, 0.1)
@@ -581,6 +565,7 @@ horizon (sin\ :sub:`β`) and the clearness index for direct beam radiation
    \sin_{\beta} \\
    0.01
    \end{cases}
+
 where:
 
 sin\ :sub:`β`= sine of the angle of the sun above the horizon [radians]
@@ -605,7 +590,7 @@ lat = Latitude [radians]
 
 where:
 
-k\ :sub:`t` =
+k\ :sub:`t` = atmospheric turbidity coefficient
 
 k\ :sub:`b` = clearness index for direct beam radiation
 
@@ -647,19 +632,46 @@ k\ :sub:`b` = clearness index for direct beam radiation
 
 k\ :sub:`d` = transmissivity index for diffuse radiation
 
-# CALCULATE Cloudiness  FRACTION
-
 Cloudiness Fraction (fcd)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Daily Cloudiness Fraction**
+
+.. math::
+
+   \textrm{fcd} = 1.35 \cdot \frac{R_{s}}{R_{so}}-0.35
+
+   0.3 < \frac{R_{s}}{R_{so}} \leq 1.0
+
+where:
+
+fcd = daily cloudiness fraction
+
+R\ :sub:`s` = measured solar radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+R\ :sub:`so` = clear sky solar radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+R\ :sub:`s` / R\ :sub:`so` is limited to 0.3 < R\ :sub:`s` / R\ :sub:`so` ≤ 1.0
+
+
+**Hourly Cloudiness Fraction**
+
+At low sun angles (β), cloudiness fraction (fcd) is set to 1.
 
 .. math::
 
    \beta = \arcsin(\sin(\textrm{lat}) \cdot \sin(\delta) + \cos(\textrm{lat})
    \cdot \cos(\delta) \cdot \cos(\omega))
 
+   \textrm{fcd}[R_{so} > 0] = 1.35 \cdot \frac{R_{s}}{R_{so}}-0.35
+
+   0.3 < \frac{R_{s}}{R_{so}} \leq 1.0
+
+   \textrm{fcd}[\beta < 0.3] = 1
+
 where:
 
-beta
+β = angle of the sun above the horizon [radians]
 
 lat = Latitude [radians]
 
@@ -667,13 +679,81 @@ lat = Latitude [radians]
 
 ω = solar hour angle [radians]
 
+fcd = hourly cloudiness fraction
 
+R\ :sub:`s` = measured solar radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
 
-# CALCULATE NET LONG-WAVE RADIATION
+R\ :sub:`so` = clear sky solar radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
 
-# CALCULATE NET RADIATION
+Net Longwave Radiation (R\ :sub:`nl`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# ADJST WINDSPEED FOR MEASUREMENT HEIGHT
+**Daily Net Longwave Radiation**
+
+.. math::
+
+   R_{nl} = 4.901\textrm{e-9} \cdot \textrm{fcd} \cdot (0.34 - 0.14 \cdot \sqrt{e_{a}}
+   \cdot 0.5 ((T_{max} + 273.16)^4 + (T_{min} + 273.16)^4)
+
+where:
+
+R\ :sub:`nl` = daily net longwave radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+fcd = daily cloudiness fraction
+
+e\ :sub:`a` = actual vapor pressure [kPa]
+
+T\ :sub:`max` = maximum daily air temperature [°C]
+
+T\ :sub:`min` = minimum daily air temperature [°C]
+
+**Hourly Net Longwave Radiation**
+
+.. math::
+
+   R_{nl} = 2.042\textrm{e-10} \cdot \textrm{fcd} \cdot (0.34 - 0.14 \cdot \sqrt{e_{a}}
+   \cdot(T_{mean} + 273.16)^4
+
+where:
+
+R\ :sub:`nl` = hourly net longwave radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
+
+fcd = daily cloudiness fraction
+
+e\ :sub:`a` = actual vapor pressure [kPa]
+
+T\ :sub:`mean` = mean hourly air temperature [°C]
+
+Net Radiation (R\ :sub:`n`)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Daily Net Radiation**
+
+.. math::
+
+   R_{n} = 0.77 \cdot R_{s} - R_{nl}
+
+where:
+
+R\ :sub:`n` = daily net radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+R\ :sub:`nl` = daily net longwave radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+R\ :sub:`s` = measured solar radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+**Hourly Net Radiation**
+
+.. math::
+
+   R_{n} = 0.77 \cdot R_{s} - R_{nl}
+
+where:
+
+R\ :sub:`n` = hourly net radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
+
+R\ :sub:`nl` = hourly net longwave radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
+
+R\ :sub:`s` = measured solar radiation [MJ m\ :sup:`-2` h\ :sup:`-1`]
 
 Windspeed Adjustment
 ^^^^^^^^^^^^^^^^^^^^
@@ -693,12 +773,75 @@ u\ :sub:`z` = measured wind speed at z\ :sub:`w` m above ground surface [m s\ :s
 
 z\ :sub:`w` = height of wind measurement about ground surface [m]
 
-# CACLCULATE REFERENCE ET
+## CACLULATE MIN AND MAX MONTHLY MEAN TEMPERATURES
+
+.. _model-description-refet-tr:
+
+Thornton and Running Solar Radiation Estimate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If measured solar radiation (R\ :sub:`s`) is not provided, it can be estimated
+using the approach described in Thorton and Running
+`(1999) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_. This approach
+requires three calibrated coefficients [LINK TO PAGE ON HOW TO DO THIS].
+
+.. math::
+
+   T_{diff} = T_{max} - T_{min}
+
+   T_{mon,diff} = T_{mon,max} - T_{mon,min}
+
+   B_{TR} = TR_{b0} + TR_{b1} \cdot \exp{(TR_{b2} \cdot{T_{mon,diff}})
+
+   R_{s} = R_{so} \cdot (1 - 0.9 \exp{(-B_{TR} \cdot T_{diff}^{1.5})})
+
+where:
+
+T\ :sub:`diff` = temperature difference [°C]
+
+T\ :sub:`max` = maximum daily air temperature [°C]
+
+T\ :sub:`min` = minimum daily air temperature [°C]
+
+T\ :sub:`mon,diff` = mean monthly temperature difference [°C]
+
+T\ :sub:`mon,max` = mean monthly maximum air temperature [°C]
+
+T\ :sub:`mon,min` = mean monthly minimum air temperature [°C]
+
+TR\ :sub:`b0` = Thornton and Running b\ :sub:`0` coefficient
+
+TR\ :sub:`b1` = Thornton and Running b\ :sub:`1` coefficient
+
+TR\ :sub:`b2` = Thornton and Running b\ :sub:`2` coefficient
+
+B\ :sub:`TR` = Thorton and Running parameter
+
+R\ :sub:`s` = calculated solar radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
+
+R\ :sub:`so` = clear sky solar radiation [MJ m\ :sup:`-2` d\ :sup:`-1`]
 
 
+For arid stations, [REFERENCE FOR THESE COEFFICIENTS]
+
+TR\ :sub:`b0` = 0.023
+
+TR\ :sub:`b1` = 0.1
+
+TR\ :sub:`b2` = 0.2
+
+[DISCUSSION OF THESE PARAMETERS, AND HOW TO GET THEM]
+
+
+Other Potential ET Estimates
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The RefET module code can also calculate potential evapotranspiration using
+several different approaches. This provides a comparison with reference ET.
 
 Latent Heat of Vaporization (λ)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 The latent heat of vaporization is calculated from mean air temperature. This
 differs from ASCE-EWRI (2005) which advises to use a constant value of
 2.45 MJ kg\ :sup:`-1` as it varies only slightly over the ranges of air
@@ -715,90 +858,6 @@ where:
 
 T\ :sub:`mean` = mean daily air temperature [°C]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Specific Humidity (q)
-^^^^^^^^^^^^^^^^^^^^^
-
-.. math::
-   q = \frac{0.622 \cdot e_a}{P - 0.378 \cdot e_a}
-
-where:
-
-q = specific humidity [kg/kg]
-
-e\ :sub:`a` = actual vapor pressure
-
-P = mean atmospheric pressure at station elevation [kPa]
-
-REFERENCE - this came out of the DRI RefET code
-
-Net Radiation (R\ :sub:`n`)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. math::
-   e_a = \Delta
-
-where:
-
-Δ = slope of the saturation vapor pressure-temperature curve [kPa °C\ :sup:`-1`]
-
-T\ :sub:`mean` = mean daily air temperature [°C]
-
-.. _model-description-refet-tr:
-
-Thornton and Running Solar Radiation Estimate
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The calculation of ET\ :sub:`sz` requires net radiation at the crop surface.
-When this is not available, net radiation can be estimated using the approach
-presented by Thornton and Running
-`(Thornton and Running, 1999) <https://doi.org/10.1016/S0168-1923(98)00126-9>`_.
-
-The calculation of clear sky radiation
-
-.. math::
-
-   inc_{Rs} =cs_{Rso} \cdot (1 - 0.9)
-
-
-incRs = csRSo * (1 - 0.9 * math.exp(-BTR * dt ** 1.5))
-
-
-This equation requires the parameter B, which
-
-.. math::
-
-   B = b_0 + b_1 \cdot \exp(-b_2 \cdot \overline{\Delta T})
-
-For arid stations, [REFERENCE FOR THESE COEFFICIENTS]
-
-b\ :sub:`0` = 0.023
-
-b\ :sub:`1` = 0.1
-
-b\ :sub:`2` = 0.2
-
-b\ :sub:`0`, b\ :sub:`1`, and b\ :sub:`2` are provided by the user. [DISCUSSION OF THESE PARAMETERS, AND HOW TO GET THEM]
-
-
-
-
-Other Potential ET Estimates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The RefET module code can also calculate potential evapotranspiration using
-several different approaches. This provides a comparison with reference ET.
 
 
 Penman
@@ -883,6 +942,7 @@ ET\ :sub:`o` = reference crop evapotranspiration from a grass reference surface
 
 Aridity Rating
 ^^^^^^^^^^^^^^
+
 Allen and Brockway `(1983) <https://idwr.idaho.gov/files/publications/1983-MISC-Est-Consumptive-Use-08-1983.pdf>`_
 estimated consumptive irrigation requirements for crops in Idaho, and developed an
 aridity rating for each meteorological weather station used to adjust temperature data.
@@ -966,7 +1026,8 @@ Irrigation Water Requirements for Idaho.
 ASCE-EWRI. (2005). The ASCE Standardized Reference Evapotranspiration Equation.
 
 Blaney, H. F., & Criddle, W. D. (1950). Determining Water Requirements in
-Irrigated Areas from Climatological and Irrigation Data. SCS-TP-96. Washington D.C.
+Irrigated Areas from Climatological and Irrigation Data. SCS-TP-96.
+Washington D.C.
 
 Hargreaves, G. H., & A. Samani, Z. (1985). Reference Crop Evapotranspiration
 from Temperature. Applied Engineering in Agriculture, 1(2), 96–99.
