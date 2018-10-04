@@ -1,26 +1,27 @@
 import math
 import numpy as np
+import refet
 
 class refET:
 
     def __init__(self, b0, b1, b2):
         """ """
-        
+
         # Thorton and Running Coefficients
-        
+
         self.TR_b0 = b0
         self.TR_b1 = b1
         self.TR_b2 = b2
-        
-        # these were defined as 'static' variable within a Function in the VB.net version 
-        
+
+        # these were defined as 'static' variable within a Function in the VB.net version
+
         self._Tp3 = 0.0 # static
         self._Tp2 = 0.0 # static
         self._Tp1 = 0.0 # static
         self._ndays = 0 # static
         self._lastDay = 0 # static
 
-    def ComputeRs(self, doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin): 
+    def ComputeRs(self, doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin):
         """ Compute estimated incident solar radiation
 
         Args:
@@ -47,13 +48,13 @@ class refET:
         pressure = self.aFNPressure(elevm)
 
         # Estimate clear sky radiation (Rso)
-        
+
         Rso = 0.0
         Rso = self.EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)
         Rs = self.EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)
         return Rs
 
-    def ComputeHargreavesSamaniRefET(self, doy, TMax, TMin, latitude): 
+    def ComputeHargreavesSamaniRefET(self, doy, TMax, TMin, latitude):
         """ Compute Hargreaves Samani reference ET
 
         Args:
@@ -66,7 +67,7 @@ class refET:
             hsRefET: Hargreaves Samani referencet ET
         """
         TAvg = 0.5 * (TMax + TMin)
-        
+
         # compute latent heat of vaporization
 
         latentHeat = self.aFNHarrison(TAvg)
@@ -116,7 +117,7 @@ class refET:
         Gamma = self.aFNGamma(pressure, latentHeat) # kPa/C
 
         # Estimate clear sky radiation (Rso)
-        
+
         Rso = 0.0
         Rso = self.EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)
 
@@ -164,23 +165,23 @@ class refET:
         """ Compute latent heat as a function average temperature
         Args:
             TAvg: average temperature
-        
+
         Returns:
             a: latent heat of evaporation
         """
-        #aFNHarrison = 2500000.0! - 2360 * TAvg  # '!' forces single precision, numpy Float32 is option if needed                              
+        #aFNHarrison = 2500000.0! - 2360 * TAvg  # '!' forces single precision, numpy Float32 is option if needed
         a = 2500000.0 - 2360 * TAvg  # J/Kg   Latent Heat of Vaporization
         return a
-        
+
     # compute extraterresttrial radiaton in MG/M2/day
-    
+
     def ExtraterrestrialRadiation(self, doy, lat):
         """ Compute extraterresttrial radiaton in MG/M2/day
-        
+
         Args:
             doy: day of year
             lat: latitude
-        
+
         Returns:
             etr: extraterresttrial radiaton
         """
@@ -190,13 +191,13 @@ class refET:
         Gsc = 0.08202 # MJ/m2/min
 
         # [131113] Note:  most of constants below were forced to single precision in VB code
-        
+
         latRad = lat * math.pi / 180.0  # Lat is station latitude in degrees
         decl = 0.4093 * math.sin(2.0 * math.pi * (284.0 + doy) / 365.0)
-        omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) / 
+        omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) /
                 (1.0 - math.tan(decl) * math.tan(decl) * math.tan(latRad) * math.tan(latRad)) ** 0.5)
         Dr = 1.0 + 0.033 * math.cos(2.0 * math.pi * doy / 365.0)
-        etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) + 
+        etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) +
                 math.cos(latRad) * math.cos(decl) * math.sin(omega))
         return etr
 
@@ -213,16 +214,16 @@ class refET:
     def aFNPressure(self, elevation):
         """ Eq. 3 - kPa - Standardized by ASCE 2005"""
         # version converted from vb.net
-    
+
         # return 101.3 * ((293. - 0.0065 * elevation) / 293.) ** (9.8 / (0.0065 * 286.9))
-    
+
         # version from from DRI
-    
+
         # return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.26)
 
         # version extended to better match vb.net version
         # 5.255114352 = 9.8 / (0.0065 * 286.9
-     
+
         return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.255114352)
 
     def aFNGamma(self, Pressure, latentHeat):
@@ -232,14 +233,14 @@ class refET:
 
     def EstimateClearSkyRadiation(self, extRa, pressure, ed, latDeg, doy):
         """ Estimate clear sky radiation (Rso) using Appendix D method of ASCE-EWRI (2005)
-        
+
         Args:
             extRa: extraterresttrial radiaton
             pressure: air pressure
             ed: saturation vapor pressure
             latDeg: latitude
             doy: day of year
-        
+
         Returns:
             csRSo: clear sky radiaton
         """
@@ -255,10 +256,10 @@ class refET:
         csRSo = (kbeam + kdiffuse) * extRa
         return csRSo
 
-    def EstimateIncidentRadiation(self, csRSo, maxT, minT, monMaxT, monMinT, 
+    def EstimateIncidentRadiation(self, csRSo, maxT, minT, monMaxT, monMinT,
                                   TR_b0 = None, TR_b1 = None, TR_b2 = None):
         """ Estimate incident radiation using equation 14
-        
+
         Args:
             csRSo: clear sky radiaton
             maxT: maximum temperature
@@ -268,7 +269,7 @@ class refET:
             TR_b0: Thronton and Running b0 coefficient
             TR_b1: Thronton and Running b1 coefficient
             TR_b2: Thronton and Running b2 coefficient
-        
+
         Returns:
             incRs: incident radiaton
         """
@@ -294,10 +295,10 @@ class refET:
         # from Eq. 14
         incRs = csRSo * (1 - 0.9 * math.exp(-BTR * dt ** 1.5))
         return incRs
-    
+
     def FAO56NetRadiation(self, elevation, lat, doy, etRa, incRs, csRSo, maxT, minT, ed):
         """ Computes FAO 56 Net Radiation
-        
+
         Args:
             elevation: elevation in meters
             latitude: latitude
@@ -308,7 +309,7 @@ class refET:
             TMax: maximum temperature
             TMin: maximum temperature
             ed: saturation vapor pressure
-        
+
         Returns:
             FAO56NR: FA056 net radiation
             Rn82: Rn82 net radiation
@@ -351,22 +352,22 @@ class refET:
         return FAO56NR, Rn82
 
     # soil heat flux
-    
+
     def ComputeSoilHeat(self, da, time_step, TAvg, Rn56, Rn82): # modified 6/24/99
         """ Computes soil heat flux
-        
+
         Args:
             da: day
             time_step: time step
             TAvg: average temperature
             Rn56: FAO56 net radiation
             Rn82: Rn82 net radiation
-        
+
         Returns:
-            G82: 
-            G82o: 
-            GFAO: 
-            GFAOr: 
+            G82:
+            G82o:
+            GFAO:
+            GFAOr:
         """
         # ByRef G82 As Double, ByRef G82o As Double, ByRef GFAO As Double, ByRef GFAOr As Double
         # Static Tp3, Tp1, Tp2 As Double
@@ -386,7 +387,7 @@ class refET:
             else:
                 if (self._lastDay == 15 and da == 15) or (self._lastDay == 0 and da == 0):
                     # monthly heat flux
-                    
+
                     G82 = 0.0 # assume monthly heat flux is zero
                     G82 = 0.14 * (TAvg - self._Tp1) # added 3/28/94  (use prior month) (FAO)
                     GFAO = G82
@@ -437,19 +438,19 @@ class refET:
             if Rn56 >= 0:      # added 10/13/90  (units are MJ/m2/day, but will be W/m2 on console.writeout)
                 # If Ref < 0.5 Then
                 GFAO = 0.1 * Rn56 # Clothier (1986), Kustas et al (1989) in Asrar Remote Sens. Txt
-                
+
                 # for full cover alfalfa (fits grass better than alfalfa.  use for grass)
-                
+
                 # Else
                 GFAOr = 0.04 * Rn56 # alfalfa reference based on Handbook Hydrol.
                 # End If
             else:
                 # If Ref < 0.5 Then
                 GFAO = Rn56 * 0.5 # R.Allen obersvations for USU Drainage Farm.  Alta Fescue
-                
+
                 # crop near full cover.  Adj. Soil heat flux assuming that
                 # therm. cond. in top 100 mm was 2 MJ/m2/C.
-                
+
                 # Else
                 GFAOr = Rn56 * 0.2 # alfalfa
                 # End If
@@ -457,7 +458,7 @@ class refET:
 
     def Penmans(self, lat, doy, pressure, Rn56, Rn82, ed, ea, latentHeat, delta, gamma, TAvg, G82, G82o, GFAO, GFAOr, U242):
         """ Compute Penman based reference ET's
-        
+
         Args:
             lat: latitude
             doy: day of year
@@ -468,12 +469,12 @@ class refET:
             latentHeat: latent heat of evaporation
             gamma:
             TAvg: average temperature
-            G82: 
-            G82o: 
-            GFAO: 
-            GFAOr: 
+            G82:
+            G82o:
+            GFAO:
+            GFAOr:
             U242: wind
-        
+
         Returns:
             Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen: Penman reference ET's
         """
@@ -481,7 +482,7 @@ class refET:
         j = doy
         if lat < 0:
             j = doy - 182
-            if j < 1: 
+            if j < 1:
                 j = j + 365
         ea_TAvg = self.aFNEs(TAvg)
         Awk = 0.4 + 1.4 * math.exp(-((j - 173) / 58) ** 2)
@@ -532,62 +533,63 @@ class refET:
         ASCEPMstdo = max(ASCEPMstdo, zero)
         return  (Penman, PreTay, KimbPeng, ASCEPMstdr, ASCEPMstdo, FAO56PM, KimbPen)
 
-############## 
+##############
 
 def do_tests():
     """ Simple testing of functions as developed """
     o = refET()
-    print 'TESTS\n'
+    'TESTS\n'
     TAvg = 51.0
     latentHeat = o.aFNHarrison(TAvg)
-    print 'aFNHarrison(T=%s):                          %s' % (TAvg, latentHeat)
+    print('aFNHarrison(T=%s):                          %s') % (TAvg, latentHeat)
 
     doy = 50
     latitude = 35.5
     Ra = o.ExtraterrestrialRadiation(doy, latitude)
-    print 'ExtraterrestrialRadiation(doy = %s, lat = %s): %s' % (doy, latitude, Ra)
-    Delta = o.aFNDelta(TAvg) 
-    print 'aFNDelta(T=%s):                             %s' % (TAvg, Delta)
+    print('ExtraterrestrialRadiation(doy = %s, lat = %s): %s') % (doy, latitude, Ra)
+    Delta = o.aFNDelta(TAvg)
+    print('aFNDelta(T=%s):                             %s') % (TAvg, Delta)
 
     elevm = 1000.
     pressure = o.aFNPressure(elevm=elevm)
-    print 'aFNPressure(elevm=%s):                     %s' % (elevm, pressure)
-    
+    print('aFNPressure(elevm=%s):                     %s') % (elevm, pressure)
+
     Gamma = o.aFNGamma(pressure, latentHeat) # kPa/C
-    print 'aFNGamma(pressure=%s,latentHeat=%s):        %s' % (pressure, latentHeat, Gamma)
+    print('aFNGamma(pressure=%s,latentHeat=%s):        %s') % (pressure, latentHeat, Gamma)
 
     TDew = 33.0
     ed = o.aFNEs(TDew)
     print
-    print 'EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)'
+    print('EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)')
     Rso = o.EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)
-    print 'EstimateClearSkyRadiation(%s,%s,%s,%s,%s):        %s' % (Ra,pressure,ed,latitude,doy,Rso)
+    print('EstimateClearSkyRadiation(%s,%s,%s,%s,%s):        %s') % (Ra,pressure,ed,latitude,doy,Rso)
 
-    TMax, TMin = 62.0, 34.3
-    avgTMax, avgTMin = 60.0, 30.3
+    TMax = 34.3
+    TMin = 62.0
+    avgTMax = 30.3
+    avgTMin = 60.0
     print
-    print 'EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)'
+    print('EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)')
     Rs = o.EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)
-    print 'EstimateIncidentRadiation(%s,%s,%s,%s,%s):        %s' % (Rso, TMax, TMin, avgTMax, avgTMin, Rs)
+    print('EstimateIncidentRadiation(%s,%s,%s,%s,%s):        %s') % (Rso, TMax, TMin, avgTMax, avgTMin, Rs)
 
     print
-    print 'FAO56NetRadiation(elevm, latitude, doy, Ra, Rs, Rso, TMax, TMin, ed):   Rn56, Rn82'
+    print('FAO56NetRadiation(elevm, latitude, doy, Ra, Rs, Rso, TMax, TMin, ed):   Rn56, Rn82')
     Rn56, Rn82 = o.FAO56NetRadiation(elevm, latitude, doy, Ra, Rs, Rso, TMax, TMin, ed)
-    print 'FAO56NetRadiation(%s,%s,%s,%s,%s,%s,%s,%s,%s):  %s, %s' % (elevm, latitude, doy, Ra, Rs, Rso, TMax, TMin, ed, Rn56, Rn82)
+    print('FAO56NetRadiation(%s,%s,%s,%s,%s,%s,%s,%s,%s):  %s, %s') % (elevm, latitude, doy, Ra, Rs, Rso, TMax, TMin, ed, Rn56, Rn82)
 
     da = 3
     # time_step = 'hour'
     time_step = 'day'
     G82, G82o, GFAO, GFAOr = o.ComputeSoilHeat(da, time_step, TAvg, Rn56)
-    print 'ComputeSoilHeat(%s,%s,%s,%s,%s):  %s, %s, %s, %s' % (da, time_step, TAvg, Rn56, G82, G82o, GFAO, GFAOr)
+    print('ComputeSoilHeat(%s,%s,%s,%s,%s):  %s, %s, %s, %s') % (da, time_step, TAvg, Rn56, G82, G82o, GFAO, GFAOr)
 
     ea = (o.aFNEs(TMax) + o.aFNEs(TMin)) * 0.5
     u242 = 5   # wind ??
     penman_results = o.Penmans(latitude, doy, pressure, Rn56, Rn82, ed, ea, latentHeat, Delta, Gamma, TAvg, G82, G82o, GFAO, GFAOr, u242)
     Penman, PreTay, KimbPeng, ASCEPMstdr, ASCEPMstdo, FAO56PM, KimbPen = penman_results
-    print penman_results
+    print(penman_results)
 
 if __name__ == '__main__':
     # testing during development
-    do_tests()        
-
+    do_tests()

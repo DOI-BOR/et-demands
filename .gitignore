@@ -40,3 +40,9 @@ example/annual_stats
 example/daily_stats
 example/monthly_stats
 example/growing_season_stats
+annual_out_met/CA9053FilledMetData.csv
+annual_ret/CA9053_KL_S0_RET.csv
+daily_out_met/CA9053FilledMetData.csv
+daily_ret/CA9053_KL_S0_RET.csv
+monthly_out_met/CA9053FilledMetData.csv
+monthly_ret/CA9053_KL_S0_RET.csv
