@@ -46,3 +46,7 @@ daily_out_met/CA9053FilledMetData.csv
 daily_ret/CA9053_KL_S0_RET.csv
 monthly_out_met/CA9053FilledMetData.csv
 monthly_ret/CA9053_KL_S0_RET.csv
+annual_ret/%s_KL_S0_RET.csv
+daily_ret/%s_KL_S0_RET.csv
+daily_ret/CA9053_KL_S0_RET-base.csv
+monthly_ret/%s_KL_S0_RET.csv

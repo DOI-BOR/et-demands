@@ -34,7 +34,7 @@ class RefETConfig():
 
         # Check that INI file can be read
 
-        config = configparser.ConfigParser()
+        config = configparser.RawConfigParser()
         try:
             ini = config.readfp(open(ini_path))
             if debug_flag:

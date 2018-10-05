@@ -425,8 +425,8 @@ class MetNode():
         if self.met_data_path is not None:
             input_met_path = self.met_data_path
         else:
-            # input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'] % self.source_met_id)
-            input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'] .format(self.source_met_id))
+            input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'] % self.source_met_id)
+            # input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'] .format(self.source_met_id))
         if not os.path.isfile(input_met_path):
             logging.error('ERROR:  input met file {} does not exist'.format(input_met_path))
             return False
