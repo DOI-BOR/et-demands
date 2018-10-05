@@ -309,8 +309,8 @@ class MetNode():
 
         # contrain max temperatures to 120 F and min temperature to 90 F
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, reduce = True)
-        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, reduce = True)
+        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, result_type='reduce')
+        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, result_type='reduce')
 
         # fill missing tmax data
 
@@ -338,7 +338,7 @@ class MetNode():
 
         # don't allow tmin to be more than tmax
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, reduce = True)
+        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, result_type='reduce')
 
         # Scale wind height to 2m if necessary
 
@@ -402,7 +402,7 @@ class MetNode():
         try:
             for dt, doy in self.input_met_df['doy'].iteritems():
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
-                   self.input_met_df.at[dt, 'rs'] = ret_utils.compute_rs(doy, self.input_met_df.at[dt, 'tmax'],
+                   self.input_met_df.at[dt, 'rs'] = ret_utils._rs_daily(doy, self.input_met_df.at[dt, 'tmax'],
                        self.input_met_df.at[dt,'tmin'], self.input_met_df.at[dt, 'tdew'], self.elevation, self.latitude,
                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
                        mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
@@ -588,7 +588,7 @@ class MetNode():
                 self.ref_et_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 self.ref_et_df['ref_et'] = np.nan
             for dt, row in self.input_met_df.iterrows():
-                HargreavesSamani = retObj.ComputeHargreavesSamaniRefET(dt.dayofyear, row['tmax'],
+                HargreavesSamani = retObj._et_hargreaves_samani(dt.dayofyear, row['tmax'],
                                    row['tmin'], self.latitude)
             penmans = retObj.ComputePenmanRefETs(dt.year, dt.month, dt.day, dt.dayofyear,
                       cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
@@ -915,7 +915,7 @@ class MetNode():
                 return False
             if 'tavg' in cfg.used_output_met_fields:
                 daily_output_met_df['tavg'] = 0.5 * (daily_output_met_df['tmax'] + daily_output_met_df['tmin'])
-                # daily_output_met_df['tavg'] = daily_output_met_df[['tmax', 'tmin']].apply(lambda s: ret_utils.avg_two_arrays(*s), axis = 1, raw = True, reduce = True)
+                # daily_output_met_df['tavg'] = daily_output_met_df[['tmax', 'tmin']].apply(lambda s: ret_utils.avg_two_arrays(*s), axis = 1, raw = True, result_type='reduce')
             if 'refet' in cfg.used_output_met_fields:
                 daily_output_met_df['refet'] = self.ref_et_df['ref_et'].values
 
