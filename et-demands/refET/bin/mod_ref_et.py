@@ -85,7 +85,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     node_mp_flag = False
     if mp_procs > 1:
         if not cfg.avg_monthly_met_flag:
-            if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() !='SF P':
+            if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() != 'SF P':
                 logging.warning("Met output data structure type " + cfg.output_met['data_structure_type'] +
                                 " can not yet be created using multiple processing.")
                 mp_procs = 1
@@ -114,7 +114,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
         if met_node.TR_b1 is None: met_node.TR_b1 = cfg.input_met['TR_b1']
         if met_node.TR_b2 is None: met_node.TR_b2 = cfg.input_met['TR_b2']
 
-	    # read input met data
+        # read input met data
 
         met_node_count += 1
         if node_mp_flag and cfg.output_met['data_structure_type'].upper() == 'SF P' and met_node_count > 1:
@@ -172,7 +172,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
 
     # post output with parameter orientation
 
-    if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() !='SF P':
+    if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() != 'SF P':
         # post optional met output data
 
         logging.info("\nPosting non 'SF P' output met data")

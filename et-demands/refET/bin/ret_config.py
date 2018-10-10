@@ -225,7 +225,6 @@ class RefETConfig():
             self.elev_units = config.get(meta_sec, 'elev_units')
             if self.elev_unit is None or self.elev_units == 'None': self.elev_units = 'feet'
         except:
-            logging.warning("Elevation units set to default 'feet'")
             self.elev_units = 'feet'
 
         # input met data parameters
@@ -714,7 +713,7 @@ class RefETConfig():
 
         # Check units
 
-        for k, v in list(self.input_met['units'].items()):
+        for k, v in sorted(self.input_met['units'].items()):
             if v is not None and v.lower() not in units_list:
                 logging.error('  ERROR: {0} units {1} are not currently supported'.format(k,v))
                 sys.exit()
@@ -1188,7 +1187,7 @@ class RefETConfig():
         # drop unused fields
 
         all_refet_out_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'ret', 'etr', 'eto', 'penm', 'kimo', 'kimr', 'pretay', 'fao56', 'ascer', 'asceg', 'harg']
-        for k, v in list(self.refet_out['fnspec'].items()):
+        for k, v in sorted(self.refet_out['fnspec'].items()):
             if not v is None:
                 try:
                     if v.lower() == "unused":
@@ -1196,14 +1195,14 @@ class RefETConfig():
                         del self.refet_out['fnspec'][k]
                         del self.refet_out['fields'][k]
                 except: pass
-        for k, v in list(self.refet_out['fields'].items()):
+        for k, v in sorted(self.refet_out['fields'].items()):
             if v is None:
                 try: del self.refet_out['fields'][k]
                 except: pass
 
         # Check units
 
-        for k, v in list(self.refet_out['units'].items()):
+        for k, v in sorted(self.refet_out['units'].items()):
             if v is not None and v.lower() not in units_list:
                 logging.error('  ERROR: {0} units {1} are not currently supported'.format(k, v))
                 sys.exit()
@@ -1822,7 +1821,7 @@ class RefETConfig():
             # drop unused fields
 
             all_output_met_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'tavg', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'refet']
-            for k, v in list(self.output_met['fnspec'].items()):
+            for k, v in sorted(self.output_met['fnspec'].items()):
                 if not v is None:
                     try:
                         if v.lower() == 'unused':
@@ -1830,14 +1829,14 @@ class RefETConfig():
                             del self.output_met['fnspec'][k]
                             del self.output_met['fields'][k]
                     except: pass
-            for k, v in list(self.output_met['fields'].items()):
+            for k, v in sorted(self.output_met['fields'].items()):
                 if v is None:
                     try: del self.output_met['fields'][k]
                     except: pass
 
             # Check units
 
-            for k, v in list(self.output_met['units'].items()):
+            for k, v in sorted(self.output_met['units'].items()):
                 if v is not None and v.lower() not in units_list:
                     logging.error('  ERROR: {0} units {1} are not currently supported'.format(k,v))
                     sys.exit()
@@ -1893,7 +1892,7 @@ class RefETConfig():
 
         # drop unused input met fields
 
-        for k, v in list(self.input_met['fnspec'].items()):
+        for k, v in sorted(self.input_met['fnspec'].items()):
             if not v is None:
                 try:
                     if v.lower() == 'unused':

@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import refet
 
 class refET:
 
@@ -538,7 +537,7 @@ class refET:
 def do_tests():
     """ Simple testing of functions as developed """
     o = refET()
-    'TESTS\n'
+    print('TESTS\n')
     TAvg = 51.0
     latentHeat = o.aFNHarrison(TAvg)
     print('aFNHarrison(T=%s):                          %s') % (TAvg, latentHeat)
@@ -564,10 +563,8 @@ def do_tests():
     Rso = o.EstimateClearSkyRadiation(Ra, pressure, ed, latitude, doy)
     print('EstimateClearSkyRadiation(%s,%s,%s,%s,%s):        %s') % (Ra,pressure,ed,latitude,doy,Rso)
 
-    TMax = 34.3
-    TMin = 62.0
-    avgTMax = 30.3
-    avgTMin = 60.0
+    TMax, TMin = 62.0, 34.3
+    avgTMax, avgTMin = 60.0, 30.3
     print
     print('EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)')
     Rs = o.EstimateIncidentRadiation(Rso, TMax, TMin, avgTMax, avgTMin)

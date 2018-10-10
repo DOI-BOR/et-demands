@@ -27,6 +27,105 @@ def valid_date(string_dt):
         msg = "Not valid date: '{0}'.".format(string_dt)
         raise argparse.ArgumentTypeError(msg)
 
+def make_datetime_from_string(string_dt):
+    """Makes datetime object from string
+
+    This function is used to make datetime date from string of unknown format
+
+    Args:
+        string_dt: date string
+    Returns:
+        datetime
+    """
+    clean_string = string_dt.replace("-","").replace("/","").replace(" ","").replace("T","").strip()
+    date_string = string_dt.replace("/","-").strip()
+    if len(clean_string) < 7:
+        try:
+            the_date = datetime.datetime.strptime(date_string, '%Y-%m')
+        except:
+            try:
+                the_date = datetime.datetime.strptime(date_string, '%m-%Y')
+            except:
+                the_date = None
+    elif len(clean_string) < 9:
+        try:
+            the_date = datetime.datetime.strptime(date_string, '%Y-%m-%d')
+        except:
+            try:
+                the_date = datetime.datetime.strptime(date_string, '%d-%m-%Y')
+            except:
+                the_date = None
+    elif len(clean_string) < 11:
+        try:
+            the_date = datetime.datetime.strptime(date_string, '%Y-%m-%d-%H')
+        except:
+            try:
+                the_date = datetime.datetime.strptime(date_string, '%d-%m-%Y-%H')
+            except:
+                try:
+                    the_date = datetime.datetime.strptime(date_string, '%Y-%m-%d %H')
+                except:
+                    try:
+                        the_date = datetime.datetime.strptime(date_string, '%d-%m-%Y %H')
+                    except:
+                        the_date = None
+    else:
+        the_date = None
+    return the_date
+
+def get_periods_given_dates_timedelta(start_dt, end_dt, time_delta):
+    """ computes periods in date range
+
+    Args:
+        start_dt: starting datetime
+        end_dt: ending datetime
+        time_step: time_delta datetime.timedelta object
+    Returns:
+        np: integer number of periods
+    """
+    if time_delta.total_seconds() > 2678400:
+        np = end_dt.year - start_dt.year
+    else:
+        if time_delta.total_seconds() > 86400:
+            np = 12 * (end_dt.year - start_dt.year - 1) + end_dt.month - start_dt.month + 12
+        else:
+            np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    return np
+
+def get_periods_given_dates_timestep(start_dt, end_dt, timestep, ts_quantity = 1):
+    """ computes periods in date range
+
+    Args:
+        start_dt: starting datetime
+        end_dt: ending datetime
+        timestep: text DMI timestep as minute, hour, day, week, month, year
+        ts_quantity: quantity of timestep - 15 for 15 minutes; 6 hour for 6 hours; 12 for 12 hours; otherwise 1
+    Returns:
+        np: integer number of periods
+    """
+    if 'year' in timestep.lower():
+        np = end_dt.year - start_dt.year
+    elif 'month' in timestep.lower():
+            np = 12 * (end_dt.year - start_dt.year - 1) + end_dt.month - start_dt.month + 12
+    elif 'day' in timestep.lower():
+        time_delta = datetime.timedelta(days = 1)
+        np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    elif 'hour' in timestep.lower():
+        time_delta = datetime.timedelta(hours = 1) * ts_quantity
+        np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    elif 'minute' in timestep.lower():
+        time_delta = datetime.timedelta(days = 1) * ts_quantity
+        np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    elif 'week' in timestep.lower():
+        time_delta = datetime.timedelta(weeks = 1)
+        np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    elif 'day' in timestep.lower():
+        time_delta = datetime.timedelta(days = 1)
+        np =  int((end_dt - start_dt).total_seconds() / time_delta.total_seconds())
+    else:
+        np = end_dt.year - start_dt.year
+    return np
+
 def read_average_monthly_wb_data(wbname, wsname, skip_lines = 1):
     """read average monthly data from a workbook
     Args:
@@ -39,16 +138,16 @@ def read_average_monthly_wb_data(wbname, wsname, skip_lines = 1):
     """
     d = {}
     try:
-        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None, 
+        df = pd.read_excel(wbname, sheetname = wsname, index_col = 0, header = None,
                 skiprows = skip_lines, na_values = ['NaN'])
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-        
+
         # move data into a dictionary    (Unable to get df.to_dict to work)
-        
+
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except: 
+    except:
         logging.error('\nERROR: ' + str(sys.exc_info()[0]) + ' occurred reading average monthly data from worksheet ' +  wsname + ' of workbook ' + wbname + '\n')
         return False, d
 
@@ -64,20 +163,20 @@ def read_average_monthly_csv_data(fn, skip_lines = 1, delimiter = ","):
     """
     d = {}
     try:
-        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None, 
+        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None,
                 skiprows = skip_lines, sep = delimiter)
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
-        
+
         # move data into a dictionary    (Unable to get df.to_dict to work)
-        
+
         for node_id, row in df.iterrows():
             d[node_id] = row.values.tolist()
         return True, d
-    except: 
+    except:
         logging.error('\nERROR: ' + str(sys.exc_info()[0]) + ' occurred reading average delimited text data from ' + fn + '\n')
         return False, d
 
-def read_average_monthly_text_data(fn, skip_lines = 1, delimiter = ","):
+def read_average_monthly__text_data(fn, skip_lines = 1, delimiter = ","):
     """read average monthly data from a delimited text file
     Args:
         fn: file name
@@ -116,7 +215,7 @@ def is_winter(et_cell, foo_day):
     Args:
         et_cell (): ETCell object
         foo_day (): Placeholder object
-        
+
     Returns:
         boolean that is True if input day is in winter month
     """
@@ -150,8 +249,8 @@ def avg_two_arrays(c1, c2):
         NumPy array of average values
     """
     return 0.5 * (c1 + c2)
-    
-def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2): 
+
+def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2):
     """ Compute estimated incident solar radiation
 
     Args:
@@ -178,7 +277,7 @@ def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, 
     pressure = pair_from_elev(elevm)
 
     # Estimate clear sky radiation (Rso)
-        
+
     Rso = 0.0
     Rso = estimate_clear_sky_radiation(Ra, pressure, ed, latitude, doy)
     Rs = estimate_incident_radiation(Rso, TMax, TMin, avgTMax, avgTMin, TR_b0, TR_b1, TR_b2)
@@ -186,34 +285,34 @@ def compute_rs(doy, TMax, TMin, TDew, elevm, latitude, avgTMax, avgTMin, TR_b0, 
 
 def extraterrestrial_radiation(doy, lat):
     """ Compute extraterresttrial radiaton in MG/M2/day
-        
+
     Args:
         doy: day of year
         lat: latitude
-        
+
     Returns:
         etr: extraterresttrial radiaton
     """
     Gsc = 0.08202 # MJ/m2/min
     latRad = lat * math.pi / 180.0  # Lat is station latitude in degrees
     decl = 0.4093 * math.sin(2.0 * math.pi * (284.0 + doy) / 365.0)
-    omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) / 
+    omega = 0.5 * math.pi - math.atan((-math.tan(latRad) * math.tan(decl)) /
             (1.0 - math.tan(decl) * math.tan(decl) * math.tan(latRad) * math.tan(latRad)) ** 0.5)
     Dr = 1.0 + 0.033 * math.cos(2.0 * math.pi * doy / 365.0)
-    etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) + 
+    etr = (24.0 * 60.0 / math.pi) * Gsc * Dr * (omega * math.sin(latRad) * math.sin(decl) +
             math.cos(latRad) * math.cos(decl) * math.sin(omega))
     return etr
 
 def estimate_clear_sky_radiation(extRa, pressure, ed, latDeg, doy):
     """ Estimate clear sky radiation (Rso) using Appendix D method of ASCE-EWRI (2005)
-        
+
     Args:
         extRa: extraterresttrial radiaton
         pressure: air pressure
         ed: saturation vapor pressure
         latDeg: latitude
         doy: day of year
-        
+
     Returns:
         csRSo: clear sky radiaton
     """
@@ -231,7 +330,7 @@ def estimate_clear_sky_radiation(extRa, pressure, ed, latDeg, doy):
 
 def estimate_incident_radiation(csRSo, maxT, minT, monMaxT, monMinT, TR_b0, TR_b1, TR_b2):
     """ Estimate incident radiation using equation 14
-        
+
     Args:
         csRSo: clear sky radiaton
         maxT: maximum temperature
@@ -241,7 +340,7 @@ def estimate_incident_radiation(csRSo, maxT, minT, monMaxT, monMinT, TR_b0, TR_b
         TR_b0: Thronton and Running b0 coefficient
         TR_b1: Thronton and Running b1 coefficient
         TR_b2: Thronton and Running b2 coefficient
-        
+
     Returns:
         incRs: incident radiaton
     """
@@ -273,16 +372,16 @@ def pair_from_elev(elevation):
         NumPy array of air pressures [kPa]
     """
     # version converted from vb.net
-    
+
     # return 101.3 * ((293. - 0.0065 * elevm) / 293.) ** (9.8 / (0.0065 * 286.9)) # kPa ' standardized by ASCE 2005
-    
+
     # version from from DRI
-    
+
     # return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.26)
 
     # version extended to better match vb.net version
     # 5.255114352 = 9.8 / (0.0065 * 286.9
-    
+
     return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.255114352)
 
 def tdew_from_avg_monthly_Ko(daily_tdew, daily_tmin, avg_monthly_Ko):
@@ -338,25 +437,25 @@ def tdew_from_ea(ea):
 def es_from_t(t):
     """ Tetens (1930) equation for sat. vap pressure, kPa, (T in C)
         Eq. 7 for saturation vapor pressure from dewpoint temperature
-        
+
     Args:
         t (float): temperature [C]
-        
+
     Returns:
         float of saturated vapor pressure [kPa]
     """
-    return 0.6108 * np.exp((17.27 * t) / (t + 237.3)) 
+    return 0.6108 * np.exp((17.27 * t) / (t + 237.3))
 
 def es_ice_from_t(t):
     """ Murray (1967) equation for sat. vap pressure over ice, kPa, (T in C)
 
     Args:
         t (float): temperature [C]
-        
+
     Returns:
         float of saturated vapor pressure over ice [kPa]
     """
-    return 0.6108 * np.exp((21.87 * t) / (t + 265.5)) 
+    return 0.6108 * np.exp((21.87 * t) / (t + 265.5))
 
 def file_logger(logger = logging.getLogger(''), log_level = logging.DEBUG,
                 output_ws = os.getcwd()):
@@ -387,16 +486,16 @@ def parse_int_set(nputstr = ""):
     selection = set()
     invalid = set()
     # tokens are comma seperated values
-    
+
     tokens = [x.strip() for x in nputstr.split(',')]
     for i in tokens:
         try:
             # typically tokens are plain old integers
-            
+
             selection.add(int(i))
         except:
             # if not, then it might be range
-            
+
             try:
                 token = [int(k.strip()) for k in i.split('-')]
                 if len(token) > 1:
@@ -413,4 +512,131 @@ def parse_int_set(nputstr = ""):
                 invalid.add(i)
     return selection
 
+def is_leap_year(year_to_test):
+    """Test if year is a leap year
 
+        Args:
+            year_to_test: year to test
+
+        Returns:
+            boolean: True or False
+        """
+    if year_to_test % 4 == 0 and year_to_test %100 != 0 or year_to_test % 400 == 0:
+        return True
+    else:
+        return False
+
+def get_ts_freq(time_step, ts_quantity, wyem = 12):
+    """ Get pandas time frequency given time_step and ts_quantity
+
+     Args:
+        time_step: RiverWare style string timestep
+        ts_quantity: Interger number of time_steps's in interval
+
+    Returns:
+        ts_freq: pandas time frequency
+    """
+    ts_freq = None
+    if time_step == 'day':
+        ts_freq = "D"
+    elif time_step == 'year':
+        ts_freq = water_year_agg_func(wyem)
+    elif time_step == 'month':
+        ts_freq = "M"
+    elif time_step == 'hour':
+        if ts_quantity == 1:
+            ts_freq = "H"
+        else:
+            ts_freq = str(ts_quantity) + "H"
+    elif time_step == 'minute':
+        if ts_quantity == 1:
+            ts_freq = "T"
+        else:
+            ts_freq = str(ts_quantity) + "T"
+    elif time_step == 'week':
+        ts_freq = "W"
+    else:
+        logging.error('\nERROR: Timestep {} and ts quantity {} are an invalid combination', format(time_step, ts_quantity))
+    return ts_freq
+
+def water_year_agg_func(wyem):
+    """Sets annual aggregation function for water year end month
+    Args:
+        wyem: Water Year End Month
+    Return; Water year aggregation function
+    """
+    ann_freqs = ['A-JAN', 'A-FEB', 'A-MAR', 'A-APR', 'A-MAY', 'A-JUN'] + \
+                ['A-JUL', 'A-AUG', 'A-SEP', 'A-OCT', 'A-NOV', 'A-DEC']
+    return ann_freqs[wyem - 1]
+
+def make_dt_index(time_step, ts_quantity, start_dt, end_dt, wyem = 12):
+    """ Make a pandas DatetimeIndex from specified dates, time_step and ts_quantity
+
+     Args:
+        time_step: RiverWare style string timestep
+        ts_quantity: Interger number of time_steps's in interval
+        start_dt: starting date time
+        end_dt: ending date time
+        wyem: Water Year End Month
+
+    Returns:
+        dt_index:pandas DatetimeIndex
+    """
+    dt_index = None
+    if time_step == 'day':
+        dt_index =pd.date_range(start_dt, end_dt, freq = "D", name = "date")
+    elif time_step == 'year':
+        dt_index = pd.date_range(start_dt, end_dt, freq = water_year_agg_func(wyem), name = "date")
+    elif time_step == 'month':
+        dt_index = pd.date_range(start_dt, end_dt, freq = "M", name = "date")
+    elif time_step == 'hour':
+        if ts_quantity == 1:
+            dt_index =pd.date_range(start_dt, end_dt, freq = "H", name = "date")
+        else:
+            dt_index = pd.date_range(start_dt, end_dt, freq = str(ts_quantity) + "H", name = "date")
+    elif time_step == 'minute':
+        if ts_quantity == 1:
+            dt_index = pd.date_range(start_dt, end_dt, freq = "T", name = "date")
+        else:
+            dt_index = pd.date_range(start_dt, end_dt, freq = str(ts_quantity) + "T", name = "date")
+    elif time_step == 'week':
+        dt_index = pd.date_range(start_dt, end_dt, freq = "W", name = "date")
+    else:
+        logging.error('\nERROR: Timestep {} and ts quantity {} are an invalid combination', format(time_step, ts_quantity))
+    return dt_index
+
+def make_ts_dataframe(time_step, ts_quantity, start_dt, end_dt, wyem = 12):
+    """ Make a pandas dataframe from specified dates, time_step and ts_quantity
+
+     Args:
+        time_step: RiverWare style string timestep
+        ts_quantity: Interger number of time_steps's in interval
+        start_dt: starting date time
+        end_dt: ending date time
+        wyem: Water Year End Month
+
+    Returns:
+        Empty pandas datafame wihh indexed dates
+    """
+    ts_dataframe = None
+    if time_step == 'day':
+        ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = "D", name = "date"))
+    elif time_step == 'year':
+        ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = water_year_agg_func(wyem), name = "date"))
+    elif time_step == 'month':
+        ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = "M", name = "date"))
+    elif time_step == 'hour':
+        if ts_quantity == 1:
+            ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = "H", name = "date"))
+        else:
+            ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = str(ts_quantity) + "H", name = "date"))
+    elif time_step == 'minute':
+        if ts_quantity == 1:
+            ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = "T", name = "date"))
+        else:
+            ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = str(ts_quantity) + "T", name = "date"))
+    elif time_step == 'week':
+        ts_dataframe = pd.DataFrame(index = pd.date_range(start_dt, end_dt, freq = "W", name = "date"))
+    else:
+        logging.error('\nERROR: Timestep {} and ts quantity {} are an invalid combination', format(time_step, ts_quantity))
+    return ts_dataframe

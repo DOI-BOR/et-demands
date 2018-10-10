@@ -309,8 +309,8 @@ class MetNode():
 
         # contrain max temperatures to 120 F and min temperature to 90 F
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, reduce = True)
-        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, reduce = True)
+        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, result_type='reduce')
+        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, result_type='reduce')
 
         # fill missing tmax data
 
@@ -320,7 +320,7 @@ class MetNode():
             self.input_met_df['tmax'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
         except: pass
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tmax']):
                    self.input_met_df.at[dt, 'tmax'] = mnd.avg_monthly_tmax[self.met_node_id][month - 1]
         except: pass
@@ -331,14 +331,14 @@ class MetNode():
             self.input_met_df['tmin'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
         except: pass
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tmin']):
                    self.input_met_df.at[dt, 'tmin'] = mnd.avg_monthly_tmin[self.met_node_id][month - 1]
         except: pass
 
         # don't allow tmin to be more than tmax
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, reduce = True)
+        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, result_type='reduce')
 
         # Scale wind height to 2m if necessary
 
@@ -357,7 +357,7 @@ class MetNode():
         # fill missing wind with average monthly values
 
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'wind']):
                    self.input_met_df.at[dt, 'wind'] = mnd.avg_monthly_wind[self.wind_id][month - 1]
         except: pass
@@ -389,7 +389,7 @@ class MetNode():
                 self.input_met_df['tdew'] = ret_utils.tdew_from_ea(ret_utils.ea_from_q(
                     self.air_pressure, self.input_met_df['q'].values))
         try:    # fill missing values with tmin minus average monthly Ko
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tdew']):
                    self.input_met_df.at[dt, 'tdew'] = self.input_met_df.at[dt, 'tmin'] - mnd.avg_monthly_Ko[self.Ko_id][month - 1]
         except:
@@ -400,7 +400,7 @@ class MetNode():
 
         if 'rs' not in self.input_met_df.columns: self.input_met_df['rs'] = np.nan
         try:
-            for dt, doy in self.input_met_df['doy'].iteritems():
+            for dt, doy in sorted(self.input_met_df['doy'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
                    self.input_met_df.at[dt, 'rs'] = ret_utils.compute_rs(doy, self.input_met_df.at[dt, 'tmax'],
                        self.input_met_df.at[dt,'tmin'], self.input_met_df.at[dt, 'tdew'], self.elevation, self.latitude,
@@ -560,7 +560,7 @@ class MetNode():
 
         # pull met node's data from parameter data frames
 
-        self.input_met_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+        self.input_met_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
         for field_key, param_df in mnd.met_nodes_input_met_data.items():
             self.input_met_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.source_met_id,
                     cfg.input_met['fields'][field_key], cfg.input_met['units'][field_key], 1,
@@ -582,10 +582,10 @@ class MetNode():
             # construct ref et object and set up output
 
             retObj = refET.refET(cfg.input_met['TR_b0'], cfg.input_met['TR_b1'], cfg.input_met['TR_b2'])
-            ret_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+            ret_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
             for fn in cfg.refet_out['refet_out_fields']: ret_df[fn] = np.nan
             if cfg.output_met_flag:
-                self.ref_et_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+                self.ref_et_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 self.ref_et_df['ref_et'] = np.nan
             for dt, row in self.input_met_df.iterrows():
                 HargreavesSamani = retObj.ComputeHargreavesSamaniRefET(dt.dayofyear, row['tmax'],
@@ -603,68 +603,68 @@ class MetNode():
             if 'fao56' in cfg.refet_out['refet_out_fields']: ret_df['fao56'][dt] = FAO56PM
             if 'kimp' in cfg.refet_out['refet_out_fields']: ret_df['kimp'][dt] = KimbPeng
 
-	        # create ref et dataframe for posting via optional met output
+            # create ref et dataframe for posting via optional met output
 
             if cfg.output_met_flag:
-                    if cfg.refet_out['ret_method'].lower() == 'asceg':
-                        self.ref_et_df['ref_et'][dt] = ASCEo
-                    elif cfg.refet_out['ret_method'].lower() == 'ascer':
-                        self.ref_et_df['ref_et'][dt] = ASCEr
-                    elif cfg.refet_out['ret_method'].lower() == 'fao56':
-                        self.ref_et_df['ref_et'][dt] = FAO56PM
-                    elif cfg.refet_out['ret_method'].lower() == 'harg':
-                        self.ref_et_df['ref_et'][dt] = HargreavesSamani
-                    elif cfg.refet_out['ret_method'].lower() == 'penm':
-                        self.ref_et_df['ref_et'][dt] = Penman
-                    elif cfg.refet_out['ret_method'].lower() == 'kimo':
-                        self.ref_et_df['ref_et'][dt] = KimbPeng
-                    elif cfg.refet_out['ret_method'].lower() == 'kimp':
-                        self.ref_et_df['ref_et'][dt] = KimbPen
-                    elif cfg.refet_out['ret_method'].lower() == 'pretay':
-                        self.ref_et_df['ref_et'][dt] = PreTay
+                if cfg.refet_out['ret_method'].lower() == 'asceg':
+                    self.ref_et_df['ref_et'][dt] = ASCEo
+                elif cfg.refet_out['ret_method'].lower() == 'ascer':
+                    self.ref_et_df['ref_et'][dt] = ASCEr
+                elif cfg.refet_out['ret_method'].lower() == 'fao56':
+                    self.ref_et_df['ref_et'][dt] = FAO56PM
+                elif cfg.refet_out['ret_method'].lower() == 'harg':
+                    self.ref_et_df['ref_et'][dt] = HargreavesSamani
+                elif cfg.refet_out['ret_method'].lower() == 'penm':
+                    self.ref_et_df['ref_et'][dt] = Penman
+                elif cfg.refet_out['ret_method'].lower() == 'kimo':
+                    self.ref_et_df['ref_et'][dt] = KimbPeng
+                elif cfg.refet_out['ret_method'].lower() == 'kimp':
+                    self.ref_et_df['ref_et'][dt] = KimbPen
+                elif cfg.refet_out['ret_method'].lower() == 'pretay':
+                    self.ref_et_df['ref_et'][dt] = PreTay
             if 'ret' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['ret_method'].lower() == 'asceg':
-                        ret_df['ret'][dt] = ASCEo
-                    elif cfg.refet_out['ret_method'].lower() == 'ascer':
-                        ret_df['ret'][dt] = ASCEr
-                    elif cfg.refet_out['ret_method'].lower() == 'fao56':
-                        ret_df['ret'][dt] = FAO56PM
-                    elif cfg.refet_out['ret_method'].lower() == 'harg':
-                        ret_df['ret'][dt] = HargreavesSamani
-                    elif cfg.refet_out['ret_method'].lower() == 'penm':
-                        ret_df['ret'][dt] = Penman
-                    elif cfg.refet_out['ret_method'].lower() == 'kimo':
-                        ret_df['ret'][dt] = KimbPeng
-                    elif cfg.refet_out['ret_method'].lower() == 'kimp':
-                        ret_df['ret'][dt] = KimbPen
-                    elif cfg.refet_out['ret_method'].lower() == 'pretay':
-                        ret_df['ret'][dt] = PreTay
+                if cfg.refet_out['ret_method'].lower() == 'asceg':
+                    ret_df['ret'][dt] = ASCEo
+                elif cfg.refet_out['ret_method'].lower() == 'ascer':
+                    ret_df['ret'][dt] = ASCEr
+                elif cfg.refet_out['ret_method'].lower() == 'fao56':
+                    ret_df['ret'][dt] = FAO56PM
+                elif cfg.refet_out['ret_method'].lower() == 'harg':
+                    ret_df['ret'][dt] = HargreavesSamani
+                elif cfg.refet_out['ret_method'].lower() == 'penm':
+                    ret_df['ret'][dt] = Penman
+                elif cfg.refet_out['ret_method'].lower() == 'kimo':
+                    ret_df['ret'][dt] = KimbPeng
+                elif cfg.refet_out['ret_method'].lower() == 'kimp':
+                    ret_df['ret'][dt] = KimbPen
+                elif cfg.refet_out['ret_method'].lower() == 'pretay':
+                    ret_df['ret'][dt] = PreTay
             if 'eto' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['eto_method'].lower() == 'asceg':
-                        ret_df['eto'][dt] = ASCEo
-                    elif cfg.refet_out['eto_method'].lower() == 'fao56':
-                        ret_df['eto'][dt] = FAO56PM
-                    elif cfg.refet_out['eto_method'].lower() == 'harg':
-                        ret_df['eto'][dt] = HargreavesSamani
-                    elif cfg.refet_out['eto_method'].lower() == 'penm':
-                        ret_df['eto'][dt] = Penman
-                    elif cfg.refet_out['eto_method'].lower() == 'kimo':
-                        ret_df['eto'][dt] = KimbPeng
-                    elif cfg.refet_out['eto_method'].lower() == 'pretay':
-                        ret_df['eto'][dt] = PreTay
+                if cfg.refet_out['eto_method'].lower() == 'asceg':
+                    ret_df['eto'][dt] = ASCEo
+                elif cfg.refet_out['eto_method'].lower() == 'fao56':
+                    ret_df['eto'][dt] = FAO56PM
+                elif cfg.refet_out['eto_method'].lower() == 'harg':
+                    ret_df['eto'][dt] = HargreavesSamani
+                elif cfg.refet_out['eto_method'].lower() == 'penm':
+                    ret_df['eto'][dt] = Penman
+                elif cfg.refet_out['eto_method'].lower() == 'kimo':
+                    ret_df['eto'][dt] = KimbPeng
+                elif cfg.refet_out['eto_method'].lower() == 'pretay':
+                    ret_df['eto'][dt] = PreTay
             if 'etr' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['etr_method'].lower() == 'ascer':
-                        ret_df['etr'][dt] = ASCEr
-                    elif cfg.refet_out['etr_method'].lower() == 'fao56':
-                        ret_df['etr'][dt] = FAO56PM
-                    elif cfg.refet_out['etr_method'].lower() == 'harg':
-                        ret_df['etr'][dt] = HargreavesSamani
-                    elif cfg.refet_out['etr_method'].lower() == 'penm':
-                        ret_df['etr'][dt] = Penman
-                    elif cfg.refet_out['etr_method'].lower() == 'kimp':
-                        ret_df['etr'][dt] = KimbPen
-                    elif cfg.refet_out['etr_method'].lower() == 'pretay':
-                        ret_df['etr'][dt] = PreTay
+                if cfg.refet_out['etr_method'].lower() == 'ascer':
+                    ret_df['etr'][dt] = ASCEr
+                elif cfg.refet_out['etr_method'].lower() == 'fao56':
+                    ret_df['etr'][dt] = FAO56PM
+                elif cfg.refet_out['etr_method'].lower() == 'harg':
+                    ret_df['etr'][dt] = HargreavesSamani
+                elif cfg.refet_out['etr_method'].lower() == 'penm':
+                    ret_df['etr'][dt] = Penman
+                elif cfg.refet_out['etr_method'].lower() == 'kimp':
+                    ret_df['etr'][dt] = KimbPen
+                elif cfg.refet_out['etr_method'].lower() == 'pretay':
+                    ret_df['etr'][dt] = PreTay
             try:
                 daily_refet_df = pd.merge(self.input_met_df, ret_df, left_index = True, right_index = True)
             except:
@@ -785,13 +785,13 @@ class MetNode():
                     if 'day' in cfg.used_refet_out_fields:
                         daily_refet_df[cfg.refet_out['fields']['day']] = \
                             daily_refet_df[cfg.refet_out['fields']['day']].map(lambda x: ' %2d' % x)
-                    if 'doy' in cfg.used_refet_out_fields:
+                if 'doy' in cfg.used_refet_out_fields:
                         daily_refet_df[cfg.refet_out['fields']['doy']] = \
                             daily_refet_df[cfg.refet_out['fields']['doy']].map(lambda x: ' %3d' % x)
 
                 # post daily output
 
-                daily_refet_path = os.path.join(cfg.daily_refet_ws, cfg.refet_out['name_format'] .format(self.met_node_id))
+                daily_refet_path = os.path.join(cfg.daily_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(daily_refet_path))
                 with open(daily_refet_path, 'w') as daily_refet_f:
                     daily_refet_f.write(cfg.refet_out['daily_header1'] + '\n')
@@ -806,12 +806,12 @@ class MetNode():
                             daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, index = False, columns = adj_daily_fields)
                     else:    # formatted output causes loss of precision in crop et computations
-                         if 'date' in cfg.used_refet_out_fields:
+                        if 'date' in cfg.used_refet_out_fields:
                             daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['daily_date_format'],
                                 float_format = cfg.refet_out['daily_float_format'],
                                 columns = adj_daily_fields)
-                         else:
+                        else:
                             daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, index = False, columns = adj_daily_fields,
                                 float_format = cfg.refet_out['daily_float_format'])
@@ -827,7 +827,7 @@ class MetNode():
 
                 # post monthly output
 
-                monthly_refet_path = os.path.join(cfg.monthly_refet_ws, cfg.refet_out['name_format'] .format(self.met_node_id))
+                monthly_refet_path = os.path.join(cfg.monthly_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(monthly_refet_path))
                 with open(monthly_refet_path, 'w') as monthly_refet_f:
                     monthly_refet_f.write(cfg.refet_out['monthly_header1'] + '\n')
@@ -862,7 +862,7 @@ class MetNode():
 
                 # post annual output
 
-                annual_refet_path = os.path.join(cfg.annual_refet_ws, cfg.refet_out['name_format'] .format(self.met_node_id))
+                annual_refet_path = os.path.join(cfg.annual_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(annual_refet_path))
                 with open(annual_refet_path, 'w') as annual_refet_f:
                     annual_refet_f.write(cfg.refet_out['annual_header1'] + '\n')
@@ -907,7 +907,6 @@ class MetNode():
 
         try:
             # copy input met object to output met object and remove unused columns
-
             try:
                 daily_output_met_df = self.input_met_df.copy()
             except:
@@ -915,7 +914,7 @@ class MetNode():
                 return False
             if 'tavg' in cfg.used_output_met_fields:
                 daily_output_met_df['tavg'] = 0.5 * (daily_output_met_df['tmax'] + daily_output_met_df['tmin'])
-                # daily_output_met_df['tavg'] = daily_output_met_df[['tmax', 'tmin']].apply(lambda s: ret_utils.avg_two_arrays(*s), axis = 1, raw = True, reduce = True)
+                # daily_output_met_df['tavg'] = daily_output_met_df[['tmax', 'tmin']].apply(lambda s: ret_utils.avg_two_arrays(*s), axis = 1, raw = True, result_type='reduce')
             if 'refet' in cfg.used_output_met_fields:
                 daily_output_met_df['refet'] = self.ref_et_df['ref_et'].values
 
@@ -1057,7 +1056,7 @@ class MetNode():
 
                     # post daily output
 
-                    daily_output_met_path = os.path.join(cfg.daily_output_met_ws, cfg.output_met['name_format'] .format(self.met_node_id))
+                    daily_output_met_path = os.path.join(cfg.daily_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
                     logging.debug('  {0}'.format(daily_output_met_path))
                     with open(daily_output_met_path, 'w') as daily_output_met_f:
                         daily_output_met_f.write(cfg.output_met['daily_header1'] + '\n')
@@ -1086,7 +1085,7 @@ class MetNode():
 
                     # post monthly output
 
-                    monthly_output_met_path = os.path.join(cfg.monthly_output_met_ws, cfg.output_met['name_format'] .format(self.met_node_id))
+                    monthly_output_met_path = os.path.join(cfg.monthly_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
                     logging.debug('  {0}'.format(monthly_output_met_path))
                     with open(monthly_output_met_path, 'w') as monthly_output_met_f:
                         monthly_output_met_f.write(cfg.output_met['monthly_header1'] + '\n')
@@ -1112,7 +1111,7 @@ class MetNode():
 
                     # post annual output
 
-                    annual_output_met_path = os.path.join(cfg.annual_output_met_ws, cfg.output_met['name_format'] .format(self.met_node_id))
+                    annual_output_met_path = os.path.join(cfg.annual_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
                     logging.debug('  {0}'.format(annual_output_met_path))
                     with open(annual_output_met_path, 'w') as annual_output_met_f:
                         annual_output_met_f.write(cfg.output_met['annual_header1'] + '\n')
