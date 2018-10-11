@@ -13,6 +13,7 @@ import refET
 import ret_utils
 import mod_dmis
 
+# move this to a unit conversion section / function
 mpdToMps = 3.2808399 * 5280 / 86400
 
 class MetNodesData():
@@ -589,19 +590,20 @@ class MetNode():
                 self.ref_et_df['ref_et'] = np.nan
             for dt, row in self.input_met_df.iterrows():
                 HargreavesSamani = retObj.ComputeHargreavesSamaniRefET(dt.dayofyear, row['tmax'],
-                                   row['tmin'], self.latitude)
-            penmans = retObj.ComputePenmanRefETs(dt.year, dt.month, dt.day, dt.dayofyear,
-                      cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
-                      row['rs'], row['wind'], self.elevation, self.latitude)
-            Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen = penmans
-            if 'harg' in cfg.refet_out['refet_out_fields']: ret_df['harg'][dt] = HargreavesSamani
-            if 'penm' in cfg.refet_out['refet_out_fields']: ret_df['penm'][dt] = Penman
-            if 'pretay' in cfg.refet_out['refet_out_fields']: ret_df['pretay'][dt] = PreTay
-            if 'kimo' in cfg.refet_out['refet_out_fields']: ret_df['kimo'][dt] = KimbPeng
-            if 'ascer' in cfg.refet_out['refet_out_fields']: ret_df['ascer'][dt] = ASCEr
-            if 'asceg' in cfg.refet_out['refet_out_fields']: ret_df['asceg'][dt] = ASCEo
-            if 'fao56' in cfg.refet_out['refet_out_fields']: ret_df['fao56'][dt] = FAO56PM
-            if 'kimp' in cfg.refet_out['refet_out_fields']: ret_df['kimp'][dt] = KimbPeng
+                    row['tmin'], self.latitude)
+                penmans = retObj.ComputePenmanRefETs(dt.year, dt.month, dt.day, dt.dayofyear,
+                    cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
+                    row['rs'], row['wind'], self.elevation, self.latitude)
+                Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen = penmans
+                # print(penmans)
+                if 'harg' in cfg.refet_out['refet_out_fields']: ret_df['harg'][dt] = HargreavesSamani
+                if 'penm' in cfg.refet_out['refet_out_fields']: ret_df['penm'][dt] = Penman
+                if 'pretay' in cfg.refet_out['refet_out_fields']: ret_df['pretay'][dt] = PreTay
+                if 'kimo' in cfg.refet_out['refet_out_fields']: ret_df['kimo'][dt] = KimbPeng
+                if 'ascer' in cfg.refet_out['refet_out_fields']: ret_df['ascer'][dt] = ASCEr
+                if 'asceg' in cfg.refet_out['refet_out_fields']: ret_df['asceg'][dt] = ASCEo
+                if 'fao56' in cfg.refet_out['refet_out_fields']: ret_df['fao56'][dt] = FAO56PM
+                if 'kimp' in cfg.refet_out['refet_out_fields']: ret_df['kimp'][dt] = KimbPeng
 
             # create ref et dataframe for posting via optional met output
 
