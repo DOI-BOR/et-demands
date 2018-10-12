@@ -44,7 +44,7 @@ class MetNodesData():
             data_skip = [i for i in range(cfg.mnmd_header_lines) if i + 1 != cfg.mnmd_names_line]
             if '.xls' in cfg.met_nodes_meta_data_path.lower():
                 df = pd.read_excel(cfg.met_nodes_meta_data_path,
-                        sheetname = cfg.met_nodes_meta_data_ws,
+                        sheet_name = cfg.met_nodes_meta_data_ws,
                         header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, na_values = ['NaN'])
             else:
@@ -345,7 +345,7 @@ class MetNode():
 
         if 'wind' in input_met_columns:
             if cfg.input_met['wind_height'] != 2:
-                self.input_met_df['wind'] = ret_utils.wind_adjust_func(self.input_met_df['wind'], cfg.input_met['wind_height'])
+                self.input_met_df['wind'] = refet.calcs._wind_height_adjust(self.input_met_df['wind'], cfg.input_met['wind_height'])
 
             # fill missing wind by interpolation
 
@@ -403,7 +403,7 @@ class MetNode():
         try:
             for dt, doy in sorted(self.input_met_df['doy'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
-                   self.input_met_df.at[dt, 'rs'] = ret_utils.compute_rs(doy, self.input_met_df.at[dt, 'tmax'],
+                   self.input_met_df.at[dt, 'rs'] = ret_utils._rs_daily(doy, self.input_met_df.at[dt, 'tmax'],
                        self.input_met_df.at[dt,'tmin'], self.input_met_df.at[dt, 'tdew'], self.elevation, self.latitude,
                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
                        mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
@@ -589,9 +589,9 @@ class MetNode():
                 self.ref_et_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 self.ref_et_df['ref_et'] = np.nan
             for dt, row in self.input_met_df.iterrows():
-                HargreavesSamani = retObj.ComputeHargreavesSamaniRefET(dt.dayofyear, row['tmax'],
+                HargreavesSamani = retObj._et_hargreaves_samani(dt.dayofyear, row['tmax'],
                     row['tmin'], self.latitude)
-                penmans = retObj.ComputePenmanRefETs(dt.year, dt.month, dt.day, dt.dayofyear,
+                penmans = retObj._compute_penmans(dt.year, dt.month, dt.day, dt.dayofyear,
                     cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
                     row['rs'], row['wind'], self.elevation, self.latitude)
                 Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen = penmans
