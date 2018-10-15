@@ -76,6 +76,7 @@ def main(ini_path, overwrite_flag=False):
     hydgrp_field = 'HYDGRP'
 
     simplify_threshold = 0.5
+    buffer_threshold = 0.1
 
     sqm_2_acres = 0.000247105381
     # sqft_2_acres
@@ -141,6 +142,16 @@ def main(ini_path, overwrite_flag=False):
     #                      width=48)
 
     # Add zonal stats fields
+    if awc_field not in zone_field_list:
+        logging.debug('  {}'.format(awc_field))
+        _arcpy.add_field(zone_path, awc_field, ogr.OFTReal)
+    if clay_field not in zone_field_list:
+        logging.debug('  {}'.format(clay_field))
+        _arcpy.add_field(zone_path, clay_field, ogr.OFTReal)
+    if sand_field not in zone_field_list:
+        logging.debug('  {}'.format(sand_field))
+        _arcpy.add_field(zone_path, sand_field, ogr.OFTReal)
+
     # if 'AG_COUNT' not in zone_field_list:
     #     logging.debug('  {}'.format('AG_COUNT'))
     #     _arcpy.add_field(zone_path, 'AG_COUNT', ogr.OFTInteger)
@@ -193,220 +204,314 @@ def main(ini_path, overwrite_flag=False):
         logging.error('\nERROR: The ET zones shapefile must be in a '
                       'projected coordinate system, exiting')
         sys.exit()
-    # zone_unit = zone_osr.GetLinearUnits()
     zone_unit = zone_osr.GetLinearUnitsName()
-    # zones_lyr_name = zones_lyr.GetName()
+    if zone_unit not in ['Meter']:
+        logging.error('\nERROR: Unsupported unit type: {}'.format(zone_unit))
+        sys.exit()
     for zone_ftr in zone_lyr:
         zone_fid = zone_ftr.GetFID()
         zone_geom = zone_ftr.GetGeometryRef()
-        # This may not be necessary
-        zone_geom = zone_geom.Buffer(0)
+        zone_geom = zone_geom.Buffer(0)  # This may not be necessary
         zone_extent = gdc.Extent(zone_geom.GetEnvelope())
         zone_extent = zone_extent.ogrenv_swap()
         zone_idx.insert(zone_fid, list(zone_extent))
         zone_dict[zone_fid] = {
             'fid': zone_fid,
-            # 'geom': zone_geom,
             'wkt': zone_geom.ExportToWkt(),
             'area': zone_geom.GetArea(),
         }
-        # pprint.pprint(zone_dict)
-        # input('ENTER')
-    zones_ds = None
+    zone_ds = None
 
-    if zone_unit not in ['Meter']:
-        logging.error('\nERROR: Unsupported unit type: {}'.format(zone_unit))
-        sys.exit()
 
-    # Read the crop shapefile and identify intersecting features
-    logging.debug('\nReading crop shapefile features')
-    crop_dict = defaultdict(dict)
-    crop_ds = shp_driver.Open(crop_path, 0)
-    crop_lyr = crop_ds.GetLayer()
-    crop_osr = crop_lyr.GetSpatialRef()
-    crop_tx = osr.CoordinateTransformation(crop_osr, zone_osr)
-    # crop_lyr_name = zones_lyr.GetName()
-    for crop_ftr in crop_lyr:
-        crop_fid = crop_ftr.GetFID()
-        if crop_fid % 100000 == 0:
-            logging.info('FID: {}'.format(crop_fid))
-        crop_geom = crop_ftr.GetGeometryRef()
-        proj_geom = crop_geom.Clone()
-        proj_geom.Transform(crop_tx)
-        proj_geom = proj_geom.Buffer(0)
-        proj_extent = gdc.Extent(proj_geom.GetEnvelope())
-        proj_extent = proj_extent.ogrenv_swap()
-        fid_list = list(zone_idx.intersection(list(proj_extent)))
-        if not fid_list:
+    # DEADBEEF - Commented out for testing
+    # # Read the crop shapefile and identify intersecting features
+    # logging.debug('\nReading crop shapefile features')
+    # crop_dict = defaultdict(dict)
+    # crop_ds = shp_driver.Open(crop_path, 0)
+    # crop_lyr = crop_ds.GetLayer()
+    # crop_osr = crop_lyr.GetSpatialRef()
+    # crop_tx = osr.CoordinateTransformation(crop_osr, zone_osr)
+    # # crop_lyr_name = zones_lyr.GetName()
+    # for crop_ftr in crop_lyr:
+    #     crop_fid = crop_ftr.GetFID()
+    #     if crop_fid % 100000 == 0:
+    #         logging.info('FID: {}'.format(crop_fid))
+    #     crop_geom = crop_ftr.GetGeometryRef()
+    #     proj_geom = crop_geom.Clone()
+    #     proj_geom.Transform(crop_tx)
+    #     proj_geom = proj_geom.Buffer(0)
+    #     proj_extent = gdc.Extent(proj_geom.GetEnvelope())
+    #     proj_extent = proj_extent.ogrenv_swap()
+    #     zone_fid_list = list(zone_idx.intersection(list(proj_extent)))
+    #     if not zone_fid_list:
+    #         continue
+    #
+    #     # Link zones to crops and crops to zones
+    #     for zone_fid in zone_fid_list:
+    #         zone_crops[zone_fid].append(crop_fid)
+    #     crop_zones[crop_fid] = zone_fid_list
+    #
+    #     crop_dict[crop_fid] = {
+    #         'fid': crop_fid,
+    #         # 'geom': proj_geom,
+    #         'wkt' :proj_geom.ExportToWkt(),
+    #         'value': crop_ftr.GetField(crop_field),
+    #     }
+    # crop_ds = None
+    #
+    # # Read ET demands crop number crosswalk
+    # # Link ET demands crop number (1-84) with input crop values (i.e. CDL)
+    # # Key is input crop number, value is crop number, ignore comment
+    # logging.info('\nReading Crop Crosswalk File\n  {}'.format(crosswalk_path))
+    # cross_df = pd.read_csv(crosswalk_path)
+    # cross_dict = dict()
+    # for index, row in cross_df.iterrows():
+    #     cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
+    # # logging.debug(crop_num_dict)
+    #
+    # # Build the crop list
+    # # Because the spatial index is extent based,
+    # #   this may include crops that don't intersect the zones.
+    # input_crops = sorted(list(set(c['value'] for c in crop_dict.values())))
+    # etd_crops = sorted(list(set(
+    #     x for c in crop_dict.values() for x in cross_dict[c['value']])))
+    # logging.info('\nInput Crops: {}'.format(', '.join(map(str, input_crops))))
+    # logging.info('Demands Crops: {}'.format(', '.join(map(str, etd_crops))))
+    #
+    # # Build the crop clipped ET zones shapefile
+    # logging.info('\nBuilding crop clipped zone shapefile')
+    # if os.path.exists(zone_crop_path):
+    #     shp_driver.DeleteDataSource(zone_crop_path)
+    # zone_crop_ds = shp_driver.CreateDataSource(zone_crop_path)
+    # zone_crop_lyr_name = os.path.splitext(os.path.basename(zone_crop_path))[0]
+    # zone_crop_lyr = zone_crop_ds.CreateLayer(
+    #     zone_crop_lyr_name, geom_type=ogr.wkbPolygon)
+    # field_defn = ogr.FieldDefn('ZONE_FID', ogr.OFTInteger)
+    # zone_crop_lyr.CreateField(field_defn)
+    #
+    # # Process crops (by zone), compute zonal stats, write clipped zones
+    # logging.info('\nComputing crop area/type zonal stats')
+    # for zone_fid, crop_fid_list in sorted(zone_crops.items()):
+    #     if zone_fid % 1000 == 0:
+    #         logging.info('ZONE FID: {}'.format(zone_fid))
+    #     # logging.debug('ZONE FID: {}'.format(zone_fid))
+    #
+    #     # logging.debug('CROP FID: {}'.format(crop_fid_list))
+    #     if not crop_fid_list:
+    #         logging.debug('  No crop FIDs, skipping zone')
+    #         continue
+    #
+    #     zone_ftr = ogr.Feature(zone_crop_lyr.GetLayerDefn())
+    #     zone_ftr.SetField('ZONE_FID', zone_fid)
+    #
+    #     zone_poly = loads(zone_dict[zone_fid]['wkt'])
+    #
+    #     zone_crop_polys = []
+    #     zone_crop_area = 0
+    #
+    #     # Initialize zonal stats crop acreages
+    #     for etd_crop in etd_crops:
+    #         field = 'CROP_{:02d}'.format(etd_crop)
+    #         zone_stats[zone_fid][field] = 0
+    #
+    #     # Process all intersecting/neighboring crops
+    #     for crop_fid in crop_fid_list:
+    #         input_crop_dict = crop_dict[crop_fid]
+    #         crop_value = input_crop_dict['value']
+    #         crop_poly = loads(input_crop_dict['wkt'])
+    #
+    #         clip_poly = zone_poly.intersection(crop_poly)
+    #
+    #         if not clip_poly or clip_poly.is_empty:
+    #             continue
+    #         elif not clip_poly.is_valid:
+    #             logging.error('\nERROR: Invalid clip geometry')
+    #             input('ENTER')
+    #
+    #         clip_area = clip_poly.area
+    #         if not clip_area or clip_area <= 0:
+    #             continue
+    #
+    #         zone_crop_area += clip_area
+    #         zone_crop_polys.append(clip_poly)
+    #
+    #         for etd_crop in cross_dict[crop_value]:
+    #             field = 'CROP_{:02d}'.format(etd_crop)
+    #             zone_stats[zone_fid][field] += clip_area
+    #
+    #     # Combine all polygons/multipolygons into a single multipolygon
+    #     zone_crop_poly = unary_union(zone_crop_polys)\
+    #         .simplify(simplify_threshold, preserve_topology=False)\
+    #         .buffer(buffer_threshold).buffer(-buffer_threshold)
+    #     # zone_crop_poly = cascaded_union(zone_crop_polys)
+    #
+    #     zone_ftr.SetGeometry(ogr.CreateGeometryFromWkt(zone_crop_poly.wkt))
+    #     zone_crop_lyr.CreateFeature(zone_ftr)
+    #     zone_ftr = None
+    #
+    # zone_crop_ds.ExecuteSQL("RECOMPUTE EXTENT ON {}".format(zone_crop_lyr_name))
+    # zone_crop_ds = None
+    #
+    # # Write projection/spatial reference to prj file
+    # # Format OSR as ESRI WKT
+    # prj_osr = zone_osr.Clone()
+    # prj_osr.MorphToESRI()
+    # with open(zone_crop_path.replace('.shp', '.prj'), 'w') as prj_f:
+    #     prj_f.write(prj_osr.ExportToWkt())
+    #
+    # # Rebuild the crop list from the stats
+    # crop_field_list = sorted(list(set([
+    #     crop_field for zone_dict in zone_stats.values()
+    #     for crop_field in zone_dict.keys()])))
+    # logging.info('\nCrops Fields: {}'.format(', '.join(map(str, etd_crops))))
+    #
+    # logging.debug('\nAdding crop fields to zones shapefile')
+    # for crop_field in crop_field_list:
+    #     if crop_field not in zone_field_list:
+    #         logging.debug('  Field: {}'.format(crop_field))
+    #         _arcpy.add_field(zone_path, crop_field, ogr.OFTReal)
+    #
+    # logging.debug('\nWriting crop zonal stats to zones shapefile')
+    # zone_ds = shp_driver.Open(zone_path, 1)
+    # zone_lyr = zone_ds.GetLayer()
+    # zone_unit = zone_osr.GetLinearUnitsName()
+    # for zone_ftr in zone_lyr:
+    #     zone_fid = zone_ftr.GetFID()
+    #     for crop_field, crop_area in zone_stats[zone_fid].items():
+    #         if crop_area <= 0:
+    #             continue
+    #
+    #         if zone_unit in ['Meter']:
+    #             acreage = crop_area * sqm_2_acres
+    #         else:
+    #             raise ValueError('Unsupported unit type: {}'.format(zone_unit))
+    #
+    #         zone_ftr.SetField(crop_field, acreage)
+    #     zone_lyr.SetFeature(zone_ftr)
+    # zone_ds = None
+
+
+    # Load the crop mask shapefile geometries into memory
+    # Build the spatial index in the zone spatial reference
+    logging.debug('\nReading zone crop shapefile features into memory')
+    zone_crop_idx = rtree.index.Index()
+    zone_crop_dict = defaultdict(dict)
+    zone_crop_ds = shp_driver.Open(zone_crop_path, 0)
+    zone_crop_lyr = zone_crop_ds.GetLayer()
+    for zone_crop_ftr in zone_crop_lyr:
+        zone_crop_fid = zone_crop_ftr.GetFID()
+        zone_fid = zone_crop_ftr.GetField('ZONE_FID')
+        zone_crop_geom = zone_crop_ftr.GetGeometryRef()
+        # NOTE - FID 335 was bombing
+        if not zone_crop_geom:
             continue
-
-        # Link zones to crops and crops to zones
-        crop_zones[crop_fid] = fid_list
-        for zone_fid in fid_list:
-            zone_crops[zone_fid].append(crop_fid)
-
-        crop_dict[crop_fid] = {
-            'fid': crop_fid,
-            # 'geom': proj_geom,
-            'wkt' :proj_geom.ExportToWkt(),
-            'value': crop_ftr.GetField(crop_field),
+        zone_crop_geom = zone_crop_geom.Buffer(0)  # This may not be necessary
+        zone_crop_extent = gdc.Extent(zone_crop_geom.GetEnvelope())
+        zone_crop_extent = zone_crop_extent.ogrenv_swap()
+        zone_crop_idx.insert(zone_crop_fid, list(zone_crop_extent))
+        zone_crop_dict[zone_fid] = {
+            'fid': zone_crop_fid,
+            'wkt': zone_crop_geom.ExportToWkt(),
+            'area': zone_crop_geom.GetArea(),
+            # 'zone': zone_fid,
         }
-    crop_ds = None
-
-    # Read ET demands crop number crosswalk
-    # Link ET demands crop number (1-84) with input crop values (i.e. CDL)
-    # Key is input crop number, value is crop number, ignore comment
-    logging.info('\nReading Crop Crosswalk File\n  {}'.format(crosswalk_path))
-    cross_df = pd.read_csv(crosswalk_path)
-    cross_dict = dict()
-    for index, row in cross_df.iterrows():
-        cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
-    # logging.debug(crop_num_dict)
-
-    # Build the crop list
-    # Because the spatial index is extent based,
-    #   this may include crops that don't intersect the zones.
-    input_crops = sorted(list(set(c['value'] for c in crop_dict.values())))
-    etd_crops = sorted(list(set(
-        x for c in crop_dict.values() for x in cross_dict[c['value']])))
-    logging.info('\nInput Crops: {}'.format(', '.join(map(str, input_crops))))
-    logging.info('Demands Crops: {}'.format(', '.join(map(str, etd_crops))))
-
-    # Build the crop clipped ET zones shapefile
-    logging.info('\nBuilding crop clipped zone shapefile')
-    if os.path.exists(zone_crop_path):
-        shp_driver.DeleteDataSource(zone_crop_path)
-    zone_crop_ds = shp_driver.CreateDataSource(zone_crop_path)
-    zone_crop_lyr_name = os.path.splitext(os.path.basename(zone_crop_path))[0]
-    zone_crop_lyr = zone_crop_ds.CreateLayer(
-        zone_crop_lyr_name, geom_type=ogr.wkbPolygon)
-    field_defn = ogr.FieldDefn('ZONE_FID', ogr.OFTInteger)
-    zone_crop_lyr.CreateField(field_defn)
-
-    # Process crops (by zone), compute zonal stats, write clipped zones
-    logging.info('\nComputing crop area/type zonal stats')
-    for zone_fid, crop_fid_list in sorted(zone_crops.items()):
-        if zone_fid % 1000 == 0:
-            logging.info('ZONE FID: {}'.format(zone_fid))
-        # logging.debug('ZONE FID: {}'.format(zone_fid))
-
-        # logging.debug('CROP FID: {}'.format(crop_fid_list))
-        if not crop_fid_list:
-            logging.debug('  No crop FIDs, skipping zone')
-            continue
-
-        zone_ftr = ogr.Feature(zone_crop_lyr.GetLayerDefn())
-        zone_ftr.SetField('ZONE_FID', zone_fid)
-
-        zone_poly = loads(zone_dict[zone_fid]['wkt'])
-
-        zone_crop_polys = []
-        zone_crop_area = 0
-
-        # Initialize zonal stats crop acreages
-        for etd_crop in etd_crops:
-            field = 'CROP_{:02d}'.format(etd_crop)
-            zone_stats[zone_fid][field] = 0
-
-        # Process all intersecting/neighboring crops
-        for crop_fid in crop_fid_list:
-            input_crop_dict = crop_dict[crop_fid]
-            crop_value = input_crop_dict['value']
-            crop_poly = loads(input_crop_dict['wkt'])
-
-            clip_poly = zone_poly.intersection(crop_poly)
-
-            if not clip_poly or clip_poly.is_empty:
-                continue
-            elif not clip_poly.is_valid:
-                logging.error('\nERROR: Invalid clip geometry')
-                input('ENTER')
-
-            clip_area = clip_poly.area
-            if not clip_area or clip_area <= 0:
-                continue
-
-            zone_crop_area += clip_area
-            zone_crop_polys.append(clip_poly)
-
-            for etd_crop in cross_dict[crop_value]:
-                field = 'CROP_{:02d}'.format(etd_crop)
-                zone_stats[zone_fid][field] += clip_area
-
-        # Combine all polygons/multipolygons into a single multipolygon
-        zone_crop_poly = unary_union(zone_crop_polys)\
-            .simplify(simplify_threshold, preserve_topology=False)
-        # zone_crop_poly = cascaded_union(zone_crop_polys)
-
-        zone_ftr.SetGeometry(ogr.CreateGeometryFromWkt(zone_crop_poly.wkt))
-        zone_crop_lyr.CreateFeature(zone_ftr)
-        zone_ftr = None
-
-    zone_crop_ds.ExecuteSQL("RECOMPUTE EXTENT ON {}".format(zone_crop_lyr_name))
     zone_crop_ds = None
 
-    # Write projection/spatial reference to prj file
-    # Format OSR as ESRI WKT
-    prj_osr = zone_osr.Clone()
-    prj_osr.MorphToESRI()
-    with open(zone_crop_path.replace('.shp', '.prj'), 'w') as prj_f:
-        prj_f.write(prj_osr.ExportToWkt())
 
+    # Compute soil zonal stats for the full ET zones shapefile
+    # Read each file separately even though the geometries are likely the same
+    def zonal_stats(input_path, input_field, zone_dict):
+        output_dict = dict()
+        area_dict = dict()
 
-    # Rebuild the crop list from the stats
-    crop_field_list = sorted(list(set([
-        crop_field for zone_dict in zone_stats.values()
-        for crop_field in zone_dict.keys()])))
-    logging.info('\nCrops Fields: {}'.format(', '.join(map(str, etd_crops))))
+        # Read the soil shapefile and identify intersecting features
+        input_dict = defaultdict(dict)
+        input_ds = shp_driver.Open(input_path, 0)
+        input_lyr = input_ds.GetLayer()
+        input_osr = input_lyr.GetSpatialRef()
+        input_tx = osr.CoordinateTransformation(input_osr, zone_osr)
+        for input_ftr in input_lyr:
+            # input_fid = input_ftr.GetFID()
+            input_value = input_ftr.GetField(input_field)
 
-    logging.debug('\nAdding crop fields to zones shapefile')
-    for crop_field in crop_field_list:
-        if crop_field not in zone_field_list:
-            logging.debug('  Field: {}'.format(crop_field))
-            _arcpy.add_field(zone_path, crop_field, ogr.OFTReal)
+            input_geom = input_ftr.GetGeometryRef()
+            proj_geom = input_geom.Clone()
+            proj_geom.Transform(input_tx)
+            input_poly = loads(proj_geom.ExportToWkt())
 
-    logging.debug('\nWriting crop zonal stats to zones shapefile')
+            proj_extent = gdc.Extent(proj_geom.GetEnvelope())
+            proj_extent = proj_extent.ogrenv_swap()
+            zone_fid_list = list(zone_idx.intersection(list(proj_extent)))
+            if not zone_fid_list:
+                continue
+
+            # Process all intersecting/neighboring features
+            for zone_fid in zone_fid_list:
+                try:
+                    zone_poly = loads(zone_dict[zone_fid]['wkt'])
+                except KeyError:
+                    continue
+                clip_poly = zone_poly.intersection(input_poly)
+                if not clip_poly or clip_poly.is_empty:
+                    continue
+                elif not clip_poly.is_valid:
+                    logging.error('\nERROR: Invalid clip geometry')
+                    input('ENTER')
+                elif not clip_poly.area or clip_poly.area <= 0:
+                    continue
+
+                if zone_fid not in output_dict:
+                    output_dict[zone_fid] = 0
+                    area_dict[zone_fid] = 0
+
+                if clip_poly.area > 0:
+                    output_dict[zone_fid] += input_value * clip_poly.area
+                    area_dict[zone_fid] += clip_poly.area
+
+        input_ds = None
+
+        for zone_fid, zone_total in output_dict.items():
+            output_dict[zone_fid] = zone_total / area_dict[zone_fid]
+
+        return output_dict
+
+    logging.debug('\nComputing AWC zonal stats')
+    awc_zs_dict = zonal_stats(awc_path, awc_field, zone_dict)
+    ag_awc_zs_dict = zonal_stats(awc_path, awc_field, zone_crop_dict)
+
+    logging.info('Computing clay zonal stats')
+    clay_zs_dict = zonal_stats(clay_path, clay_field, zone_dict)
+    ag_clay_zs_dict = zonal_stats(clay_path, clay_field, zone_crop_dict)
+
+    logging.info('Computing sand zonal stats')
+    sand_zs_dict = zonal_stats(sand_path, sand_field, zone_dict)
+    ag_sand_zs_dict = zonal_stats(sand_path, sand_field, zone_crop_dict)
+
+    logging.debug('\nWriting soil zonal stats to zones shapefile')
     zone_ds = shp_driver.Open(zone_path, 1)
     zone_lyr = zone_ds.GetLayer()
-    zone_unit = zone_osr.GetLinearUnitsName()
     for zone_ftr in zone_lyr:
         zone_fid = zone_ftr.GetFID()
-        for crop_field, area in zone_stats[zone_fid].items():
-            if area <= 0:
+        for field_name, zs_dict in [
+                [awc_field, awc_zs_dict],
+                ['AG_' + awc_field, ag_awc_zs_dict]
+                [clay_field, clay_zs_dict],
+                ['AG_' + clay_field, ag_clay_zs_dict]
+                [sand_field, sand_zs_dict],
+                ['AG_' + sand_field, ag_sand_zs_dict]
+            ]:
+            if zone_fid not in zs_dict.keys():
                 continue
-            if zone_unit in ['Meter']:
-                acreage = area * sqm_2_acres
-            else:
-                logging.error('Unsupported unit type: {}'.format(zone_unit))
-            zone_ftr.SetField(crop_field, acreage)
+            zone_value = zs_dict[zone_fid]
+            if zone_value < 0:
+                continue
+            zone_ftr.SetField(field_name, zone_value)
+
         zone_lyr.SetFeature(zone_ftr)
     zone_ds = None
 
 
 
-    # Compute soil zonal stats for the full ET zones shapefile
-    # and the crop clipped shapefile.
-
-    # # Read the AWC shapefile and identify intersecting features
-    # logging.debug('\nReading AWC shapefile')
-    # awc_ds = shp_driver.Open(awc_path, 0)
-    # awc_lyr = awc_ds.GetLayer()
-    # awc_osr = awc_lyr.GetSpatialRef()
-    # awc_tx = osr.CoordinateTransformation(awc_osr, zones_osr)
-    # # awc_lyr_name = zones_lyr.GetName()
-    # for awc_ftr in awc_lyr:
-    #     awc_fid = awc_ftr.GetFID()
-    #     awc_geom = awc_ftr.GetGeometryRef()
-    #     proj_geom = awc_geom.Clone()
-    #     proj_geom.Transform(awc_tx)
-    #     proj_extent = gdc.Extent(proj_geom.GetEnvelope())
-    #     proj_extent = proj_extent.ogrenv_swap()
-    #     zone_fid_list = list(zone_idx.intersection(list(proj_extent)))
-    #     if not zone_fid_list:
-    #         continue
-    #     print(awc_fid, zone_fid_list)
-    #     # input('ENTER')
-    # awc_ds = None
 
 
 
@@ -414,53 +519,29 @@ def main(ini_path, overwrite_flag=False):
 
 
 
+    # # Calculate agricultural area in acres
+    # logging.info('\nCalculating agricultural acreage')
+    # _arcpy.calculate_field(
+    #     zone_path, 'AG_ACRES',
+    #     '!AG_COUNT! * {0} * {1} * {1}'.format(sqm_2_acres, snap_cs))
 
+    # # Calculate AWC in in/feet
+    # logging.info('Calculating AWC in in/ft')
+    # _arcpy.calculate_field(
+    #     zone_path, awc_in_ft_field, '!{}! * 12'.format(awc_field))
 
-
-
-
-
-
-
-
-
-
-
-
-    # # Read the AWC shapefile and identify intersecting features
-    # logging.debug('\nReading AWC shapefile')
-    # awc_ds = shp_driver.Open(awc_path, 0)
-    # awc_lyr = awc_ds.GetLayer()
-    # awc_osr = awc_lyr.GetSpatialRef()
-    # awc_tx = osr.CoordinateTransformation(awc_osr, zones_osr)
-    # # awc_lyr_name = zones_lyr.GetName()
-    # for awc_ftr in awc_lyr:
-    #     awc_fid = awc_ftr.GetFID()
-    #     awc_geom = awc_ftr.GetGeometryRef()
-    #     proj_geom = awc_geom.Clone()
-    #     proj_geom.Transform(awc_tx)
-    #     proj_extent = gdc.Extent(proj_geom.GetEnvelope())
-    #     proj_extent = proj_extent.ogrenv_swap()
-    #     zone_fid_list = list(zone_idx.intersection(list(proj_extent)))
-    #     if not zone_fid_list:
-    #         continue
-    #     print(awc_fid, zone_fid_list)
-    #     # input('ENTER')
-    # awc_ds = None
-
-
-
-
-
-
-
-
-
-    # awc_ds = shp_driver.Open(awc_path, 0)
-    # awc_layer = awc_ds.GetLayer()
-    # awc_layer_name = awc_layer.GetName()
-    # awc_ds = None
-
+    # # Calculate hydrologic group
+    # logging.info('Calculating hydrologic group')
+    # fields = (clay_field, sand_field, hydgrp_num_field, hydgrp_field)
+    # values = _arcpy.search_cursor(zone_path, fields)
+    # for fid, row in values.items():
+    #     if row[sand_field] > 50:
+    #         values[fid][hydgrp_num_field], values[fid][hydgrp_field] = 1, 'A'
+    #     elif row[clay_field] > 40:
+    #         values[fid][hydgrp_num_field], values[fid][hydgrp_field] = 3, 'C'
+    #     else:
+    #         values[fid][hydgrp_num_field], values[fid][hydgrp_field] = 2, 'B'
+    # _arcpy.update_cursor(zone_path, values)
 
 
 
