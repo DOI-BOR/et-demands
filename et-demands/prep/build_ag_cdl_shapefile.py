@@ -83,15 +83,17 @@ def main(ini_path, overwrite_flag=False):
     cdl_geo = cdl_ds.GetGeoTransform()
     cdl_x, cdl_y = gdc.geo_origin(cdl_geo)
     cdl_cs = gdc.geo_cellsize(cdl_geo, x_only=True)
+    cdl_extent = gdc.raster_ds_extent(cdl_ds)
     logging.debug('\nCDL Raster Properties')
     logging.debug('  Geo:        {}'.format(cdl_geo))
     logging.debug('  Snap:       {} {}'.format(cdl_x, cdl_y))
     logging.debug('  Cellsize:   {}'.format(cdl_cs))
     logging.debug('  Nodata:     {}'.format(cdl_nodata))
     logging.debug('  GDAL Type:  {}'.format(cdl_gtype))
+    logging.debug('  Extent: {}'.format(cdl_extent))
     logging.debug('  Projection: {}'.format(cdl_osr.ExportToWkt()))
     # logging.debug('  OSR: {}'.format(cdl_osr))
-    # logging.debug('  Extent: {}'.format(zones_extent))
+
 
     # ET Zones Properties
     zone_ds = shp_driver.Open(zone_path, 0)
@@ -118,8 +120,8 @@ def main(ini_path, overwrite_flag=False):
     clip_extent.adjust_to_snap(snap_x=cdl_x, snap_y=cdl_y, cs=cdl_cs,
                                method='EXPAND')
     logging.debug('  Snapped:    {}'.format(clip_extent))
-    # Limit the subset extent to CDL extent
-    clip_extent.clip(clip_extent)
+    # Limit the subset extent to the CDL extent
+    clip_extent.clip(cdl_extent)
     logging.debug('  Clipped:    {}'.format(clip_extent))
     # Compute the clip geotransform and shape
     clip_geo = clip_extent.geo(cs=cdl_cs)
