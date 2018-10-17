@@ -72,7 +72,7 @@ def main(ini_path, overwrite_flag=False):
     hydgrp_field = 'HYDGRP'
 
     # +/- buffer distance (in zone units)
-    simplify_threshold = 0.1
+    simplify_threshold = 0.01
 
     sqm_2_acres = 0.000247105381
     sqft_2_acres = 0.0000229568
@@ -367,6 +367,11 @@ def main(ini_path, overwrite_flag=False):
                 .buffer(simplify_threshold).buffer(-simplify_threshold)
                 # .simplify(simplify_threshold, preserve_topology=False)\
             # zone_crop_poly = cascaded_union(zone_crop_polys)
+
+        if zone_crop_poly.is_empty:
+            logging.debug('  ZONE FID: {} - empty polygon, skipping'.format(
+                zone_fid))
+            continue
 
         if soil_crop_mask_flag:
             # Save the crop masked zone to memory
