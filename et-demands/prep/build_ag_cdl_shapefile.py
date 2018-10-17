@@ -76,7 +76,7 @@ def main(ini_path, overwrite_flag=False):
     # CDL Raster Properties
     cdl_ds = gdal.Open(cdl_path)
     cdl_band = cdl_ds.GetRasterBand(1)
-    cdl_nodata = cdl_band.GetNoDataValue()
+    cdl_nodata = int(cdl_band.GetNoDataValue())
     cdl_gtype = cdl_band.DataType
     cdl_proj = cdl_ds.GetProjection()
     cdl_osr = gdc.proj_osr(cdl_proj)
@@ -93,7 +93,6 @@ def main(ini_path, overwrite_flag=False):
     logging.debug('  Extent: {}'.format(cdl_extent))
     logging.debug('  Projection: {}'.format(cdl_osr.ExportToWkt()))
     # logging.debug('  OSR: {}'.format(cdl_osr))
-
 
     # ET Zones Properties
     zone_ds = shp_driver.Open(zone_path, 0)
@@ -128,9 +127,8 @@ def main(ini_path, overwrite_flag=False):
     clip_rows, clip_cols = clip_extent.shape(cs=cdl_cs)
     logging.debug('  Rows/Cols:  {} {}'.format(clip_rows, clip_cols))
 
-
-    # Build a raster mask was a little more efficient than selecting
-    # touching features later on
+    # Building a raster mask was a little more efficient than selecting
+    #   touching features later on.
     logging.debug('\nBuilding ET Zones mask')
     zone_count = zone_lyr.GetFeatureCount()
     if zone_count < 255:
@@ -213,23 +211,27 @@ def main(ini_path, overwrite_flag=False):
     # cdl_array[nodata_mask] = cdl_nodata
 
     # Create an in-memory raster to read the CDL into
+    # Set the mask band separately
     memory_driver = gdal.GetDriverByName('MEM')
     memory_ds = memory_driver.Create(
-        '', clip_cols, clip_rows, 1, cdl_gtype)
+        '', clip_cols, clip_rows, 2, cdl_gtype)
     memory_ds.SetGeoTransform(clip_geo)
     memory_ds.SetProjection(cdl_proj)
     memory_band = memory_ds.GetRasterBand(1)
     memory_band.SetNoDataValue(cdl_nodata)
+    mask_band = memory_ds.GetRasterBand(2)
 
     # Write the CDL subset array to the memory raster
     logging.debug('\nWriting array')
     memory_band.WriteArray(cdl_array, 0, 0)
+    mask_band.WriteArray(cdl_array != cdl_nodata, 0, 0)
 
     # Polygonize the CDL array
     logging.debug('\nConverting raster to polygon')
-    gdal.Polygonize(memory_band, memory_band, polygon_lyr, 0)
+    gdal.Polygonize(memory_band, mask_band, polygon_lyr, 0)
 
     # Cleanup
+    mask_band = None
     memory_band = None
     memory_ds = None
     polygon_lyr = None
