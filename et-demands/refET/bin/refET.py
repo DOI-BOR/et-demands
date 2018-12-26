@@ -67,7 +67,7 @@ class refET:
         psy = 1013 * pair / 0.622 / lmbda
         return psy
 
-    def _et_hargreaves_samani(self, doy, tmax, tmin, latitude):
+    def et_hargreaves_samani(self, doy, tmax, tmin, latitude):
         """Hargreaves Samani reference ET (https://doi.org/10.13031/2013.26773)
 
         Parameters
@@ -271,7 +271,7 @@ class refET:
         EToPriTay = max(EToPriTay, 0.0)
         return(EToPriTay)
 
-    def _compute_penmans(self, yr, mo, da, doy, time_step, tmax, tmin, tdew, rs, u24, elev, latitude):
+    def compute_penmans(self, yr, mo, da, doy, time_step, tmax, tmin, tdew, rs, u24, elev, latitude):
         """ Compute reference ET by Penman methods
 
         Parameters
@@ -394,7 +394,7 @@ class refET:
             # input_units={'tmin': 'C', 'tmax': 'C', 'rs': 'mj m-2 d-1', 'uz': 'm s-1',
             #              'lat': 'deg'}
         ASCEPMstdo = refet.Daily(tmin, tmax, ea, rs, u242, zw, elev, latitude, doy, method='refet').eto()
-        return  (Penman, PreTay, KimbPeng, ASCEPMstdr, ASCEPMstdo, FAO56PM, KimbPen)
+        return (Penman, PreTay, KimbPeng, ASCEPMstdr, ASCEPMstdo, FAO56PM, KimbPen)
 
     def _rn_daily(self, elev, lat, doy, ra, rs, rso, tmax, tmin, es):
         """FAO56 and Kimberly 1982 net radiation

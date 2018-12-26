@@ -247,7 +247,7 @@ def avg_two_arrays(c1, c2):
     """
     return 0.5 * (c1 + c2)
 
-def _rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_b1, TR_b2):
+def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_b1, TR_b2):
     """Estimated incident solar radiation
     Parameters
     ----------
@@ -275,6 +275,7 @@ def _rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR
     -------
     rs : ndarray
         Estimated incident solar radiation [MJ m-2 d-1].
+        
     """
     # Latutude in radians
     latRad = latitude * math.pi / 180.0  # Lat is station latitude in degrees
@@ -331,7 +332,7 @@ def _dewpoint_temperature(ea):
     -------
     tdew : scalar or array_like of shape(M, )
         Dew point temperature [C].
-        
+
     """
     return (237.3 * np.log(ea / 0.6108)) / (17.27 - np.log(ea / 0.6108))
 
@@ -366,9 +367,9 @@ def _es_ice(temperature):
     ----------
     temperature : scalar or array_like of shape(M, )
         Air temperature [C].
+
     Returns
     -------
-
     es_ice : ndarray
         Saturation vapor pressure [kPa].
 
@@ -380,13 +381,17 @@ def _es_ice(temperature):
     return 0.6108 * np.exp((21.87 * t) / (t + 265.5))
 
 def tdew_from_ea(ea):
-    """Calculates vapor pressure at given temperature
+    """Dew point temperature from vapor pressure
 
-    Args:
+    Parameters
+    -----------
         temperature: NumPy array of temperatures [C]
 
-    Returns:
-        NumPy array of vapor pressures [kPa]
+    Returns
+    -------
+        tdew : ndarray
+            Dew point temperature [C].
+
     """
     return (237.3 * np.log(ea / 0.6108)) / (17.27 - np.log(ea / 0.6108))
 

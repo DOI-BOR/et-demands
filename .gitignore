@@ -226,3 +226,41 @@ et-demands_py27/tools/solar_radiation_opt/UserGuideForMonteCarloAnalysis.pdf
 et-demands_py27/tools/split_vb_crop_daily_timeseries.py
 et-demands_py27/tools/util.py
 example/ret_hist2.ini
+testing/data/historical/annual_retalt/MT1008_UMRB_historical_S0_RET.csv
+testing/data/historical/annual_retalt/MT1008_UMRB_historical_S0_RETAlt.csv
+testing/data/historical/daily_retalt/MT1008_UMRB_historical_S0_RETAlt.csv
+testing/data/historical/monthly_retalt/MT1008_UMRB_historical_S0_RETAlt.csv
+testing/data/historical/scratch_in_met/MT1044_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT1552_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT1737_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT1875_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT1974_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT2173_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT2409_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT2550_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT2857_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT3013_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT3445_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT3727_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT3939_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT4027_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT4055_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT4368_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT4522_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT5030_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT5761_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT6153_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT6902_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT7214_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT8161_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT8430_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT8498_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT8597_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT8927_UMRB_historical_S0_Met.csv
+testing/data/historical/scratch_in_met/MT9067_UMRB_historical_S0_Met.csv
+testing/RefETComparison.xlsx
+testing/RET Comparison.xlsx
+testing/static/MBIA_Dillon_MetaData_Sub.xlsx
+testing/RET Comparison.xlsx
+testing/RET Comparison.xlsx
+testing/RET Comparison.xlsx

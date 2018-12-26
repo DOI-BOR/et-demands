@@ -64,7 +64,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
 
     # Set up average monthly output if flagged
 
-    if cfg.avg_monthly_met_flag:
+    if cfg.avg_monthly_flag:
         avg_monthly_header = 'Met Node ID,Met Node Name,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'
         if "xls" in cfg.input_met['avgm_tmax_path'].lower():
             avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".xlsx", "avgTMaxMon.txt.").replace(".xls", "avgTMaxMon.txt.")
@@ -84,9 +84,9 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     node_mp_list =  []
     node_mp_flag = False
     if mp_procs > 1:
-        if not cfg.avg_monthly_met_flag:
-            if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() != 'SF P':
-                logging.warning("Met output data structure type " + cfg.output_met['data_structure_type'] +
+        if not cfg.avg_monthly_flag:
+            if cfg.output_retalt_flag and cfg.refetalt_out['data_structure_type'].upper() != 'SF P':
+                logging.warning("Met output data structure type " + cfg.refetalt_out['data_structure_type'] +
                                 " can not yet be created using multiple processing.")
                 mp_procs = 1
             else:
@@ -117,11 +117,11 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
         # read input met data
 
         met_node_count += 1
-        if node_mp_flag and cfg.output_met['data_structure_type'].upper() == 'SF P' and met_node_count > 1:
+        if node_mp_flag and cfg.refetalt_out['data_structure_type'].upper() == 'SF P' and met_node_count > 1:
             node_mp_list.append([met_node_count, cfg, met_node, mnd])
         else:
             if not met_node.read_and_fill_met_data(met_node_count, cfg, mnd):
-                if cfg.avg_monthly_met_flag:
+                if cfg.avg_monthly_flag:
                     avgTMaxRev_hand.close()
                     avgTMinRev_hand.close()
                 sys.exit()
@@ -130,14 +130,14 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
 
             if cfg.refet_out_flag:
                 if not met_node.calculate_and_post_ret_data(cfg):
-                    if cfg.avg_monthly_met_flag:
+                    if cfg.avg_monthly_flag:
                         avgTMaxRev_hand.close()
                         avgTMinRev_hand.close()
                     sys.exit()
 
-            # post updated average monthly temperatures if requested
+            # post updated average monthly temperatures if requested -
 
-            if cfg.avg_monthly_met_flag:
+            if cfg.avg_monthly_flag:
                 avgTMaxRev_string = met_node_id + cfg.input_met['avgm_tmax_delimitor'] + met_node.met_node_name
                 avgTMinRev_string = avgTMaxRev_string
                 for month, row in met_node.input_met_df.groupby(['month'])['tmax'].agg([np.mean]).iterrows():
@@ -149,14 +149,14 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
 
             # setup output met data posting
 
-            if cfg.output_met_flag:
-                if not met_node.setup_output_met_data(met_node_count, cfg, mnd):
-                    if cfg.avg_monthly_met_flag:
-                        avgTMaxRev_hand.clos
-                        avgTMinRev_hand.close()
-                    sys.exit()
-            del met_node.input_met_df
-    if cfg.avg_monthly_met_flag:
+            # if cfg.output_retalt_flag:
+            #     if not met_node.setup_refetalt_out_data(met_node_count, cfg, mnd):
+            #         if cfg.avg_monthly_flag:
+            #             avgTMaxRev_hand.clos
+            #             avgTMinRev_hand.close()
+            #         sys.exit()
+            # del met_node.input_met_df
+    if cfg.avg_monthly_flag:
         avgTMaxRev_hand.close()
         avgTMinRev_hand.close()
 
@@ -172,269 +172,269 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
 
     # post output with parameter orientation
 
-    if cfg.output_met_flag and cfg.output_met['data_structure_type'].upper() != 'SF P':
+    if cfg.output_retalt_flag and cfg.refetalt_out['data_structure_type'].upper() != 'SF P':
         # post optional met output data
 
-        logging.info("\nPosting non 'SF P' output met data")
-        if 'date' in cfg.output_met['fields'] and cfg.output_met['fields'] is not None:
+        logging.info("\nPosting non 'SF P' output alt ref et data")
+        if 'date' in cfg.refetalt_out['fields'] and cfg.refetalt_out['fields'] is not None:
             date_is_posted = True
         else:
             date_is_posted = False
-        if cfg.daily_output_met_flag:
-            if '%p' in cfg.output_met['name_format']:    # individual parameter files
-                for field_name, param_df in mnd.mn_daily_output_met_data.items():
+        if cfg.daily_output_retalt_flag:
+            if '%p' in cfg.refetalt_out['name_format']:    # individual parameter files
+                for field_name, param_df in mnd.mn_daily_refetalt_out_data.items():
                     field_key = None
-                    for fk, fn in cfg.output_met['fields'].items():
+                    for fk, fn in cfg.refetalt_out['fields'].items():
                         if fn == field_name:
                             field_key = fk
                             break
                     if field_key is None:
-                        logging.error('ERROR  Unable to determine key for ' + field_name + ' posting daily met output')
+                        logging.error('ERROR  Unable to determine key for ' + field_name + ' posting daily alt ref et output')
                         sys.exit()
-                    file_path = os.path.join(cfg.daily_output_met_ws,
-                        cfg.output_met['name_format'].replace('%p', cfg.output_met['fnspec'][field_key]))
+                    file_path = os.path.join(cfg.daily_refetalt_out_ws,
+                        cfg.refetalt_out['name_format'].replace('%p', cfg.refetalt_out['fnspec'][field_key]))
                     logging.debug('  Daily output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['daily_float_format'],
-                            cfg.output_met['daily_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['daily_float_format'],
+                            cfg.refetalt_out['daily_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['daily_float_format'],
-                            cfg.output_met['daily_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['daily_float_format'],
+                            cfg.refetalt_out['daily_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                    elif cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                         if os.path.isfile(file_path):
                             shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                         params_dict = {}
                         params_dict['[param_df'] = param_df
                         ws_names = []
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
                                 file_path, ws_names, params_dict,
-                                cfg.output_met['daily_float_format'],
-                                cfg.output_met['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
+                                cfg.refetalt_out['daily_float_format'],
+                                cfg.refetalt_out['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
             else:    # common parameter file
-                file_path = os.path.join(cfg.daily_output_met_ws, cfg.output_met['name_format'])
-                if cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                file_path = os.path.join(cfg.daily_refetalt_out_ws, cfg.refetalt_out['name_format'])
+                if cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                     ws_names = []
-                    for field_name, param_df in mnd.mn_daily_output_met_data.items():
+                    for field_name, param_df in mnd.mn_daily_refetalt_out_data.items():
                         field_key = None
-                        for fk, fn in cfg.output_met['fields'].items():
+                        for fk, fn in cfg.refetalt_out['fields'].items():
                             if fn == field_name:
                                 field_key = fk
                                 break
                         if field_key is None:
                             logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily met output')
                             sys.exit()
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, mnd.mn_daily_output_met_data,
-                            cfg.output_met['daily_float_format'],
-                            cfg.output_met['daily_date_format'],
+                            file_path, ws_names, mnd.mn_daily_refetalt_out_data,
+                            cfg.refetalt_out['daily_float_format'],
+                            cfg.refetalt_out['daily_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
                     field_count = 0
-                    for field_name, param_df in mnd.mn_daily_output_met_data.items():
+                    for field_name, param_df in mnd.mn_daily_refetalt_out_data.items():
                         field_count += 1
                         if field_count == 1:
                             params_df = param_df.copy()
                         else:
                             # daily_refet_df = pd.merge(self.input_met_df, ret_df, left_index = True, right_index = True)
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['daily_float_format'],
-                            cfg.output_met['daily_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['daily_float_format'],
+                            cfg.refetalt_out['daily_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['daily_float_format'],
-                            cfg.output_met['daily_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['daily_float_format'],
+                            cfg.refetalt_out['daily_date_format'], date_is_posted):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
-            del mnd.mn_daily_output_met_data
-        if cfg.monthly_output_met_flag:
-            if '%p' in cfg.output_met['name_format']:    # individual parameter files
-                for field_name, param_df in mnd.mn_monthly_output_met_data.items():
+            del mnd.mn_daily_refetalt_out_data
+        if cfg.monthly_output_retalt_flag:
+            if '%p' in cfg.refetalt_out['name_format']:    # individual parameter files
+                for field_name, param_df in mnd.mn_monthly_refetalt_out_data.items():
                     field_key = None
-                    for fk, fn in cfg.output_met['fields'].items():
+                    for fk, fn in cfg.refetalt_out['fields'].items():
                         if fn == field_name:
                             field_key = fk
                             break
                     if field_key is None:
-                        logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily met output')
+                        logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting monthly alt ref et output')
                         sys.exit()
-                    file_path = os.path.join(cfg.monthly_output_met_ws,
-                        cfg.output_met['name_format'].replace('%p', cfg.output_met['fnspec'][field_key]))
+                    file_path = os.path.join(cfg.monthly_refetalt_out_ws,
+                        cfg.refetalt_out['name_format'].replace('%p', cfg.refetalt_out['fnspec'][field_key]))
                     logging.debug('  monthly output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['monthly_float_format'],
-                            cfg.output_met['monthly_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['monthly_float_format'],
+                            cfg.refetalt_out['monthly_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['monthly_float_format'],
-                            cfg.output_met['monthly_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['monthly_float_format'],
+                            cfg.refetalt_out['monthly_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                    elif cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                         if os.path.isfile(file_path):
                             shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                         params_dict = {}
                         params_dict['[param_df'] = param_df
                         ws_names = []
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
                                 file_path, ws_names, params_dict,
-                                cfg.output_met['monthly_float_format'],
-                                cfg.output_met['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
+                                cfg.refetalt_out['monthly_float_format'],
+                                cfg.refetalt_out['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
             else:    # common parameter file
-                file_path = os.path.join(cfg.monthly_output_met_ws, cfg.output_met['name_format'])
-                if cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                file_path = os.path.join(cfg.monthly_refetalt_out_ws, cfg.refetalt_out['name_format'])
+                if cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                     ws_names = []
-                    for field_name, param_df in mnd.mn_monthly_output_met_data.items():
+                    for field_name, param_df in mnd.mn_monthly_refetalt_out_data.items():
                         field_key = None
-                        for fk, fn in cfg.output_met['fields'].items():
+                        for fk, fn in cfg.refetalt_out['fields'].items():
                             if fn == field_name:
                                 field_key = fk
                                 break
                         if field_key is None:
-                            logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily met output')
+                            logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting monthly alt ref et output')
                             sys.exit()
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, mnd.mn_monthly_output_met_data,
-                            cfg.output_met['monthly_float_format'],
-                            cfg.output_met['monthly_date_format'],
+                            file_path, ws_names, mnd.mn_monthly_refetalt_out_data,
+                            cfg.refetalt_out['monthly_float_format'],
+                            cfg.refetalt_out['monthly_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
                     field_count = 0
-                    for field_name, param_df in mnd.mn_monthly_output_met_data.items():
+                    for field_name, param_df in mnd.mn_monthly_refetalt_out_data.items():
                         field_count += 1
                         if field_count == 1:
                             params_df = param_df.copy()
                         else:
                             # monthly_refet_df = pd.merge(self.input_met_df, ret_df, left_index = True, right_index = True)
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['monthly_float_format'],
-                            cfg.output_met['monthly_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['monthly_float_format'],
+                            cfg.refetalt_out['monthly_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['monthly_float_format'],
-                            cfg.output_met['monthly_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['monthly_float_format'],
+                            cfg.refetalt_out['monthly_date_format'], date_is_posted):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
-            del mnd.mn_monthly_output_met_data
-        if cfg.annual_output_met_flag:
-            if '%p' in cfg.output_met['name_format']:    # individual parameter files
-                for field_name, param_df in mnd.mn_annual_output_met_data.items():
+            del mnd.mn_monthly_refetalt_out_data
+        if cfg.annual_output_retalt_flag:
+            if '%p' in cfg.refetalt_out['name_format']:    # individual parameter files
+                for field_name, param_df in mnd.mn_annual_refetalt_out_data.items():
                     field_key = None
-                    for fk, fn in cfg.output_met['fields'].items():
+                    for fk, fn in cfg.refetalt_out['fields'].items():
                         if fn == field_name:
                             field_key = fk
                             break
                     if field_key is None:
-                        logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily met output')
+                        logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting annual alt ref et output')
                         sys.exit()
-                    file_path = os.path.join(cfg.annual_output_met_ws,
-                        cfg.output_met['name_format'].replace('%p', cfg.output_met['fnspec'][field_key]))
+                    file_path = os.path.join(cfg.annual_refetalt_out_ws,
+                        cfg.refetalt_out['name_format'].replace('%p', cfg.refetalt_out['fnspec'][field_key]))
                     logging.debug('  annual output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['annual_float_format'],
-                            cfg.output_met['annual_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['annual_float_format'],
+                            cfg.refetalt_out['annual_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            param_df, cfg.output_met['annual_float_format'],
-                            cfg.output_met['annual_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            param_df, cfg.refetalt_out['annual_float_format'],
+                            cfg.refetalt_out['annual_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                    elif cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                         if os.path.isfile(file_path):
                             shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                         params_dict = {}
                         params_dict['[param_df'] = param_df
                         ws_names = []
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
                                 file_path, ws_names, params_dict,
-                                cfg.output_met['annual_float_format'],
-                                cfg.output_met['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
+                                cfg.refetalt_out['annual_float_format'],
+                                cfg.refetalt_out['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
             else:    # common parameter file
-                file_path = os.path.join(cfg.annual_output_met_ws, cfg.output_met['name_format'])
-                if cfg.output_met['file_type'].lower() == 'xls' or cfg.output_met['file_type'].lower() == 'wb':
+                file_path = os.path.join(cfg.annual_refetalt_out_ws, cfg.refetalt_out['name_format'])
+                if cfg.refetalt_out['file_type'].lower() == 'xls' or cfg.refetalt_out['file_type'].lower() == 'wb':
                     ws_names = []
-                    for field_name, param_df in mnd.mn_annual_output_met_data.items():
+                    for field_name, param_df in mnd.mn_annual_refetalt_out_data.items():
                         field_key = None
-                        for fk, fn in cfg.output_met['fields'].items():
+                        for fk, fn in cfg.refetalt_out['fields'].items():
                             if fn == field_name:
                                 field_key = fk
                                 break
                         if field_key is None:
-                            logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily met output')
+                            logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting annual alt ref et output')
                             sys.exit()
-                        ws_names.append(cfg.output_met['wsspec'][field_key])
+                        ws_names.append(cfg.refetalt_out['wsspec'][field_key])
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, mnd.mn_annual_output_met_data,
-                            cfg.output_met['annual_float_format'],
-                            cfg.output_met['annual_date_format'],
+                            file_path, ws_names, mnd.mn_annual_refetalt_out_data,
+                            cfg.refetalt_out['annual_float_format'],
+                            cfg.refetalt_out['annual_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
                     field_count = 0
-                    for field_name, param_df in mnd.mn_annual_output_met_data.items():
+                    for field_name, param_df in mnd.mn_annual_refetalt_out_data.items():
                         field_count += 1
                         if field_count == 1:
                             params_df = param_df.copy()
                         else:
                             # annual_refet_df = pd.merge(self.input_met_df, ret_df, left_index = True, right_index = True)
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_met['file_type'].lower() == 'csf':
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['annual_float_format'],
-                            cfg.output_met['annual_date_format'], date_is_posted):
+                    if cfg.refetalt_out['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['annual_float_format'],
+                            cfg.refetalt_out['annual_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_met['file_type'].lower() == 'rdb':
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_met['delimiter'],
-                            params_df, cfg.output_met['annual_float_format'],
-                            cfg.output_met['annual_date_format'], date_is_posted):
+                    elif cfg.refetalt_out['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.refetalt_out['delimiter'],
+                            params_df, cfg.refetalt_out['annual_float_format'],
+                            cfg.refetalt_out['annual_date_format'], date_is_posted):
                             sys.exit()
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.output_met['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.format(cfg.refetalt_out['file_type']))
                         sys.exit()
-            del mnd.mn_annual_output_met_data
+            del mnd.mn_annual_refetalt_out_data
     logging.warning('\nREFET Run Completed')
     logging.info('\n{} seconds'.format(clock()-clock_start))
 
@@ -465,8 +465,8 @@ def node_sp(met_node_count, cfg, met_node, mnd):
 
     # setup output met data posting
 
-    if cfg.output_met_flag:
-        if not met_node.setup_output_met_data(met_node_count, cfg, mnd):
+    if cfg.output_retalt_flag:
+        if not met_node.setup_refetalt_out_data(met_node_count, cfg, mnd):
             sys.exit()
     del met_node.input_met_df
 
