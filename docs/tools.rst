@@ -1,5 +1,14 @@
 Analysis Tools
 ==============
+ETDemands provides post-processing tools to assist with summarizing and viewing the raw daily, monthly, and annual .csv datasets. In general, there are two types of outputs: Timeseries Plots and Summary Shapefiles
+
+The timeseries scripts analyze specific crops and years to create interactive .html plots that can be used to visualize temporal patterns or changes in the data. Each .html plot contains all the data used to generate the plot and can be easily shared.
+
+The shapefile scripts batch the output files into spatial summaries that can be visualized with any standard GIS software (e.g. ArcGIS, QGIS). Each output shapefile will contain summary statistics for each ET Zone for the crop(s) and year(s) of interest.
+
+Note: Many of these tools offer options to process single years or multiple years. Passing the "-h" argument to each script will display input argument options.
+
+
 Annual Summary Shapefiles (annual_summary_shapefiles_gpd.py)
 ---------
 This analysis tool converts the annual output .csv files into crop specific summary shapefiles for viewing and analysis of the spatial distribution of evaporation. The output shapefiles contain 'ET (ETo or ETr)', 'ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season' information for each ET Zone containing the crop of interest.
