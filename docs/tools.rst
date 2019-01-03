@@ -82,11 +82,12 @@ Growing Season Summary (compute_growing_season.py)
 ---------
 This script processing the daily output files to summarize growing season
 length and cutting information for each ET Zone/crop combination. Two summary
-.csv files are generated::
-growing_season_full_summary.csv contains information for ET Zone/crop growing
+.csv files are generated:
+
+  growing_season_full_summary.csv contains information for ET Zone/crop growing
 season information for each year included in the analysis.
 
-growing_season_mean_annual.csv contains averages of all years included in the
+  growing_season_mean_annual.csv contains averages of all years included in the
 analysis.
 
 
