@@ -9,7 +9,7 @@ The timeseries scripts analyze specific crops and years to create interactive
 data. Each .html plot contains all the data used to generate the plot and can be
 easily shared with team members and stakeholders.
 
-The shapefile scripts batch the output files into spatial summaries that can be
+The shapefile scripts batch the output .csv files into spatial summaries that can be
 visualized with any standard GIS software (e.g. ArcGIS, QGIS). Each output
 shapefile will contain summary statistics for each ET Zone for the crop and
 year(s) of interest.
@@ -84,11 +84,12 @@ This script processing the daily output files to summarize growing season
 length and cutting information for each ET Zone/crop combination. Two summary
 .csv files are generated:
 
-  growing_season_full_summary.csv contains information for ET Zone/crop growing
-season information for each year included in the analysis.
+  'growing_season_full_summary.csv' contains information for ET Zone/crop growing
+  season information for each year included in the analysis.
 
-  growing_season_mean_annual.csv contains averages of all years included in the
-analysis.
+  'growing_season_mean_annual.csv' contains averages of all years included in the
+  analysis.
+Both .csv files can be found in the 'growing_season_stats' folder.
 
 
 
