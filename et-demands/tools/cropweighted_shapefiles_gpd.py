@@ -26,10 +26,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     Returns:
         None
     """
-    print('SCRIPT STILL IN DEVELOPMENT (SEE CODE). EXITING')
-    # sys.exit()
 
-    #  INI path
+    # INI path
     config = util.read_ini(ini_path, section='CROP_ET')
     try:
         project_ws = config.get('CROP_ET', 'project_folder')
@@ -54,7 +52,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     year_list = None
     if year_filter:
         try:
-            year_list= sorted(list(util.parse_int_set(year_filter)))
+            year_list = sorted(list(util.parse_int_set(year_filter)))
             # logging.info('\nyear_list = {0}'.format(year_list))
         except:
             pass
@@ -89,7 +87,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
     # Regular expressions
     data_re = re.compile('(?P<CELLID>\w+)_crop_(?P<CROP>\d+).csv$', re.I)
-    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
+    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$',
+    #  re.I)
 
     # Build list of all data files
     data_file_list = sorted(
@@ -113,7 +112,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         logging.debug('')
         logging.info('  {0}'.format(file_name))
 
-        # station, crop_num = os.path.splitext(file_name)[0].split('_daily_crop_')
+        # station, crop_num = os.path.splitext(file_name)[0].split(
+        # '_daily_crop_')
         station, crop_num = os.path.splitext(file_name)[0].split('_crop_')
         stations.append(station)
         crop_num = int(crop_num)
@@ -138,8 +138,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         logging.info(
             '\nFiltering data using ETDemands defined growing season.')
     if time_filter == 'doy':
-        logging.info('\nFiltering data using doy inputs. Start doy: {:03d}'
-            '  End doy: {:03d}'.format(start_doy, end_doy))
+        logging.info('\nFiltering data using doy inputs. Start doy: {:03d} '
+                     'End doy: {:03d}'.format(start_doy, end_doy))
 
     for crop in unique_crop_nums:
         logging.info('\n Processing Crop: {:02d}'.format(crop))
@@ -181,22 +181,23 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             # GroupStats by Year of each column follow agg assignment above
             yearlygroup_df = daily_df.groupby('Year', as_index=True).agg(a)
 
-            #Take Mean of Yearly GroupStats
+            # Take Mean of Yearly GroupStats
             mean_df = yearlygroup_df.mean(axis=0)
             mean_fieldnames = [v + '_mn_{:02d}'.format(crop) for v in var_list]
 
-            #Take Median of Yearly GroupStats
+            # Take Median of Yearly GroupStats
             median_df = yearlygroup_df.median(axis=0)
-            median_fieldnames =[v + '_md_{:02d}'.format(crop) for v in var_list]
+            median_fieldnames = [v + '_md_{:02d}'.format(crop) for v in
+                                 var_list]
 
-            #Create Dataframe if it doesn't exist
+            # Create Dataframe if it doesn't exist
             if df is None:
                df = pd.DataFrame(index=unique_stations,
                                  columns=mean_fieldnames + median_fieldnames)
 
-            #Write data to each station row
-            df.loc[station] = list(mean_df[var_list]) + \
-                              list(median_df[var_list])
+            # Write data to each station row
+            df.loc[station] = list(mean_df[var_list]) + list(median_df[
+                                                                 var_list])
 
             # Grab min/max year for output folder naming
             min_year = min(daily_df['Year'])
@@ -219,21 +220,24 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # List Comprehension (All combinations of var_list and stat)
     # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch01s15.html
     for var, stat in [(var, stat) for var in var_list for stat in ['mn', 'md']]:
-        # nitialize empty columns (zeros)
+        # initialize empty columns (zeros)
         cells['CW{0}_{1}'.format(var, stat)] = 0
         for crop in unique_crop_nums:
             # reset temp
             temp = []
             # calculate crop fraction of weighted rate
             temp = cells['CROP_{0:02d}'.format(crop)].multiply(
-                cells['{0}_{1}_{2:02d}'.format(var, stat, crop)]).divide(cells['AG_ACRES'])
+                cells['{0}_{1}_{2:02d}'.format(var, stat, crop)]).divide(
+                cells['AG_ACRES'])
             # replace nan with zero
             temp = temp.fillna(0)
             # add crop fraction to total calculate weighted rate
-            cells['CW{0}_{1}'.format(var, stat)] = cells['CW{0}_{1}'.format(var, stat)].add(temp)
+            cells['CW{0}_{1}'.format(var, stat)] = cells['CW{0}_{1}'.format(
+                var, stat)].add(temp)
 
     # Subset to "Final" dataframe for merge to output .shp
-    Final = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn','CWETact_md', 'CWNIWR_md']]
+    Final = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn',
+                   'CWETact_md', 'CWNIWR_md']]
 
     # Copy ETCELLS.shp and join cropweighted data to it
     data = gpd.read_file(et_cells_path)
@@ -268,11 +272,11 @@ def read_shapefile(shp_path):
     sf = shapefile.Reader(shp_path)
     fields = [x[0] for x in sf.fields][1:]
     records = sf.records()
-    #	shps = [s.points for s in sf.shapes()]
+    # shps = [s.points for s in sf.shapes()]
 
     # write into a dataframe
     df = pd.DataFrame(columns=fields, data=records)
-    #	df = df.assign(coords=shps)
+    # df = df.assign(coords=shps)
     return df
 
 def arg_parse():
@@ -285,7 +289,8 @@ def arg_parse():
         type=lambda x: util.is_valid_file(parser, x), help='Input file')
     parser.add_argument(
         '-t', '--time_filter', default='annual', choices=['annual',
-                                    'growing_season', 'doy'], type=str,
+                                                          'growing_season',
+                                                          'doy'], type=str,
         help='Data coverage options. If "doy", -start_doy and'
              ' -end_doy required.')
     parser.add_argument(
@@ -302,6 +307,7 @@ def arg_parse():
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
     return args
+
 
 if __name__ == '__main__':
     args = arg_parse()

@@ -21,13 +21,14 @@ dist/
 
 # PyCharm
 .idea
+venv
 
 # Miscellaneous files
 *.bak
 
 # Common Data
 common
-venv
+
 
 # Example folders/files
 example/calibration
