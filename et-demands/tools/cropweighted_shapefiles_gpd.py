@@ -53,7 +53,6 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     if year_filter:
         try:
             year_list = sorted(list(util.parse_int_set(year_filter)))
-            # logging.info('\nyear_list = {0}'.format(year_list))
         except:
             pass
 
@@ -192,14 +191,15 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Create Dataframe if it doesn't exist
             if df is None:
-               df = pd.DataFrame(index=unique_stations,
-                                 columns=mean_fieldnames + median_fieldnames)
+                df = pd.DataFrame(index=unique_stations,
+                                  columns=mean_fieldnames + median_fieldnames)
 
             # Write data to each station row
             df.loc[station] = list(mean_df[var_list]) + list(median_df[
                                                                  var_list])
 
             # Grab min/max year for output folder naming
+            # assumes all daily files cover same time period
             min_year = min(daily_df['Year'])
             max_year = max(daily_df['Year'])
 
@@ -217,7 +217,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     cells[cells['AG_ACRES'] == 0] = np.nan
 
     # Calculate CropArea Weighted ETact and NIWR for each cell
-    # List Comprehension (All combinations of var_list and stat)
+    # List Comprehension (all combinations of var_list and stat)
     # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch01s15.html
     for var, stat in [(var, stat) for var in var_list for stat in ['mn', 'md']]:
         # initialize empty columns (zeros)
@@ -236,14 +236,14 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                 var, stat)].add(temp)
 
     # Subset to "Final" dataframe for merge to output .shp
-    Final = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn',
-                   'CWETact_md', 'CWNIWR_md']]
+    final_df = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
+                      'CWNIWR_md']]
 
     # Copy ETCELLS.shp and join cropweighted data to it
     data = gpd.read_file(et_cells_path)
 
     # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
-    merged_data = data.merge(Final, on='GRIDMET_ID')
+    merged_data = data.merge(final_df, on='GRIDMET_ID')
 
     # Output file name
     out_name = "{}_cropweighted.shp".format(time_filter, crop)
@@ -263,6 +263,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # Write output .shp
     merged_data.to_file(os.path.join(output_folder_path, out_name))
 
+
 def read_shapefile(shp_path):
     """
     Read a shapefile into a Pandas dataframe with a 'coords' column holding
@@ -279,10 +280,11 @@ def read_shapefile(shp_path):
     # df = df.assign(coords=shps)
     return df
 
+
 def arg_parse():
     """"""
     parser = argparse.ArgumentParser(
-        description='ET-Demands Annual Stat Shapefiles',
+        description='ET-Demands Cropweighted Shapefiles',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', metavar='PATH',
@@ -328,20 +330,3 @@ if __name__ == '__main__':
 
     main(ini_path=args.ini, time_filter=args.time_filter,
          start_doy=args.start_doy, end_doy=args.end_doy, year_filter=args.year)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
