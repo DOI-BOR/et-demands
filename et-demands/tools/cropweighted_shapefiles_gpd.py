@@ -2,13 +2,15 @@ import argparse
 import datetime as dt
 import geopandas as gpd
 import logging
+import numpy as np
 import os
 import pandas as pd
 import re
+import shapefile
 import sys
-
 # Eventually rename util.py to _util.py
 import util as util
+
 
 def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
@@ -24,6 +26,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     Returns:
         None
     """
+    print('SCRIPT STILL IN DEVELOPMENT (SEE CODE). EXITING')
+    # sys.exit()
+
     #  INI path
     config = util.read_ini(ini_path, section='CROP_ET')
     try:
@@ -44,13 +49,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         logging.error(
             'et_cells_path parameter must be set in the INI file, exiting')
         return False
-    try:
-        etref_field = config.get('REFET', 'etref_field')
-    except:
-        logging.error(
-            'etref_field parameter must be set in the INI file, exiting')
-        return False
-    
+
     # Year Filter
     year_list = None
     if year_filter:
@@ -62,7 +61,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
     # Sub folder names
     daily_ws = os.path.join(project_ws, 'daily_stats')
-    output_ws = os.path.join(project_ws, 'summary_shapefiles')
+    output_ws = os.path.join(project_ws, 'cropweighted_shapefiles')
     if not os.path.exists(output_ws):
         os.makedirs(output_ws)
 
@@ -83,19 +82,26 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         sys.exit()
     logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
 
+    # Create Output folder if it doesn't exist
+    output_folder_path = os.path.join(project_ws, 'cropweighted_shapefiles')
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
+
     # Regular expressions
     data_re = re.compile('(?P<CELLID>\w+)_crop_(?P<CROP>\d+).csv$', re.I)
-    #data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
-    
+    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
+
     # Build list of all data files
     data_file_list = sorted(
         [os.path.join(daily_ws, f_name) for f_name in os.listdir(daily_ws)
          if data_re.match(f_name)])
     if not data_file_list:
         logging.error(
-            '  ERROR: No daily files were found\n' +
+            '  ERROR: No daily ET files were found\n' +
             '  ERROR: Check the folder_name parameters\n')
         sys.exit()
+
+    cells = read_shapefile(et_cells_path)
 
     # Start with empty lists
     stations = []
@@ -105,9 +111,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     for file_path in data_file_list:
         file_name = os.path.basename(file_path)
         logging.debug('')
-        # logging.info('  {0}'.format(file_name))
+        logging.info('  {0}'.format(file_name))
 
-        #station, crop_num = os.path.splitext(file_name)[0].split('_daily_crop_')
+        # station, crop_num = os.path.splitext(file_name)[0].split('_daily_crop_')
         station, crop_num = os.path.splitext(file_name)[0].split('_crop_')
         stations.append(station)
         crop_num = int(crop_num)
@@ -117,32 +123,14 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     unique_crop_nums = list(set(crop_nums))
     unique_stations = list(set(stations))
 
-    # Loop through each crop and station list to build summary dataframes for
-    # variables to include in output (if not in .csv skip)
-    var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
-                'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season']
-    pmet_field =  'PM{}'.format(etref_field)
-    var_list.insert(0, pmet_field)
-    
-    # Arc fieldnames can only be 10 characters. Shorten names to include _stat
-    # field name list will be based on etref_field ETr, ETo, or ET (not ETo/ETr)
-    if 'ETr' in etref_field:
-        var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-    elif 'ETo' in etref_field:
-        var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-    else:
-        var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
-
     # Testing (should this be an input option?)
     # unique_crop_nums = [86]
     # unique_stations = [608807]
-    print('\nCreating summary shapefiles.')
-    if year_list:
-        logging.info('\nIncluding years {} to {}.'.format(min(year_list),
-                                                         max(year_list)))
+
+    # Variables to calculate output statistics
+    var_list = ['ETact', 'NIWR']
+
+    logging.info('\nCreating Crop Area Weighted Shapefiles')
     # Apply Time Filter (annual, etd growing season, doy (start/end))
     if time_filter == 'annual':
         logging.info('\nIncluding January-December data.')
@@ -152,16 +140,17 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     if time_filter == 'doy':
         logging.info('\nFiltering data using doy inputs. Start doy: {:03d}'
             '  End doy: {:03d}'.format(start_doy, end_doy))
+
     for crop in unique_crop_nums:
-        print('\nProcessing Crop: {:02d}'.format(crop))
+        logging.info('\n Processing Crop: {:02d}'.format(crop))
 
         # Initialize df variable to check if pandas df needs to be created
-        output_df = None
+        df = None
         for station in unique_stations:
-            #Build File Path
+            # Build File Path
             file_path = os.path.join(daily_ws,
-                                     '{}_crop_{:02d}.csv').format(station,
-                                                                  crop)
+                                     '{}_crop_{:02d}.csv'.format(station,
+                                                                 crop))
             # Only process files that exists (crop/cell combinations)
             if not os.path.exists(file_path):
                 continue
@@ -186,87 +175,105 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Dictionary to control agg of each variable
             a = {
-            'ETact':'sum',
-            'ETpot':'sum',
-            'ETbas':'sum',
-            'PPT':'sum',
-            'Irrigation':'sum',
-            'Runoff':'sum',
-            'DPerc':'sum',
-            'NIWR':'sum',
-            'Season':'sum',
-            'Kc':'mean',
-            'Kcb':'mean'}
-            # Add etref_field to dictionary
-            a[pmet_field] = 'sum'
-            
+                'ETact': 'sum',
+                'NIWR': 'sum'}
+
             # GroupStats by Year of each column follow agg assignment above
-            yearlygroup_df = daily_df.groupby('Year',
-                                                as_index=True).agg(a)
-            # Take Mean of Yearly GroupStats
+            yearlygroup_df = daily_df.groupby('Year', as_index=True).agg(a)
+
+            #Take Mean of Yearly GroupStats
             mean_df = yearlygroup_df.mean(axis=0)
-            mean_fieldnames = [v + '_mn' for v in var_fieldname_list]
+            mean_fieldnames = [v + '_mn_{:02d}'.format(crop) for v in var_list]
 
-            # Take Median of Yearly GroupStats
+            #Take Median of Yearly GroupStats
             median_df = yearlygroup_df.median(axis=0)
-            median_fieldnames =[v + '_mdn' for v in var_fieldname_list]
+            median_fieldnames =[v + '_md_{:02d}'.format(crop) for v in var_list]
 
-            # Create df if it doesn't exist
-            if output_df is None:
-                output_df = pd.DataFrame(index=unique_stations,
+            #Create Dataframe if it doesn't exist
+            if df is None:
+               df = pd.DataFrame(index=unique_stations,
                                  columns=mean_fieldnames + median_fieldnames)
 
-            # Write data to each station row
-            output_df.loc[station] = list(mean_df[var_list]) + \
+            #Write data to each station row
+            df.loc[station] = list(mean_df[var_list]) + \
                               list(median_df[var_list])
 
             # Grab min/max year for output folder naming
             min_year = min(daily_df['Year'])
             max_year = max(daily_df['Year'])
 
-        # Create station ID column from index (ETCells GRIDMET ID is int)
-        output_df['Station'] = output_df.index.map(int)
+        # Convert index to integers
+        df.index = df.index.map(int)
 
-        # Remove rows with Na (is this the best option?)
-        # Write all stations to index and then remove empty
-        output_df = output_df.dropna()
+        # Remove rows with Na (Is this the best option???)
+        df = df.dropna()
 
-        # Output file name
-        out_name = "{}_crop_{:02d}.shp".format(time_filter, crop)
-        if time_filter == 'doy':
-            out_name = "{}_{:03d}_{:03d}_crop_{:02d}.shp".format(
-                time_filter, start_doy, end_doy, crop)
+        # Merge Crop ETact and NIWR to cells dataframe
+        cells = pd.merge(cells, df, how='left', left_on=['GRIDMET_ID'],
+                         right_index=True)
 
-        # output folder
-        output_folder_path = os.path.join(output_ws, 'summary_{}to{}'.format(
-                                                  min_year, max_year))
-        if min_year == max_year:
-            output_folder_path = os.path.join(output_ws,
-                                              'cropweighted_{}'.format(
-                                                  min_year))
+    # Change Ag_Acres cells with zero area to nan (Avoid ZeroDivisionError)
+    cells[cells['AG_ACRES'] == 0] = np.nan
 
-        if not os.path.exists(output_folder_path):
-            os.makedirs(output_folder_path)
+    # Calculate CropArea Weighted ETact and NIWR for each cell
+    # List Comprehension (All combinations of var_list and stat)
+    # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch01s15.html
+    for var, stat in [(var, stat) for var in var_list for stat in ['mn', 'md']]:
+        # nitialize empty columns (zeros)
+        cells['CW{0}_{1}'.format(var, stat)] = 0
+        for crop in unique_crop_nums:
+            # reset temp
+            temp = []
+            # calculate crop fraction of weighted rate
+            temp = cells['CROP_{0:02d}'.format(crop)].multiply(
+                cells['{0}_{1}_{2:02d}'.format(var, stat, crop)]).divide(cells['AG_ACRES'])
+            # replace nan with zero
+            temp = temp.fillna(0)
+            # add crop fraction to total calculate weighted rate
+            cells['CW{0}_{1}'.format(var, stat)] = cells['CW{0}_{1}'.format(var, stat)].add(temp)
 
-        # Copy ETCELLS.shp and join cropweighted data to it
-        data = gpd.read_file(et_cells_path)
+    # Subset to "Final" dataframe for merge to output .shp
+    Final = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn','CWETact_md', 'CWNIWR_md']]
 
-        # Data keep list (geometry is needed to write out as geodataframe)
-        keep_list = ['geometry','GRIDMET_ID', 'LAT', 'LON', 'ELEV_M', 'ELEV_FT',
-                     'COUNTYNAME', 'STATENAME', 'STPO', 'HUC8',
-                     'AG_ACRES', 'CROP_{:02d}'.format(crop)]
+    # Copy ETCELLS.shp and join cropweighted data to it
+    data = gpd.read_file(et_cells_path)
 
-        # Filter ETCells using keep list
-        data = data[keep_list]
+    # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
+    merged_data = data.merge(Final, on='GRIDMET_ID')
 
-        # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
-        merged_data = data.merge(output_df, left_on='GRIDMET_ID',
-                                 right_on='Station')
-        # Remove redundant Station column
-        merged_data = merged_data.drop(columns='Station')
-        # Write output .shp
-        merged_data.to_file(os.path.join(output_folder_path, out_name),
-                            driver='ESRI Shapefile')
+    # Output file name
+    out_name = "{}_cropweighted.shp".format(time_filter, crop)
+    if time_filter == 'doy':
+        out_name = "{}_{:03d}_{:03d}_cropweighted.shp".format(
+            time_filter, start_doy, end_doy)
+
+    # output folder
+    output_folder_path = os.path.join(output_ws, 'cropweighted_{}to{}'.format(
+        min_year, max_year))
+    if min_year == max_year:
+        output_folder_path = os.path.join(output_ws, 'cropweighted_{}'.format(
+            min_year))
+
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
+    # Write output .shp
+    merged_data.to_file(os.path.join(output_folder_path, out_name))
+
+def read_shapefile(shp_path):
+    """
+    Read a shapefile into a Pandas dataframe with a 'coords' column holding
+    the geometry information. This uses the pyshp package
+    """
+    # read file, parse out the records and shapes
+    sf = shapefile.Reader(shp_path)
+    fields = [x[0] for x in sf.fields][1:]
+    records = sf.records()
+    #	shps = [s.points for s in sf.shapes()]
+
+    # write into a dataframe
+    df = pd.DataFrame(columns=fields, data=records)
+    #	df = df.assign(coords=shps)
+    return df
 
 def arg_parse():
     """"""
@@ -315,3 +322,20 @@ if __name__ == '__main__':
 
     main(ini_path=args.ini, time_filter=args.time_filter,
          start_doy=args.start_doy, end_doy=args.end_doy, year_filter=args.year)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

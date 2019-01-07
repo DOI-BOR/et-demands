@@ -61,7 +61,7 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
 
     # Check input folders
     if not os.path.exists(daily_ws):
-        logging.critical('ERROR: The monthly_stat folder does not exist.'
+        logging.critical('ERROR: The daily_stat folder does not exist.'
                          ' Check .ini settings')
         sys.exit()
 
