@@ -26,54 +26,118 @@ This analysis tool creates an .html time series figure from the daily
 ETact/ETbas/ETr, Kc/Kcb, PPT/Irrigation datasets. A figure is generated for
 each ET Zone/Crop combination. Input arguments for start/end date and crop
 allow the user to only process specific date ranges and crops. Output figures
-can be found in the 'daily_plots' subfolder.
+can be found in the 'daily_plots' subfolder. The following
+input arguments can be specified to customize the output:
 
+-i, --ini
+        ini_path (str): file path of project INI file
+--show
+        figure_show_flag (bool): if True, show figures
+--save
+        figure_save_flag (bool): if True, save figures
+--size
+        figure_size (tuple): width, height of figure in pixels
+--start
+        start_date (str): ISO format date string (YYYY-MM-DD)
+--end
+        end_date (str): ISO format date string (YYYY-MM-DD)
+-c, --crops
+        crop_str (str): comma separate list or range of crops to compare
+        
 Average Annual Timeseries (plot_crop_daily_groupstats.py)
 ---------
 The groupstats timeseries script averages daily input data from multiple years
 and creates a single average annual timeseries plot of ETact/ETr, Kc,
 and Kcb information for each ET Zone/crop combination. This timeseries plot
 includes 25th, 50th, 75th percentile information. Output figures
-can be found in the 'daily_plots' subfolder.
+can be found in the 'daily_plots' subfolder. The following
+input arguments can be specified to customize the output:
 
+-i, --ini
+        ini_path (str): file path of project INI file
+--show
+        figure_show_flag (bool): if True, show figures
+--save
+        figure_save_flag (bool): if True, save figures
+--size
+        figure_size (tuple): width, height of figure in pixels
+--start
+        start_date (str): ISO format date string (YYYY-MM-DD)
+--end
+        end_date (str): ISO format date string (YYYY-MM-DD)
+-c, --crops
+        crop_str (str): comma separate list or range of crops to compare
 
 Shapefile Summary Tools
 ==============
-Annual Summary Shapefiles (annual_summary_shapefiles_gpd.py)
+Summary Shapefiles (summary_shapefiles_gpd.py)
 ---------
-This analysis tool converts the annual output .csv files into crop specific
+This analysis tool converts the daily output .csv files into crop specific
 summary shapefiles for viewing and analysis of the spatial distribution of
-evaporation. The output shapefiles contain 'ET (ETo or ETr)', 'ETact', 'ETpot',
+evaporation. Specific Time periods can be specified to process statistics for
+annual,growing season (as defined by ETDemands), or custom day of year ranges.
+The output shapefiles contain 'ET (ETo or ETr)', 'ETact', 'ETpot',
 'ETbas', 'Kc', 'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season'
 information for each ET Zone containing the crop of interest.
 
-Annual summary shapefiles can be created for a specific year of interest or for
+Summary shapefiles can be created for a specific year of interest or for
 a range of years using "year filter" input argument. Note that both mean ('_mn')
 and median ('_mdn') statistics are output for each variable. If only one year
-is specified, mean and median statistics are the same. Output files can be found
-in the 'annual_stats' folder where 'summary_shapefiles_YYYYtoYYYY' specifies the
-minimum and maximum years included in the analysis.
+is specified, mean and median statistics are the identical. Output files can be found
+in the 'summary_shapefiles' folder where 'summary_YYYY' or 'summary_YYYYtoYYYY' specifies the
+minimum and maximum years included in the analysis. The following
+input arguments can be specified to customize the summary output:
 
-Growing Season Summary Shapefiles (gs_summary_shapefiles_gpd.py)
+-i, --ini
+        ini_path (str): file path of the project INI file
+-y, -year
+        year_filter (list): include specific years in summary
+        (single YYYY or range YYYY:YYYY)
+-t, --time_filter
+        time_filter (str): 'annual' (default), 'growing_season', 'doy'
+-s, --start_doy
+        start_doy (int): starting julian doy (inclusive)
+-e, --end_doy
+        end_doy (int): ending julian doy (inclusive)
+       
+*start and end doy of year must be included when using the 
+'doy' time_filter
+
+
+Cropweighted Summary Shapefile (cropweighted_shapefiles_gpd.py)
 ---------
-Similar to the annual summary shapefile script, the growing season summary
-shapefile script creates a summary shapefile for each crop containing growing
-seasons statistics for the year(s) specified. If a single year is specified, the
-statistics represent totals and averages for each day during the growing season.
-If multiple years are specified, the statistics represent an average of the
-yearly totals.
+This analysis tool converts the daily output .csv files into cropweighted 
+summary shapefiles for viewing and analysis of the spatial distribution of
+evaporation and net irrigation water requirements (NIWR). Specific Time
+periods can be specified to process statistics for annual, growing season
+(as defined by ETDemands), or custom day of year ranges. The output
+shapefiles contain the standard 'ETCells' shapefile information as
+well as cropweighted 'ETact', 'NIWR' information for each ET Zone.
 
-Output files can be found in the 'growing_season_stats' folder where
-'gs_summary_shapefiles_YYYYtoYYYY' specifies the minimum and maximum years
-included in the analysis.
+Cropweighted shapefiles can be created for a specific year of interest or for
+a range of years using "year filter" input argument. Note that both mean ('_mn')
+and median ('_mdn') statistics are output for each variable. If only one year
+is specified, mean and median statistics are the identical. Output files can be found
+in the 'cropweighted_shapefiles' folder where 'cropweighted_YYYY' or
+'cropweighted_YYYYtoYYYY' specifies the years included in the analysis. Each specific
+.shp within the subfolders contains the specific time period (annual, growing season,
+doy range) for the summary. The following input arguments can be specified to
+customize the output:
 
-Cropweighted Summary Shapefile (cropweighted_summary_shapefiles.py)
----------
-The cropweighted script generates a shapefile of crop area weighted average ET
-rates and NIWR for each ET Zone. Information for a single year or an average of
-multiple years can be output. Options to process annual or growing season totals
-are available. Single or multiple years can be included in the output statistic.
-Output files can be found in the 'cropweighted_shapefile' folder.
+-i, --ini
+        ini_path (str): file path of the project INI file
+-y, -year
+        year_filter (list): include specific years in summary
+        (single YYYY or range YYYY:YYYY)
+-t, --time_filter
+        time_filter (str): 'annual' (default), 'growing_season', 'doy'
+-s, --start_doy
+        start_doy (int): starting julian doy (inclusive)
+-e, --end_doy
+        end_doy (int): ending julian doy (inclusive)
+       
+*start and end doy of year must be included when using the 
+'doy' time_filter 
 
 Miscellaneous Summary Tools
 ==============
@@ -90,11 +154,3 @@ length and cutting information for each ET Zone/crop combination. Two summary
   'growing_season_mean_annual.csv' contains averages of all years included in the
   analysis.
 Both .csv files can be found in the 'growing_season_stats' folder.
-
-
-
-
-
-
-
-
