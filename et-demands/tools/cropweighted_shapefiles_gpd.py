@@ -1,36 +1,33 @@
 import argparse
-import pandas as pd
-import os
-import re
+import datetime as dt
+import geopandas as gpd
 import logging
+import numpy as np
+import os
+import pandas as pd
+import re
+import shapefile
 import sys
 # Eventually rename util.py to _util.py
 import util as util
-import datetime as dt
-import numpy as np
-import geopandas as gpd
-import shapefile
 
 
-def main(ini_path, overwrite_flag=True, cleanup_flag=True,
-         growing_season = False, year_filter=[]):
-    """Create Crop Area Weighted ETact and NIWR shapefiles
-     from monthly_stat files
+def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
+
+    """Create Median NIWR Shapefiles from annual_stat files
 
     Args:
         ini_path (str): file path of the project INI file
-        overwrite_flag (bool): If True (default), overwrite existing files
-        cleanup_flag (bool): If True, remove temporary files
-        growing_season (bool): If True, filters data to April-October
-        year_filter (int): Only includes data for one year in statistics
+        year_filter (list): only include certain years for summary
+            (single YYYY or range YYYY:YYYY)
+        time_filter (str): 'annual', 'growing_season', 'doy'
+        start_doy (int): starting julian doy (inclusive)
+        end_doy (int): ending julian doy (inclusive)
     Returns:
         None
     """
-    # print('SCRIPT STILL IN DEVELOPMENT (SEE CODE). EXITING')
-    # sys.exit()
 
-    logging.info('\nCreating Crop Area Weighted Shapefiles')
-    #  INI path
+    # INI path
     config = util.read_ini(ini_path, section='CROP_ET')
     try:
         project_ws = config.get('CROP_ET', 'project_folder')
@@ -52,16 +49,22 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
         return False
 
     # Year Filter
+    year_list = None
     if year_filter:
-        logging.info('\nEstimating Data for {0}'.format(year_filter))
+        try:
+            year_list = sorted(list(util.parse_int_set(year_filter)))
+        except:
+            pass
 
     # Sub folder names
     daily_ws = os.path.join(project_ws, 'daily_stats')
-    gs_ws = os.path.join(project_ws, 'growing_season_stats')
+    output_ws = os.path.join(project_ws, 'cropweighted_shapefiles')
+    if not os.path.exists(output_ws):
+        os.makedirs(output_ws)
 
     # Check input folders
     if not os.path.exists(daily_ws):
-        logging.critical('ERROR: The monthly_stat folder does not exist.'
+        logging.critical('ERROR: The daily_stat folder does not exist.'
                          ' Check .ini settings')
         sys.exit()
 
@@ -77,13 +80,14 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     logging.info('\nGIS Workspace:      {0}'.format(gis_ws))
 
     # Create Output folder if it doesn't exist
-    output_folder_path = os.path.join(project_ws, 'cropweighted_shapefile')
+    output_folder_path = os.path.join(project_ws, 'cropweighted_shapefiles')
     if not os.path.exists(output_folder_path):
         os.makedirs(output_folder_path)
 
     # Regular expressions
     data_re = re.compile('(?P<CELLID>\w+)_crop_(?P<CROP>\d+).csv$', re.I)
-    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
+    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$',
+    #  re.I)
 
     # Build list of all data files
     data_file_list = sorted(
@@ -107,7 +111,8 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
         logging.debug('')
         logging.info('  {0}'.format(file_name))
 
-        # station, crop_num = os.path.splitext(file_name)[0].split('_daily_crop_')
+        # station, crop_num = os.path.splitext(file_name)[0].split(
+        # '_daily_crop_')
         station, crop_num = os.path.splitext(file_name)[0].split('_crop_')
         stations.append(station)
         crop_num = int(crop_num)
@@ -117,14 +122,23 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     unique_crop_nums = list(set(crop_nums))
     unique_stations = list(set(stations))
 
+    # Testing (should this be an input option?)
+    # unique_crop_nums = [86]
+    # unique_stations = [608807]
+
     # Variables to calculate output statistics
     var_list = ['ETact', 'NIWR']
 
-    logging.info('\n Creating Crop Area Weighted Shapefiles')
-    if year_filter:
-        logging.info('\nFiltering by Year: {}'.format(year_filter))
-    if growing_season:
-        logging.info('\nFiltering stats to Growing Season, Apr-Oct')
+    logging.info('\nCreating Crop Area Weighted Shapefiles')
+    # Apply Time Filter (annual, etd growing season, doy (start/end))
+    if time_filter == 'annual':
+        logging.info('\nIncluding January-December data.')
+    if time_filter == 'growing_season':
+        logging.info(
+            '\nFiltering data using ETDemands defined growing season.')
+    if time_filter == 'doy':
+        logging.info('\nFiltering data using doy inputs. Start doy: {:03d} '
+                     'End doy: {:03d}'.format(start_doy, end_doy))
 
     for crop in unique_crop_nums:
         logging.info('\n Processing Crop: {:02d}'.format(crop))
@@ -142,19 +156,21 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
 
             # Read file into df
             daily_df = pd.read_csv(file_path, skiprows=1)
-            # Filter data based on year_filter
-            if year_filter:
-                daily_df = daily_df[daily_df['Year']== year_filter]
-                logging.info('\nFiltering by Year: {}'.format(year_filter))
 
-            # Remove all non-growing season data if growing season flag = True
-            # UPDATE TO USE SEASON FLAG IN DAILY CSV FILES (0 or 1)
-            if growing_season:
+            # Apply Year Filter
+            if year_list:
                 daily_df = daily_df[
-                    (daily_df['Month'] >= 4) & (daily_df['Month'] <= 10)]
-                logging.info('\nFiltering stats to Growing Season, Apr-Oct')
-            # if growing_season:
-            #     daily_df = daily_df[(daily_df['Season'] == 1)]
+                    (daily_df['Year'] >= min(year_list)) &
+                    (daily_df['Year'] <= max(year_list))]
+                # logging.info('Including Years: {}'.format(year_list))
+
+            # Apply Time Filter (annual, etd growing season, doy (start/end))
+            if time_filter == 'growing_season':
+                daily_df = daily_df[(daily_df['Season'] == 1)]
+            if time_filter == 'doy':
+                daily_df = daily_df[
+                    (daily_df['DOY'] >= start_doy) &
+                    (daily_df['DOY'] <= end_doy)]
 
             # Dictionary to control agg of each variable
             a = {
@@ -164,24 +180,30 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
             # GroupStats by Year of each column follow agg assignment above
             yearlygroup_df = daily_df.groupby('Year', as_index=True).agg(a)
 
-            #Take Mean of Yearly GroupStats
+            # Take Mean of Yearly GroupStats
             mean_df = yearlygroup_df.mean(axis=0)
             mean_fieldnames = [v + '_mn_{:02d}'.format(crop) for v in var_list]
 
-            #Take Median of Yearly GroupStats
+            # Take Median of Yearly GroupStats
             median_df = yearlygroup_df.median(axis=0)
-            median_fieldnames =[v + '_md_{:02d}'.format(crop) for v in var_list]
+            median_fieldnames = [v + '_md_{:02d}'.format(crop) for v in
+                                 var_list]
 
-            #Create Dataframe if it doesn't exist
+            # Create Dataframe if it doesn't exist
             if df is None:
-               df = pd.DataFrame(index=unique_stations,
-                                 columns=mean_fieldnames + median_fieldnames)
+                df = pd.DataFrame(index=unique_stations,
+                                  columns=mean_fieldnames + median_fieldnames)
 
-            #Write data to each station row
-            df.loc[station] = list(mean_df[var_list]) + \
-                              list(median_df[var_list])
+            # Write data to each station row
+            df.loc[station] = list(mean_df[var_list]) + list(median_df[
+                                                                 var_list])
 
-        # Convert index to integers)
+            # Grab min/max year for output folder naming
+            # assumes all daily files cover same time period
+            min_year = min(daily_df['Year'])
+            max_year = max(daily_df['Year'])
+
+        # Convert index to integers
         df.index = df.index.map(int)
 
         # Remove rows with Na (Is this the best option???)
@@ -195,40 +217,51 @@ def main(ini_path, overwrite_flag=True, cleanup_flag=True,
     cells[cells['AG_ACRES'] == 0] = np.nan
 
     # Calculate CropArea Weighted ETact and NIWR for each cell
-    # List Comprehension (All combinations of var_list and stat)
+    # List Comprehension (all combinations of var_list and stat)
     # https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch01s15.html
     for var, stat in [(var, stat) for var in var_list for stat in ['mn', 'md']]:
-        # nitialize empty columns (zeros)
+        # initialize empty columns (zeros)
         cells['CW{0}_{1}'.format(var, stat)] = 0
         for crop in unique_crop_nums:
             # reset temp
             temp = []
             # calculate crop fraction of weighted rate
             temp = cells['CROP_{0:02d}'.format(crop)].multiply(
-                cells['{0}_{1}_{2:02d}'.format(var, stat, crop)]).divide(cells['AG_ACRES'])
+                cells['{0}_{1}_{2:02d}'.format(var, stat, crop)]).divide(
+                cells['AG_ACRES'])
             # replace nan with zero
             temp = temp.fillna(0)
             # add crop fraction to total calculate weighted rate
-            cells['CW{0}_{1}'.format(var, stat)] = cells['CW{0}_{1}'.format(var, stat)].add(temp)
+            cells['CW{0}_{1}'.format(var, stat)] = cells['CW{0}_{1}'.format(
+                var, stat)].add(temp)
 
     # Subset to "Final" dataframe for merge to output .shp
-    Final = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn','CWETact_md', 'CWNIWR_md']]
+    final_df = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
+                      'CWNIWR_md']]
 
     # Copy ETCELLS.shp and join cropweighted data to it
     data = gpd.read_file(et_cells_path)
 
     # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
-    merged_data = data.merge(Final, on='GRIDMET_ID')
-    if not year_filter:
-        year_filter = 'AllYears'
-    if growing_season:
-        out_filepath = os.path.join(output_folder_path,
-                                    '{}_GS_CropWeighted.shp'.format(year_filter))
-    else:
-        out_filepath = os.path.join(output_folder_path,
-                                    '{}_Ann_CropWeighted.shp'.format(year_filter))
-    #Write output .shp
-    merged_data.to_file(out_filepath)
+    merged_data = data.merge(final_df, on='GRIDMET_ID')
+
+    # Output file name
+    out_name = "{}_cropweighted.shp".format(time_filter, crop)
+    if time_filter == 'doy':
+        out_name = "{}_{:03d}_{:03d}_cropweighted.shp".format(
+            time_filter, start_doy, end_doy)
+
+    # output folder
+    output_folder_path = os.path.join(output_ws, 'cropweighted_{}to{}'.format(
+        min_year, max_year))
+    if min_year == max_year:
+        output_folder_path = os.path.join(output_ws, 'cropweighted_{}'.format(
+            min_year))
+
+    if not os.path.exists(output_folder_path):
+        os.makedirs(output_folder_path)
+    # Write output .shp
+    merged_data.to_file(os.path.join(output_folder_path, out_name))
 
 
 def read_shapefile(shp_path):
@@ -240,33 +273,37 @@ def read_shapefile(shp_path):
     sf = shapefile.Reader(shp_path)
     fields = [x[0] for x in sf.fields][1:]
     records = sf.records()
-    #	shps = [s.points for s in sf.shapes()]
+    # shps = [s.points for s in sf.shapes()]
 
     # write into a dataframe
     df = pd.DataFrame(columns=fields, data=records)
-    #	df = df.assign(coords=shps)
+    # df = df.assign(coords=shps)
     return df
+
 
 def arg_parse():
     """"""
     parser = argparse.ArgumentParser(
-        description='ET-Demands Annual Stat Shapefiles',
+        description='ET-Demands Cropweighted Shapefiles',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', metavar='PATH',
         type=lambda x: util.is_valid_file(parser, x), help='Input file')
     parser.add_argument(
-        '-o', '--overwrite', default=True, action='store_true',
-        help='Overwrite existing file')
+        '-t', '--time_filter', default='annual', choices=['annual',
+                                                          'growing_season',
+                                                          'doy'], type=str,
+        help='Data coverage options. If "doy", -start_doy and'
+             ' -end_doy required.')
     parser.add_argument(
-        '--clean', default=False, action='store_true',
-        help='Remove temporary datasets')
+        '-s', '--start_doy', type=int,
+        help='Starting julian doy (inclusive)')
     parser.add_argument(
-        '-y', '--year', type=int,
-        help='Year of interest (single year)')
+        '-e', '--end_doy', type=int,
+        help='Ending julian doy (inclusive)')
     parser.add_argument(
-        '-gs','--growing_season', default=False, action='store_true',
-        help='Growing Season Flag, Include only April-October Data')
+        '-y', '--year', default='', type=str,
+        help='Years to include, single year (YYYY) or range (YYYY-YYYY)')
     parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
@@ -276,6 +313,12 @@ def arg_parse():
 
 if __name__ == '__main__':
     args = arg_parse()
+    if args.time_filter == 'doy' and \
+            (args.start_doy is None or args.end_doy is None):
+        logging.error(
+            '\nstart/end doy must be input when using "doy" time filter.'
+            '\nExiting.')
+        sys.exit()
 
     logging.basicConfig(level=args.loglevel, format='%(message)s')
     logging.info('\n{}'.format('#' * 80))
@@ -285,24 +328,5 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, overwrite_flag=args.overwrite,
-         cleanup_flag=args.clean, growing_season=args.growing_season,
-         year_filter=args.year)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    main(ini_path=args.ini, time_filter=args.time_filter,
+         start_doy=args.start_doy, end_doy=args.end_doy, year_filter=args.year)

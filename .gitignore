@@ -21,12 +21,14 @@ dist/
 
 # PyCharm
 .idea
+venv
 
 # Miscellaneous files
 *.bak
 
 # Common Data
 common
+
 
 # Example folders/files
 example/calibration
@@ -40,3 +42,6 @@ example/annual_stats
 example/daily_stats
 example/monthly_stats
 example/growing_season_stats
+et-demands/tools/__init__.py
+et-demands/tools/legacy_scripts/__init__.py
+et-demands/__init__.py
