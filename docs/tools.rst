@@ -9,9 +9,9 @@ The timeseries scripts analyze specific crops and years to create interactive
 data. Each .html plot contains all the data used to generate the plot and can be
 easily shared with team members and stakeholders.
 
-The shapefile scripts batch the output .csv files into spatial summaries that can be
-visualized with any standard GIS software (e.g. ArcGIS, QGIS). Each output
-shapefile will contain summary statistics for each ET Zone for the crop and
+The shapefile scripts batch the output .csv files into spatial summaries that can
+be visualized with any standard GIS software (e.g. ArcGIS, QGIS). Each output
+shapefile will contain summary statistics for each ET Zone for the crop(s) and
 year(s) of interest.
 
 Note: Many of these tools offer options to process single or multiple
@@ -74,9 +74,9 @@ Summary Shapefiles (summary_shapefiles_gpd.py)
 ---------
 This analysis tool converts the daily output .csv files into crop specific
 summary shapefiles for viewing and analysis of the spatial distribution of
-evaporation. Specific Time periods can be specified to process statistics for
-annual,growing season (as defined by ETDemands), or custom day of year ranges.
-The output shapefiles contain 'ET (ETo or ETr)', 'ETact', 'ETpot',
+evaporation. Specific time periods can be specified to process statistics for
+annual, growing season (as determined by ETDemands), or custom day of year
+ranges. The output shapefiles contain 'ET (ETo or ETr)', 'ETact', 'ETpot',
 'ETbas', 'Kc', 'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season'
 information for each ET Zone containing the crop of interest.
 
@@ -110,7 +110,7 @@ This analysis tool converts the daily output .csv files into cropweighted
 summary shapefiles for viewing and analysis of the spatial distribution of
 evaporation and net irrigation water requirements (NIWR). Specific Time
 periods can be specified to process statistics for annual, growing season
-(as defined by ETDemands), or custom day of year ranges. The output
+(as determined by ETDemands), or custom day of year ranges. The output
 shapefiles contain the standard 'ETCells' shapefile information as
 well as cropweighted 'ETact', 'NIWR' information for each ET Zone.
 
@@ -120,9 +120,9 @@ and median ('_mdn') statistics are output for each variable. If only one year
 is specified, mean and median statistics are the identical. Output files can be found
 in the 'cropweighted_shapefiles' folder where 'cropweighted_YYYY' or
 'cropweighted_YYYYtoYYYY' specifies the years included in the analysis. Each specific
-.shp within the subfolders contains the specific time period (annual, growing season,
-doy range) for the summary. The following input arguments can be specified to
-customize the output:
+.shp within the subfolders contains the specific time period information (annual,
+growing season, doy range) in the filename. The following input arguments can be
+specified to customize the output:
 
 -i, --ini
         ini_path (str): file path of the project INI file
@@ -153,4 +153,14 @@ length and cutting information for each ET Zone/crop combination. Two summary
 
   'growing_season_mean_annual.csv' contains averages of all years included in the
   analysis.
-Both .csv files can be found in the 'growing_season_stats' folder.
+Both .csv files can be found in the 'growing_season_stats' folder. The following
+input arguments can be specified to customize the output:
+
+-i, --ini
+        ini_path (str): file path of project INI file
+--start 
+        start_date (str): ISO format date string (YYYY-MM-DD)
+--end
+        end_date (str): ISO format date string (YYYY-MM-DD)
+-c, --crops
+        crop_str (str): comma separate list or range of crops to compare
