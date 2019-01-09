@@ -173,7 +173,10 @@ def main(ini_path, overwrite_flag=False):
     #     field_name = 'CROP_{0:02d}'.format(crop_num)
     #     if field_name not in zone_field_list:
     #         logging.debug('  {}'.format(field_name))
-    #         _arcpy.add_field(et_cells_path, field_name, ogr.OFTInteger)
+    #         _arcpy.add_field(zone_path, field_name, ogr.OFTInteger)
+
+    # Rebuild the field list
+    zone_field_list = _arcpy.list_fields(zone_path)
 
     # Update field width/precision
     logging.debug('\nUpdating ET zone field width and precision')
