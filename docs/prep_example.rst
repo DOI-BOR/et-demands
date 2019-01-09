@@ -37,62 +37,55 @@ Change directory into the example folder::
 
     > cd example
 
-Cropland Data Layer (CDL)
--------------------------
-Download the CONUS CDL raster.  The CONUS CDL rasters should be downloaded to the "common" folder so that they can be used for other projects.  For this example we will be using the 2010 CDL raster. ::
+Cell Shapefile
+--------------
+DEADBEEF
 
-    > python ..\et-demands\prep\download_cdl_raster.py --cdl ..\common\cdl --years 2010
-
-If the download script doesn't work, please try downloading the `2010_30m_cdls.zip <ftp://ftp.nass.usda.gov/download/res/2010_30m_cdls.zip>`_ file directly from your browser or using a dedicated FTP program.
-
-Study Area
-----------
-For this example, the study area is a single HUC 8 watershed (12090105) in Texas that was extracted from the full `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase.
+For this example, ET-Demands will be run for a single HUC 8 watershed (12090105) in Texas that was extracted from the full `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase.
 
 .. image:: https://cfpub.epa.gov/surf/images/hucs/12090105l.gif
    :target: https://cfpub.epa.gov/surf/huc.cfm?huc_code=12090105
 .. image:: https://cfpub.epa.gov/surf/images/hucs/12090105.gif
    :target: https://cfpub.epa.gov/surf/huc.cfm?huc_code=12090105
 
-Project the study area shapefile to the CDL spatial reference and then convert to a raster::
-
-    > python ..\et-demands\prep\build_study_area_raster.py -shp gis\huc8\wbdhu8_albers.shp --cdl ..\common\cdl --year 2010 --buffer 300 --stats -o
-
 Weather Stations
 ----------------
+DEADBEEF
+
 The example station is the centroid of a single 4km cell from the `University of Idaho Gridded Surface Meteorological Data <http://metdata.northwestknowledge.net/>`_ that is located in the study area.
 
-Cropland Data Layer (CDL)
--------------------------
-Clip the CDL raster to the study area::
+Crop Shapefile
+--------------
+For this example, the crop shapefile will be built from the 2010 Cropland Data Layer (CDL) raster.
 
-    > python ..\et-demands\prep\clip_cdl_raster.py --cdl ..\common\cdl --years 2010 --stats -o
+For this example the CDL raster will be downloaded directly to the project GIS folder. ::
 
-Mask the non-agricultural CDL pixels::
+    > python ..\et-demands\prep\download_cdl_raster.py --ini cet_prep.ini -o
 
-    > python ..\et-demands\prep\build_ag_cdl_rasters.py --years 2010 --mask -o --stats
+If the download script doesn't work, please try downloading the `2010_30m_cdls.zip <ftp://ftp.nass.usda.gov/download/res/2010_30m_cdls.zip>`_ file directly from your browser or using a dedicated FTP program.
+
+Clip the CDL raster to the cell shapefile extent::
+
+    > python ..\et-demands\prep\clip_cdl_raster.py --ini cet_prep.ini -o
+
+Convert the clipped CDL raster to a polygon, with the non-agricultural areas removed::
+
+    > python ..\et-demands\prep\build_ag_cdl_shapefile.py --ini cet_prep.ini -o
 
 Soils
 -----
-.. note::
-   For this example, the soils shapefiles have already been converted to raster and are located in the example\\gis\\soils folder.  It is not necessary to run the "rasterize_soil_polygons.py step below.
+Download the pre-computed STATSGO2 shapefiles::
 
-Rasterize the soil shapefiles to match the CDL grid size and spatial reference::
-
-    > python ..\et-demands\prep\rasterize_soil_polygons.py --soil ..\common\statsgo -o --stats
-
-Extract the soil values for each CDL ag pixel::
-
-    > python ..\et-demands\prep\build_ag_soil_rasters.py --years 2010 --mask -o --stats
+    > python ..\et-demands\prep\download_statsgo_shapefiles.py --ini cet_prep.ini -o
 
 Zonal Stats
 -----------
 Compute the soil properties and crop acreages for each feature/polygon. ::
 
-    > python ..\et-demands\prep\et_demands_zonal_stats.py --year 2010 -o --zone huc8
+    > python ..\et-demands\prep\et_demands_zonal_stats.py --ini cet_prep.ini
 
 Static Text Files
 -----------------
 Build the static text files from the templates in "et-demands\\static". ::
 
-    > python ..\et-demands\prep\build_static_files.py --ini example.ini --zone huc8 --acres 10 -o
+    > python ..\et-demands\prep\build_static_files.py --ini cet_prep.ini --area_threshold 10
