@@ -38,7 +38,7 @@ def main(ini_path, overwrite_flag=False):
 
     """
     logging.debug('INI: {}'.format(ini_path))
-    config = util.read_ini(ini_path, 'CROP_ET')
+    config = util.read_ini(ini_path, section='CROP_ET')
     zones_path = config.get('CROP_ET', 'cells_path')
 
     gis_ws = config.get('CROP_ET', 'gis_folder')
@@ -91,7 +91,7 @@ def main(ini_path, overwrite_flag=False):
 
     # TODO: Add logic to handle doing the clip inplace
     if cdl_input_path == cdl_output_path:
-        logging.error('\nThe script does not currently handle clipping the'
+        logging.error('\nThe script does not currently handle clipping the '
                       'CDL raster in place, exiting')
         sys.exit()
 
@@ -197,7 +197,7 @@ def main(ini_path, overwrite_flag=False):
 def arg_parse():
     """"""
     parser = argparse.ArgumentParser(
-        description='Clip CDL Raster',
+        description='Clip the CDL Raster to the cell extent',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', required=True, metavar='INI',

@@ -14,7 +14,7 @@ from osgeo import gdal, ogr, osr
 
 import _arcpy as arcpy
 import _gdal_common as gdc
-import _ogr2ogr as ogr2ogr
+# import _ogr2ogr as ogr2ogr
 import _util as util
 
 
@@ -36,7 +36,7 @@ def main(ini_path, overwrite_flag=False):
     logging.info('\nBuilding Agricultural CDL Shapefile')
 
     logging.debug('INI: {}'.format(ini_path))
-    config = util.read_ini(ini_path, 'CROP_ET')
+    config = util.read_ini(ini_path, section='CROP_ET')
     zone_path = config.get('CROP_ET', 'cells_path')
     crop_path = config.get('CROP_ET', 'crop_path')
     temp_path = crop_path.replace('.shp', '_temp.shp')
@@ -76,7 +76,10 @@ def main(ini_path, overwrite_flag=False):
     # CDL Raster Properties
     cdl_ds = gdal.Open(cdl_path)
     cdl_band = cdl_ds.GetRasterBand(1)
-    cdl_nodata = int(cdl_band.GetNoDataValue())
+    try:
+        cdl_nodata = int(cdl_band.GetNoDataValue())
+    except TypeError:
+        cdl_nodata = 0
     cdl_gtype = cdl_band.DataType
     cdl_proj = cdl_ds.GetProjection()
     cdl_osr = gdc.proj_osr(cdl_proj)

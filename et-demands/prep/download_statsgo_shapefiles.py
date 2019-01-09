@@ -35,7 +35,7 @@ def main(ini_path, overwrite_flag=False):
     logging.info('\nDownload soil shapefiles')
 
     logging.debug('INI: {}'.format(ini_path))
-    config = util.read_ini(ini_path, 'CROP_ET')
+    config = util.read_ini(ini_path, section='CROP_ET')
 
     base_url = 'https://storage.googleapis.com/openet/statsgo/shapefiles'
     ext_list = ['.shp', '.dbf', '.prj', '.shx', '.sbn', '.sbx']
