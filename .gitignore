@@ -40,3 +40,11 @@ example/annual_stats
 example/daily_stats
 example/monthly_stats
 example/growing_season_stats
+
+examples/common
+examples/gridmet/gis/cdl
+examples/gridmet/gis/scratch
+examples/gridmet/gis/soils
+examples/huc8/gis/cdl
+examples/huc8/gis/scratch
+examples/huc8/gis/soils
