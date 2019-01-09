@@ -41,7 +41,7 @@ def main(ini_path, overwrite_flag=False):
     logging.info('\nComputing ET-Demands Zonal Stats')
 
     logging.debug('INI: {}'.format(ini_path))
-    config = util.read_ini(ini_path, 'CROP_ET')
+    config = util.read_ini(ini_path, section='CROP_ET')
 
     gis_ws = config.get('CROP_ET', 'gis_folder')
     zone_path = config.get('CROP_ET', 'cells_path')
@@ -221,7 +221,7 @@ def main(ini_path, overwrite_flag=False):
                       'projected coordinate system, exiting')
         sys.exit()
     zone_full_unit = zone_full_osr.GetLinearUnitsName()
-    if zone_full_unit not in ['Meter']:
+    if zone_full_unit.upper() not in ['METER', 'METRE']:
         logging.error('\nERROR: Unsupported unit type: {}'.format(
             zone_full_unit))
         sys.exit()
@@ -416,7 +416,7 @@ def main(ini_path, overwrite_flag=False):
     zone_lyr = zone_ds.GetLayer()
     zone_osr = zone_lyr.GetSpatialRef()
     zone_unit = zone_osr.GetLinearUnitsName()
-    if zone_unit not in ['Meter']:
+    if zone_unit.upper() not in ['METER', 'METRE']:
         raise ValueError('Unsupported unit type: {}'.format(zone_unit))
     for zone_fid, crop_stat_dict in crop_stats.items():
         for crop_field, crop_area in crop_stat_dict.items():
@@ -424,7 +424,7 @@ def main(ini_path, overwrite_flag=False):
                 continue
             elif crop_field not in crop_field_list:
                 continue
-            elif zone_unit in ['Meter']:
+            elif zone_unit.upper() in ['METER', 'METRE']:
                 crop_stats[zone_fid][crop_field] = crop_area * sqm_2_acres
             # elif zone_unit in ['Feet']:
             #     crop_stats[zone_fid][crop_field] = crop_area * sqft_2_acres
