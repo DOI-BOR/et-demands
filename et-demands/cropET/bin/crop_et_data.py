@@ -1025,7 +1025,7 @@ class CropETData():
         # Field names
         # Following fields are mandatory
         # DEADBEEF - Are snow and snow depth required?
-
+        # Add check for (tdew or ea or q)
         field_list = ['tmin', 'tmax', 'ppt', 'wind']
         for f_name in field_list:
             try:
@@ -1037,7 +1037,6 @@ class CropETData():
                 sys.exit()
 
         # Units
-        
         for f_name in field_list:
             if f_name == 'date':
                 continue
@@ -1051,8 +1050,8 @@ class CropETData():
                          'in INI').format(f_name))
                     sys.exit()
 
+
         # fnspec
-        
         for f_name in field_list:
             if f_name == 'date':
                 continue
@@ -1137,63 +1136,54 @@ class CropETData():
             self.weather['units']['snow_depth'] = 'mm'
             self.weather['fnspec']['snow_depth'] = 'Estimated'
 
-        # Dewpoint temperature can be set or computed from Q (specific humidity)
-        # Field that is provided is used to estimate humidity
-        
-        try:
-            self.weather['fields']['tdew'] = config.get(weather_sec, 'tdew_field')
-            if self.weather['fields']['tdew'] is None or self.weather['fields']['tdew'] == 'None':
-                self.weather['fields']['tdew'] = 'TDew'
-                self.weather['units']['tdew'] = 'C'
-                self.weather['fnspec']['tdew'] = 'Estimated'
-            else:
-                try: self.weather['units']['tdew'] = config.get(weather_sec, 'tdew_units')
-                except: self.weather['units']['tdew'] = 'C'
-                try: self.weather['fnspec']['tdew'] = config.get(weather_sec, 'tdew_name')
-                except: self.weather['fnspec']['tdew'] = self.weather['fields']['tdew']
-                if self.weather['file_type'].lower() == 'xls' or self.weather['file_type'].lower() == 'wb':
-                    try: 
-                        self.weather['wsspec']['tdew'] = config.get(weather_sec, 'tdew_ws')
-                        if self.weather['wsspec']['tdew'] is None or self.weather['wsspec']['tdew'] == 'None':
-                            logging.info('  INFO:  WEATHER: tdew worksheet name set to TDew')
-                            self.weather['wsspec']['tdew'] = 'TDew'
-                    except:
-                        logging.info('  INFO:  WEATHER: tdew worksheet name set to TDew')
-                        self.weather['wsspec']['tdew'] = 'TDew'
-                self.weather['fnspec']['q'] = 'Unused'
-                self.weather['fields']['q'] = None
-                self.weather['units']['q'] = 'kg/kg'
-        except:
-            self.weather['fields']['tdew'] = 'TDew'
-            self.weather['units']['tdew'] = 'C'
-            self.weather['fnspec']['tdew'] = 'Estimated'
+        # Dewpoint temperature can be set or computed from ea or q
+        # Field that is provided is used to estimate rh_min for kc calcs
+        for x in ['tdew', 'ea', 'q']:
+            self.weather['fields'][x] = None
+            self.weather['units'][x] = None
+            # Check if field exists
             try:
-                self.weather['fields']['q'] = config.get(weather_sec, 'q_field')
-                if self.weather['fields']['q'] is None or self.weather['fields']['q'] == 'None':
-                    self.weather['fields']['q'] = 'q'
-                    self.weather['units']['q'] = 'kg/kg'
-                    self.weather['fnspec']['q'] = 'Unused'
-                else:
-                    try: self.weather['units']['q'] = config.get(weather_sec, 'q_units')
-                    except: self.weather['units']['q'] = 'kg/kg'
-                    try: self.weather['fnspec']['q'] = config.get(weather_sec, 'q_name')
-                    except: self.weather['fnspec']['q'] = self.weather['fields']['q']
-                    if self.weather['file_type'].lower() == 'xls' or self.weather['file_type'].lower() == 'wb':
-                        try: 
-                            self.weather['wsspec']['q'] = config.get(weather_sec, 'q_ws')
-                            if self.weather['wsspec']['q'] is None or self.weather['wsspec']['q'] == 'None':
-                                logging.info('  INFO:  WEATHER: q worksheet name set to Q')
-                                self.weather['wsspec']['q'] = 'Q'
-                        except:
-                            logging.info('  INFO:  WEATHER: q worksheet name set to Q')
-                            self.weather['wsspec']['q'] = 'Q'
-            except:
-                self.weather['fields']['q'] = 'q'
-                self.weather['units']['q'] = 'kg/kg'
-                self.weather['fnspec']['q'] = 'Unused'
+                self.weather['fields'][x] = config.get(weather_sec, x +
+                                                       '_field')
+            except configparser.NoOptionError:
+                logging.info(x + ' field not found in .ini. skipping.')
+                continue
+            # Check if field is None or ''
+            if self.weather['fields'][x] is None or self.weather['fields'][
+                    x].lower() in ['', 'None']:
+                logging.info(x + 'field was not set or was set to none')
+                continue
+            # If field exists check for units
+            if self.weather['fields'][x]:
+                try:
+                    self.weather['units'][x] = config.get(weather_sec,
+                                                          x + '_units')
+                except configparser.NoOptionError:
+                    logging.info(x + ' units not found in .ini. skipping')
+                    continue
+            # Check if units is None or ''
+            if self.weather['units'][x] is None or self.weather['units'][
+                    x].lower() in ['', 'None']:
+                logging.debug(x + 'units was not set or was set to none')
+                continue
+            # If field and units exist; add fnspec (field for now)
+            # What is fnspec used for?
+            if self.weather['fields'][x] and self.weather['units'][x]:
+                self.weather['fnspec'][x] = self.weather['fields'][x]
+                break
+
+        # Check that at least one atmospheric moisture option is present in INI
+        if not ((self.weather['fields']['tdew'] and
+                 self.weather['units']['tdew']) or
+                (self.weather['fields']['ea'] and
+                 self.weather['units']['ea']) or
+                (self.weather['fields']['q'] and
+                 self.weather['units']['q'])):
+            logging.error('tdew, ea, or q field and units must be specific in'
+                          ' INI WEATHER section. \nExiting.')
+            sys.exit()
 
         # CO2 correction factors are optional (default to None)
-        
         self.weather['fields']['co2_grass'] = None
         self.weather['fields']['co2_tree'] = None
         self.weather['fields']['co2_c4'] = None
@@ -1332,10 +1322,9 @@ class CropETData():
             sys.exit()
             
         # Check units
-        
         units_list = (
             ['c', 'mm', 'mm/d', 'mm/day', 'm/d', 'm', 'meter', 'in*100', 'in', 'in/day', 'inches/day'] +
-            ['kg/kg', 'k', 'f', 'm/s', 'mps', 'mpd', 'miles/day', 'miles/d'])
+            ['kg/kg', 'kpa', 'mmhg', 'k', 'f', 'm/s', 'mps', 'mpd', 'miles/day', 'miles/d'])
         for k, v in self.weather['units'].items():
             if v is not None and v.lower() not in units_list:
                 logging.error(('  ERROR: {0} units {1} are not currently supported').format(k, v))

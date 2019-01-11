@@ -21,6 +21,7 @@ dist/
 
 # PyCharm
 .idea
+venv
 
 # Miscellaneous files
 *.bak
@@ -48,3 +49,8 @@ examples/gridmet/gis/soils
 examples/huc8/gis/cdl
 examples/huc8/gis/scratch
 examples/huc8/gis/soils
+examples/huc8/static
+examples/huc8/daily_stats
+examples/huc8/monthly_stats
+examples/huc8/annual_stats
+examples/huc8/growing_season_stats
