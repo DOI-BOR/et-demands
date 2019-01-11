@@ -20,7 +20,10 @@ python run_cet.py -i huc8_example.ini
 # Debug/verbose options on
 python run_cet.py -i huc8_example.ini -v -d
 
+# Post-processing Tools
+python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py -i huc_example.ini -y 2017 -t annual
 
+python ..\..\et-demands\tools\summary_shapefiles_gpd.py -i huc_example.ini -y 2017 -t annual
 
 # Project ET zones .shp if needed (https://www.nceas.ucsb.edu/scicomp/recipes/gdal-reproject)
 ogr2ogr -t_srs EPSG:32612 D:\et-demands\examples\huc8\gis\WBDHU8_32612.shp D:\et-demands\examples\huc8\gis\WBDHU8.shp
