@@ -55,3 +55,7 @@ examples/huc8/monthly_stats
 examples/huc8/annual_stats
 examples/huc8/growing_season_stats
 examples/huc8/debug.txt
+
+et-demands/tools/__init__.py
+et-demands/tools/legacy_scripts/__init__.py
+et-demands/__init__.py
