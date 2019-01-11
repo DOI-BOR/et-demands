@@ -775,15 +775,15 @@ class ETCell():
         logging.info('  Reading ETo/ETr ratios')
         try:
             if ".xls" in data.refet_ratios_path.lower():
-                refet_ratios_df = pd.read_excel(data.refet_ratios_path, sheetname = data.eto_ratios_ws,
-                        header = None, skiprows = data.eto_ratios_header_lines - 1, na_values = ['NaN'])
+                refet_ratios_df = pd.read_excel(data.refet_ratios_path, sheetname = data.et_ratios_ws,
+                        header = None, skiprows = data.et_ratios_header_lines - 1, na_values = ['NaN'])
             else:
-                refet_ratios_df = pd.read_table(data.refet_ratios_path, delimiter = data.eto_ratios_delimiter,
-                        header = 'infer', skiprows = data.eto_ratios_header_lines - 1, na_values = ['NaN'])
+                refet_ratios_df = pd.read_table(data.refet_ratios_path, delimiter = data.et_ratios_delimiter,
+                        header = 'infer', skiprows = data.et_ratios_header_lines - 1, na_values = ['NaN'])
                 # print(refet_ratios_df)
-                # print(refet_ratios_df[data.eto_ratios_name_field])
-                # print(data.eto_ratios_name_field)
-            del refet_ratios_df[data.eto_ratios_name_field]
+                # print(refet_ratios_df[data.et_ratios_name_field])
+                # print(data.et_ratios_name_field)
+            del refet_ratios_df[data.et_ratios_name_field]
         except IOError:
             logging.error(
                 ('  IOError: ETo ratios static file could not be ' +
@@ -798,18 +798,18 @@ class ETCell():
         # If there are duplicate station IDs, for now only use first instance
         # Eventually allow users to tie station IDs to cells
         
-        if refet_ratios_df.duplicated(subset = data.eto_ratios_id_field).any():
+        if refet_ratios_df.duplicated(subset = data.et_ratios_id_field).any():
             logging.warning(
                 '  There are duplicate station IDs in ETo Ratios file\n' 
                 '  Only the first instance of station ID will be applied')
-            refet_ratios_df.drop_duplicates(subset = data.eto_ratios_id_field, inplace = True)
+            refet_ratios_df.drop_duplicates(subset = data.et_ratios_id_field, inplace = True)
 
         # Flatten/flip data so that ratio values are in one column
         
         refet_ratios_df = pd.melt(
-            refet_ratios_df, id_vars=[data.eto_ratios_id_field],
-            var_name = data.eto_ratios_month_field, value_name = data.eto_ratios_ratio_field)
-        refet_ratios_df[data.eto_ratios_ratio_field] = refet_ratios_df[data.eto_ratios_ratio_field].astype(np.float)
+            refet_ratios_df, id_vars=[data.et_ratios_id_field],
+            var_name = data.et_ratios_month_field, value_name = data.et_ratios_ratio_field)
+        refet_ratios_df[data.et_ratios_ratio_field] = refet_ratios_df[data.et_ratios_ratio_field].astype(np.float)
         
         # Set any missing values to 1.0
         
@@ -817,31 +817,31 @@ class ETCell():
 
         # Convert month abbreviations to numbers
         
-        refet_ratios_df[data.eto_ratios_month_field] = [
+        refet_ratios_df[data.et_ratios_month_field] = [
             datetime.datetime.strptime(m, '%b').month
-            for m in refet_ratios_df[data.eto_ratios_month_field]]
+            for m in refet_ratios_df[data.et_ratios_month_field]]
         # print(refet_ratios_df)
         # Filter to current station
         
         refet_ratios_df = refet_ratios_df[
-           refet_ratios_df[data.eto_ratios_id_field] == self.refet_id]
+           refet_ratios_df[data.et_ratios_id_field] == self.refet_id]
         if refet_ratios_df.empty:
             logging.warning('  Empty table, ETo/ETr ratios not applied')
             return False
 
         # Set month as index
         
-        refet_ratios_df.set_index(data.eto_ratios_month_field, inplace=True)
+        refet_ratios_df.set_index(data.et_ratios_month_field, inplace=True)
         logging.info(refet_ratios_df)
 
         # Scale ETo/ETr values
         #WHY 'Month' vs 'month' change needed? Input climate files have Year, Month, Day.
         self.refet_df = self.refet_df.join(refet_ratios_df, 'Month')
 
-        self.refet_df['etref'] *= self.refet_df[data.eto_ratios_ratio_field]
-        del self.refet_df[data.eto_ratios_ratio_field]
-        del self.refet_df[data.eto_ratios_month_field]
-        del self.refet_df[data.eto_ratios_id_field]
+        self.refet_df['etref'] *= self.refet_df[data.et_ratios_ratio_field]
+        del self.refet_df[data.et_ratios_ratio_field]
+        del self.refet_df[data.et_ratios_month_field]
+        del self.refet_df[data.et_ratios_id_field]
         return True
 
     def set_weather_data(self, cell_count, data, cells):
