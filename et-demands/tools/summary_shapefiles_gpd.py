@@ -186,17 +186,17 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Dictionary to control agg of each variable
             a = {
-            'ETact':'sum',
-            'ETpot':'sum',
-            'ETbas':'sum',
-            'PPT':'sum',
-            'Irrigation':'sum',
-            'Runoff':'sum',
-            'DPerc':'sum',
-            'NIWR':'sum',
-            'Season':'sum',
-            'Kc':'mean',
-            'Kcb':'mean'}
+            'ETact': 'sum',
+            'ETpot': 'sum',
+            'ETbas': 'sum',
+            'PPT': 'sum',
+            'Irrigation': 'sum',
+            'Runoff': 'sum',
+            'DPerc': 'sum',
+            'NIWR': 'sum',
+            'Season': 'sum',
+            'Kc': 'mean',
+            'Kcb': 'mean'}
             # Add etref_field to dictionary
             a[pmet_field] = 'sum'
             
@@ -242,7 +242,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                                                   min_year, max_year))
         if min_year == max_year:
             output_folder_path = os.path.join(output_ws,
-                                              'cropweighted_{}'.format(
+                                              'summary_{}'.format(
                                                   min_year))
 
         if not os.path.exists(output_folder_path):
@@ -252,15 +252,17 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         data = gpd.read_file(et_cells_path)
 
         # Data keep list (geometry is needed to write out as geodataframe)
-        keep_list = ['geometry','GRIDMET_ID', 'LAT', 'LON', 'ELEV_M', 'ELEV_FT',
-                     'COUNTYNAME', 'STATENAME', 'STPO', 'HUC8',
+        # keep_list = ['geometry','CELL_ID', 'LAT', 'LON', 'ELEV_M', 'ELEV_FT',
+        #              'COUNTYNAME', 'STATENAME', 'STPO', 'HUC8',
+        #              'AG_ACRES', 'CROP_{:02d}'.format(crop)]
+        keep_list = ['geometry','CELL_ID', 'LAT', 'LON',
                      'AG_ACRES', 'CROP_{:02d}'.format(crop)]
 
         # Filter ETCells using keep list
         data = data[keep_list]
 
         # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
-        merged_data = data.merge(output_df, left_on='GRIDMET_ID',
+        merged_data = data.merge(output_df, left_on='CELL_ID',
                                  right_on='Station')
         # Remove redundant Station column
         merged_data = merged_data.drop(columns='Station')

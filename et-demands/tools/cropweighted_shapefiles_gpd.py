@@ -210,7 +210,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         df = df.dropna()
 
         # Merge Crop ETact and NIWR to cells dataframe
-        cells = pd.merge(cells, df, how='left', left_on=['GRIDMET_ID'],
+        cells = pd.merge(cells, df, how='left', left_on=['CELL_ID'],
                          right_index=True)
 
     # Change Ag_Acres cells with zero area to nan (Avoid ZeroDivisionError)
@@ -236,14 +236,17 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                 var, stat)].add(temp)
 
     # Subset to "Final" dataframe for merge to output .shp
-    final_df = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
+    # final_df = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
+    #                   'CWNIWR_md']]
+    final_df = cells[['CELL_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
                       'CWNIWR_md']]
+
 
     # Copy ETCELLS.shp and join cropweighted data to it
     data = gpd.read_file(et_cells_path)
 
     # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
-    merged_data = data.merge(final_df, on='GRIDMET_ID')
+    merged_data = data.merge(final_df, on='CELL_ID')
 
     # Output file name
     out_name = "{}_cropweighted.shp".format(time_filter, crop)
@@ -274,7 +277,6 @@ def read_shapefile(shp_path):
     fields = [x[0] for x in sf.fields][1:]
     records = sf.records()
     # shps = [s.points for s in sf.shapes()]
-
     # write into a dataframe
     df = pd.DataFrame(columns=fields, data=records)
     # df = df.assign(coords=shps)

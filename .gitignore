@@ -34,7 +34,7 @@ example/calibration
 example/gis/ETCells*
 example/gis/cdl
 example/gis/scratch
-example/gis/soils
+example/gis/soils/*
 example/gis/zone_tables
 example/static
 example/annual_stats
@@ -49,11 +49,14 @@ examples/gridmet/gis/soils
 examples/huc8/gis/cdl
 examples/huc8/gis/scratch
 examples/huc8/gis/soils
+examples/huc8/gis/cdl_crops*
 examples/huc8/static
 examples/huc8/daily_stats
 examples/huc8/monthly_stats
 examples/huc8/annual_stats
 examples/huc8/growing_season_stats
+examples/huc8/summary_shapefiles
+examples/huc8/cropweighted_shapefiles
 examples/huc8/debug.txt
 
 et-demands/tools/__init__.py
