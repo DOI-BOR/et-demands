@@ -54,3 +54,4 @@ examples/huc8/daily_stats
 examples/huc8/monthly_stats
 examples/huc8/annual_stats
 examples/huc8/growing_season_stats
+examples/huc8/debug.txt
