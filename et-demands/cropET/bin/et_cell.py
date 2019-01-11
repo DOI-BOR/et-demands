@@ -865,11 +865,12 @@ class ETCell():
             return False
         
         # Check/modify units
-        
+        # GROUP UNIT CHANGES AND COMMENT !!!
         for field_key, field_units in data.weather['units'].items():
             if field_units is None:
                 continue
-            elif field_units.lower() in ['c', 'mm', 'mm/day', 'm/s', 'mps', 'mj/m2', 'mj/m^2', 'kg/kg']:
+            elif field_units.lower() in ['c', 'mm', 'mm/day', 'm/s', 'mps',
+                                         'mj/m2', 'mj/m^2', 'kg/kg', 'kpa']:
                 continue
             elif field_units.lower() == 'k':
                 self.weather_df[field_key] -= 273.15
@@ -884,6 +885,9 @@ class ETCell():
                 self.weather_df[field_key] *= 25.4
             elif field_units.lower() == 'in/day':
                 self.weather_df[field_key] *= 25.4
+            # pressure unit conversions (add more)
+            elif field_units.lower() == 'mmhg':
+                self.weather_df[field_key] *= 0.133322
             elif field_units.lower() == 'm':
                 self.weather_df[field_key] *= 1000.0
             elif field_units.lower() in ['m/d', 'm/day']:
@@ -905,25 +909,31 @@ class ETCell():
         # Scale wind height to 2m if necessary
         
         if data.weather['wind_height'] != 2:
-            self.weather_df['wind'] *= (4.87 / np.log(67.8 * data.weather['wind_height'] - 5.42))
+            self.weather_df['wind'] *=\
+                (4.87 / np.log(67.8 * data.weather['wind_height'] - 5.42))
+
 
         # Add snow and snow_depth if necessary
-        
         if 'snow' not in self.weather_df.columns:
             self.weather_df['snow'] = 0
         if 'snow_depth' not in self.weather_df.columns:
             self.weather_df['snow_depth'] = 0
 
-        # Calculate Tdew from specific humidity
-        # Convert station elevation from feet to meters
-        
-        if ('tdew' not in self.weather_df.columns and
-                'q' in self.weather_df.columns):
+        # Calculate Tdew from q or ea if tdew not input
+        if 'tdew' in self.weather_df.columns:
+            logging.info('\nUsing tdew for rh_min calculation.')
+            pass
+        elif 'ea' in self.weather_df.columns:
+            logging.info('\nUsing ea for rh_min calculation.')
+            self.weather_df['tdew'] = util.tdew_from_ea(
+                self.weather_df['ea'].values)
+        elif 'q' in self.weather_df.columns:
+            logging.info('\nUsing q for rh_min calculation.')
             self.weather_df['tdew'] = util.tdew_from_ea(util.ea_from_q(
                 self.air_pressure, self.weather_df['q'].values))
 
-        # Compute RH from Tdew and Tmax
-        
+
+        # Compute rh_min from Tdew and Tmax
         if ('rh_min' not in self.weather_df.columns and
                 'tdew' in self.weather_df.columns and
                 'tmax' in self.weather_df.columns):
@@ -937,7 +947,7 @@ class ETCell():
 
         # DEADBEEF
         # Don't default CO2 correction values to 1 if they aren't in the data
-        # CO2 corrections must be in the weather file
+        # CO2 corrections must be in the weather filek
         # Is this going for work for all BOR data sets?
 
         """
@@ -1323,9 +1333,8 @@ class ETCell():
         """
         
         # Initialize climate dataframe
-
         self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin', 'tdew', 'wind', 'rh_min', 'snow', 'snow_depth']].copy()
-        
+
         # Extend to support historic (constant) phenology
         
         if data.phenology_option > 0:

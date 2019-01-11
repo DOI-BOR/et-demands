@@ -1,0 +1,26 @@
+### Prep Commands (Run from et-demands\examples\huc8) Folder
+
+# The first three scripts only needed if user does not have a crop shapefile
+# The CDL clip script is only needed if storage space is an issue
+python ..\..\et-demands\prep\download_cdl_raster.py --ini cet_prep.ini
+python ..\..\et-demands\prep\clip_cdl_raster.py --ini cet_prep.ini
+
+python ..\..\et-demands\prep\build_ag_cdl_shapefile.py --ini cet_prep.ini
+
+python ..\..\et-demands\prep\download_statsgo_shapefiles.py --ini cet_prep.ini
+
+python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini cet_prep.ini
+
+python ..\..\et-demands\prep\build_static_files.py --ini cet_prep.ini
+# or 
+python ..\..\et-demands\prep\build_spatial_crop_params.py --ini cet_prep.ini
+
+# Run Model
+python run_cet.py -i huc8_example.ini 
+# Debug/verbose options on
+python run_cet.py -i huc8_example.ini -v -d
+
+
+
+# Project ET zones .shp if needed (https://www.nceas.ucsb.edu/scicomp/recipes/gdal-reproject)
+ogr2ogr -t_srs EPSG:32612 D:\et-demands\examples\huc8\gis\WBDHU8_32612.shp D:\et-demands\examples\huc8\gis\WBDHU8.shp

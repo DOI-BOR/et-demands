@@ -11,30 +11,38 @@ import os
 import re
 import sys
 
-from osgeo import gdal, ogr, osr
+from osgeo import ogr
+# from osgeo import gdal, ogr, osr
 
 import _arcpy
 import _util as util
 
 
-def main(ini_path, zone_type='huc8', area_threshold=10,
+def main(ini_path, area_threshold=10,
          dairy_cuttings=5, beef_cuttings=4, crop_str='',
-         remove_empty_flag=True, overwrite_flag=False):
+         overwrite_flag=False):
     """Build a feature class for each crop and set default crop parameters
 
     Apply the values in the CropParams.txt as defaults to every cell
 
-    Args:
-        ini_path (str): file path of the project INI file
-        zone_type (str): Zone type (huc8, huc10, county, gridmet)
-        area_threshold (float): CDL area threshold [acres]
-        dairy_cuttings (int): Initial number of dairy hay cuttings
-        beef_cuttings (int): Initial number of beef hay cuttings
-        crop_str (str): comma separated list or range of crops to compare
-        overwrite_flag (bool): If True, overwrite existing output rasters
+    Parameters
+    ----------
+    ini_path : str
+        File path of the parameter INI file.
+    area_threshold : float
+        CDL area threshold [acres].
+    dairy_cuttings : int
+        Initial number of dairy hay cuttings.
+    beef_cuttings : int
+        Initial number of beef hay cuttings.
+    crop_str : str
+        Comma separated list or range of crops to compare.
+    overwrite_flag : bool
+        If True, overwrite existing output rasters.
 
-    Returns:
-        None
+    Returns
+    -------
+    None
 
     """
     logging.info('\nCalculating ET-Demands Spatial Crop Parameters')
@@ -438,13 +446,9 @@ def arg_parse():
         description='ET-Demands Spatial Crop Parameters',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-i', '--ini', metavar='PATH',
-        type=lambda x: util.is_valid_file(parser, x), help='Input file')
-    parser.add_argument(
-        '--zone', default='county', metavar='', type=str,
-        choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(
-            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
+        '-i', '--ini', required=True, metavar='INI',
+        type=lambda x: util.is_valid_file(parser, x),
+        help='Input file')
     parser.add_argument(
         '--area', default=10, type=float,
         help='Crop area threshold [acres]')
@@ -467,6 +471,11 @@ def arg_parse():
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
+
+    # Convert input file to an absolute path
+    if args.ini and os.path.isdir(os.path.abspath(args.ini)):
+        args.ini = os.path.abspath(args.ini)
+
     return args
 
 
@@ -481,7 +490,6 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, zone_type=args.zone, area_threshold=args.area,
+    main(ini_path=args.ini, area_threshold=args.area,
          dairy_cuttings=args.dairy, beef_cuttings=args.beef,
-         remove_empty_flag=args.empty, crop_str=args.crops,
-         overwrite_flag=args.overwrite)
+         crop_str=args.crops, overwrite_flag=args.overwrite)

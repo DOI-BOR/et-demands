@@ -226,28 +226,28 @@ def is_valid_directory(parser, arg):
 def parse_args():
     """"""
     parser = argparse.ArgumentParser(
-        description = 'Crop ET',
-        formatter_class = argparse.ArgumentDefaultsHelpFormatter)
+        description='Crop ET',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-i', '--ini', required = True, metavar = 'PATH',
+        '-i', '--ini', required=True, metavar = 'PATH',
         type = lambda x: is_valid_file(parser, x), help = 'Input file')
     parser.add_argument(
-        '-d', '--debug', action = "store_true", default = False,
+        '-d', '--debug', action="store_true", default = False,
         help = "Save debug level comments to debug.txt")
     parser.add_argument(
-        '-c', '--etcid', metavar = 'etcid_to_run', default = 'ALL',
-        help = "User specified et cell id to run")
+        '-c', '--etcid', metavar='etcid_to_run', default = 'ALL',
+        help="User specified et cell id to run")
     parser.add_argument(
-        '-v', '--verbose', action = "store_const",
-        dest = 'log_level', const = logging.INFO, default = logging.WARNING,
+        '-v', '--verbose', action="store_const",
+        dest = 'log_level', const=logging.INFO, default=logging.WARNING,
         help = "Print info level comments")
     parser.add_argument(
-        '-mp', '--multiprocessing', default = 1, type = int,
-        metavar = 'N', nargs = '?', const = mp.cpu_count(),
-        help = 'Number of processers to use')
+        '-mp', '--multiprocessing', default=1, type=int,
+        metavar='N', nargs='?', const=mp.cpu_count(),
+        help='Number of processers to use')
     parser.add_argument(
-        '--cal', action = 'store_true', default = False,
-        help = "Display mean annual start/end dates to screen")
+        '--cal', action='store_true', default = False,
+        help="Display mean annual start/end dates to screen")
     args = parser.parse_args()
     
     # Convert INI path to an absolute path if necessary
@@ -258,7 +258,6 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    main(ini_path=args.ini, log_level = args.log_level, 
-        etcid_to_run = args.etcid, cal_flag = args.cal, 
-        debug_flag = args.debug, 
-        mp_procs = args.multiprocessing)
+    main(ini_path=args.ini, log_level=args.log_level,
+         etcid_to_run=args.etcid, cal_flag=args.cal,
+         debug_flag=args.debug, mp_procs=args.multiprocessing)

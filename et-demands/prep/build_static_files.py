@@ -16,22 +16,27 @@ import _arcpy
 import _util as util
 
 
-def main(ini_path, zone_type='huc8', area_threshold=10,
+def main(ini_path, area_threshold=10,
          beef_cuttings=4, dairy_cuttings=5,
-         overwrite_flag=False, cleanup_flag=False):
+         overwrite_flag=False):
     """Build static text files needed to run ET-Demands model
 
-    Args:
-        ini_path (str): file path of the project INI file
-        zone_type (str): Zone type (huc8, huc10, county)
-        area_threshold (float): CDL area threshold [acres]
-        beef_cuttings (int): Initial number of beef hay cuttings
-        dairy_cuttings (int): Initial number of dairy hay cuttings
-        overwrite_flag (bool): If True, overwrite existing files
-        cleanup_flag (bool): If True, remove temporary files
+    Parameters
+    ----------
+    ini_path : str
+        File path of the parameter INI file.
+    area_threshold : float
+        CDL area threshold [acres] (the default is 10 acres).
+    beef_cuttings : int
+        Initial number of beef hay cuttings (the default is 4).
+    dairy_cuttings : int
+        Initial number of dairy hay cuttings (the default is 5).
+    overwrite_flag : bool
+        If True, overwrite existing files (the default is False).
 
-    Returns:
-        None
+    Returns
+    -------
+    None
 
     """
     logging.info('\nBuilding ET-Demands Static Files')
@@ -44,6 +49,7 @@ def main(ini_path, zone_type='huc8', area_threshold=10,
     soil_depth = 60         # inches
     aridity = 50
     irrigation = 1
+    # DEADBEEF - The number of crops should not be hardcoded here
     crops = 86
 
     # Input paths
@@ -339,13 +345,9 @@ def arg_parse():
         description='ET-Demands Static Files',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-i', '--ini', metavar='PATH',
-        type=lambda x: util.is_valid_file(parser, x), help='Input file')
-    parser.add_argument(
-        '--zone', default='huc8', metavar='STR', type=str,
-        choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(
-            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
+        '-i', '--ini', required=True, metavar='INI',
+        type=lambda x: util.is_valid_file(parser, x),
+        help='Input file')
     parser.add_argument(
         '--acres', default=10, type=float,
         help='Crop area threshold')
@@ -359,12 +361,13 @@ def arg_parse():
         '-o', '--overwrite', default=None, action='store_true',
         help='Overwrite existing file')
     parser.add_argument(
-        '--clean', default=None, action='store_true',
-        help='Remove temporary datasets')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
+
+    # Convert input file to an absolute path
+    if args.ini and os.path.isdir(os.path.abspath(args.ini)):
+        args.ini = os.path.abspath(args.ini)
 
     return args
 
@@ -380,6 +383,6 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, area_threshold=args.acres, zone_type=args.zone,
+    main(ini_path=args.ini, area_threshold=args.acres,
          dairy_cuttings=args.dairy, beef_cuttings=args.beef,
-         overwrite_flag=args.overwrite, cleanup_flag=args.clean)
+         overwrite_flag=args.overwrite)

@@ -592,6 +592,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         if data.gs_name_format is None:
             # default filename spec
 
+
             gs_output_path = os.path.join(
                 data.gs_output_ws, '{0}_gs_crop_{1:02d}.csv'.format(
                     et_cell.cell_id, int(crop.class_number)))
@@ -606,8 +607,20 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         with open(gs_output_path, 'w') as gs_output_f:
             gs_output_f.write(
                 '# {0:2d} - {1}\n'.format(crop.class_number, crop.name))
-            gs_start_doy = int(round(gs_output_df[gs_start_doy_field].mean()))
-            gs_end_doy = int(round(gs_output_df[gs_end_doy_field].mean()))
+            try:
+                gs_start_doy = int(round(
+                    gs_output_df[gs_start_doy_field].mean()))
+            except:
+                gs_start_doy = np.nan
+            try:
+                gs_end_doy = int(round(gs_output_df[gs_end_doy_field].mean()))
+            except:
+                gs_end_doy = np.nan
+            if gs_start_doy is np.nan:
+                logging.info('\nSkipping Growing Season Output for'
+                             ' Cell ID: {} Crop: {:02d}'
+                             .format(et_cell.cell_id, int(crop.class_number)))
+                return
             gs_start_dt = datetime.datetime.strptime(
                 '2001_{:03d}'. format(gs_start_doy), '%Y_%j')
             gs_end_dt = datetime.datetime.strptime(
@@ -617,10 +630,10 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                     dt=gs_start_dt, doy=gs_start_doy))
             gs_output_f.write(
                 '# Mean End Date:   {dt.month}/{dt.day}  ({doy})\n'.format(
-                    dt=gs_end_dt, doy = gs_end_doy))
+                    dt=gs_end_dt, doy=gs_end_doy))
             gs_output_df.to_csv(
-                gs_output_f, sep = ',', columns = gs_output_columns,
-                date_format = '%Y', index = False)
+                gs_output_f, sep=',', columns=gs_output_columns,
+                date_format='%Y', index=False)
         del gs_output_df, gs_output_path, gs_output_columns
 
 if __name__ == '__main__':

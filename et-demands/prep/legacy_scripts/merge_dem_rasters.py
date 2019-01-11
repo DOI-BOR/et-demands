@@ -118,11 +118,11 @@ def main(gis_ws, tile_ws, dem_cs, overwrite_flag=False,
     logging.debug('  Output cellsize: {}'.format(output_cs))
 
     # Project study area extent to DEM tile coordinate system
-    tile_extent = gdc.project_extent(output_extent, output_osr, tile_osr)
+    tile_extent = output_extent.project(output_osr, tile_osr)
     logging.debug('Output Extent: {}'.format(tile_extent))
 
     # Extent needed to select 1x1 degree tiles
-    tile_extent.buffer_extent(tile_buffer)
+    tile_extent.buffer(tile_buffer)
     tile_extent.adjust_to_snap(tile_x, tile_y, tile_cs, method='EXPAND')
     logging.debug('Tile Extent: {}'.format(tile_extent))
 

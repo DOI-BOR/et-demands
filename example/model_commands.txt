@@ -1,4 +1,4 @@
-###Prep Commands
+### Prep Commands
 
 python ..\et-demands\prep\download_cdl_raster.py --cdl ..\common\cdl --years 2010
 
@@ -16,7 +16,7 @@ python ..\et-demands\prep\et_demands_zonal_stats.py --year 2010 -o --zone huc8
 
 python ..\et-demands\prep\build_static_files.py --ini example.ini --zone huc8 --acres 10 -o
 
-###Model Command
+### Model Command
 
 python run_basin.py -i example.ini
 

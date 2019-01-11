@@ -104,11 +104,14 @@ def read_ini(ini_path, section):
     """
     logging.info('  INI: {}'.format(os.path.basename(ini_path)))
     config = configparser.ConfigParser()
+
     try:
-        config.read(ini_path)
-    except IOError:
-        logging.error('\nERROR: INI file does not exist'
-                      '\n  {}\n'.format(ini_path))
+        config.read_file(open(ini_path, 'r'))
+        # This doesn't raise an exception when the file doesn't exist
+        # config.read(ini_path)
+    except [FileNotFoundError, IOError] as e:
+        logging.error('\nERROR: INI file does not exist\n'
+                      '  {}\n'.format(ini_path))
         sys.exit()
     except configparser.MissingSectionHeaderError:
         logging.error('\nERROR: INI file is missing a section header'
@@ -141,3 +144,20 @@ def remove_file(file_path):
     for file_name in glob.glob(os.path.splitext(file_path)[0] + ".*"):
         logging.debug('  Remove: {}'.format(os.path.join(file_ws, file_name)))
         os.remove(os.path.join(file_ws, file_name))
+
+
+def url_download(download_url, output_path, verify=True):
+    """Download file from a URL using requests module"""
+    import requests
+    response = requests.get(download_url, stream=True, verify=verify)
+    if response.status_code != 200:
+        logging.error('  HTTPError: {}'.format(response.status_code))
+        return False
+
+    logging.debug('  Beginning download')
+    with (open(output_path, "wb")) as output_f:
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
+            if chunk:  # filter out keep-alive new chunks
+                output_f.write(chunk)
+    logging.debug('  Download complete')
+    return True

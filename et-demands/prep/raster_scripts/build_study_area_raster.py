@@ -115,7 +115,7 @@ def main(gis_ws, cdl_ws, cdl_year, study_area_path, study_area_buffer=None,
     # This will buffer in the CDL spatial reference & units
     if study_area_buffer is not None:
         logging.debug('Buffering: {}'.format(study_area_buffer))
-        clip_extent.buffer_extent(study_area_buffer)
+        clip_extent.buffer(study_area_buffer)
         logging.debug('Clip Extent: {}'.format(clip_extent))
     clip_extent.adjust_to_snap(output_x, output_y, output_cs, method='EXPAND')
     logging.debug('Clip Extent: {}'.format(clip_extent))

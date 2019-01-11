@@ -3,8 +3,7 @@ import glob
 import logging
 import os
 import re
-# import shutil
-import subprocess
+import shutil
 
 from osgeo import gdal, ogr, osr
 
@@ -30,8 +29,8 @@ def add_field(input_path, name, type, width=None, precision=None):
     """
     input_driver = get_ogr_driver(input_path)
 
-    fields = list_fields(input_path)
-    if name in fields:
+    fields = [x.upper() for x in list_fields(input_path)]
+    if name.upper() in fields:
         logging.debug('The field already exists')
 
     input_ds = input_driver.Open(input_path, 1)
@@ -104,7 +103,7 @@ def calculate_field(input_path, field_name, calc_expr):
 
 
 def copy(input_path, output_path):
-    """
+    """Copy a feature or raster dataset
 
     Parameters
     ----------
@@ -117,40 +116,28 @@ def copy(input_path, output_path):
     else:
         shell_flag = True
 
-    if is_shapefile(input_path):
-        # DEADBEEF - Extra command(s) remove the field type warning but make
-        # the DBF quite a bit larger since all the field types are doubles.
-        subprocess.check_output(
-            ['ogr2ogr', '-f', 'ESRI Shapefile', '-overwrite', '-preserve_fid',
-                '-unsetFieldWidth', output_path, input_path],
-            shell=shell_flag)
+    # if not is_shapefile(input_path):
+    #     raise Exception('input must be a .shp type')
 
-        # # DEADBEEF - Only runs on Python 3 but suppresses field width warning
-        # subprocess.run(
-        #     ['ogr2ogr', '-f', 'ESRI Shapefile', output_path, input_path],
-        #     shell=shell_flag, stderr=subprocess.DEVNULL)
+    # Brute force approach for copying a file and all sidecars
+    input_ws = os.path.dirname(input_path)
+    input_name = os.path.splitext(input_path)[0]
+    output_name = os.path.splitext(output_path)[0]
+    for file_name in glob.glob(input_name + ".*"):
+        shutil.copyfile(
+            os.path.join(input_ws, file_name),
+            os.path.join(input_ws, file_name.replace(input_name, output_name)))
 
-        # # DEADBEEEF - The CopyDataSource call was crashing randomly
-        # input_driver = ogr.GetDriverByName('ESRI Shapefile')
-        # input_ds = input_driver.Open(input_path, 0)
-        # output_ds = input_driver.CopyDataSource(input_ds, output_path)
-        # output_ds = None
-        # input_ds = None
-    else:
-        raise Exception('input must be a .shp type')
-
-    # # Brute force approach for copying a file and all sidecars
-    # input_ws = os.path.dirname(input_path)
-    # input_name = os.path.splitext(input_path)[0]
-    # output_name = os.path.splitext(output_path)[0]
-    # for file_name in glob.glob(input_name + ".*"):
-    #     shutil.copyfile(
-    #         os.path.join(input_ws, file_name),
-    #         os.path.join(input_ws, file_name.replace(input_name, output_name)))
+    # # DEADBEEEF - The CopyDataSource call was crashing randomly
+    # input_driver = ogr.GetDriverByName('ESRI Shapefile')
+    # input_ds = input_driver.Open(input_path, 0)
+    # output_ds = input_driver.CopyDataSource(input_ds, output_path)
+    # output_ds = None
+    # input_ds = None
 
 
 def delete(input_path):
-    """Remove a shapefile/raster and all of its ancillary files
+    """Remove a shapefile/raster and all sidecar files
 
     Parameters
     ----------
@@ -235,7 +222,7 @@ def feature_to_raster(input_path, input_field, output_path, output_geo):
     logging.debug('  {}'.format(input_field))
     logging.debug('  {}'.format(output_path))
     input_driver = get_ogr_driver(input_path)
-    input_ds = input_driver.Open(input_path)
+    input_ds = input_driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     input_count = input_lyr.GetFeatureCount()
     input_osr = input_lyr.GetSpatialRef()
@@ -399,14 +386,17 @@ def project(input_path, output_path, output_osr):
     output_path : str
     output_osr :
 
+    Returns
+    -------
+    None
+
     """
     driver = get_ogr_driver(input_path)
 
-    # First make a copy of the dataset
     input_ds = driver.Open(input_path, 0)
     input_lyr = input_ds.GetLayer()
     input_osr = input_lyr.GetSpatialRef()
-    # input_osr.MorphToESRI()
+    output_tx = osr.CoordinateTransformation(input_osr, output_osr)
     output_ds = driver.CopyDataSource(input_ds, output_path)
     output_ds = None
     input_ds = None
@@ -415,16 +405,28 @@ def project(input_path, output_path, output_osr):
     # Project the geometry of each feature
     output_ds = driver.Open(output_path, 1)
     output_lyr = output_ds.GetLayer()
+    output_lyr_name = output_lyr.GetName()
     for output_ftr in output_lyr:
-        output_fid = output_ftr.GetFID()
+        # output_fid = output_ftr.GetFID()
         # logging.debug('  FID: {}'.format(output_fid))
         output_geom = output_ftr.GetGeometryRef()
-        proj_geom = output_geom.Clone()
-        proj_geom.Transform(osr.CoordinateTransformation(input_osr, output_osr))
-        output_ftr.SetGeometry(proj_geom)
-        input_lyr.SetFeature(output_ftr)
+        output_geom.Transform(output_tx)
+        output_ftr.SetGeometry(output_geom)
+        output_lyr.SetFeature(output_ftr)
+
+    # If you modify the geometries, the extent must be recomputed
+    # This should happen automatically as of 2.2
+    output_ds.ExecuteSQL("RECOMPUTE EXTENT ON {}".format(output_lyr_name))
+    # output_ds.FlushCache()
     output_ds = None
     del output_ds
+
+    # Write projection/spatial reference to prj file
+    # Format OSR as ESRI WKT
+    prj_osr = output_osr.Clone()
+    prj_osr.MorphToESRI()
+    with open(output_path.replace('.shp', '.prj'), 'w') as prj_f:
+        prj_f.write(prj_osr.ExportToWkt())
 
 
 def search_cursor(input_path, fields):

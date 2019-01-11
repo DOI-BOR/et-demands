@@ -51,15 +51,12 @@ class Extent:
             self.xmax = math.floor((self.xmax - snap_x) / cs) * cs + snap_x
             self.ymax = math.floor((self.ymax - snap_y) / cs) * cs + snap_y
 
-    def buffer_extent(self, distance):
+    def buffer(self, distance):
+        """Buffer the extent"""
         self.xmin -= distance
         self.ymin -= distance
         self.xmax += distance
         self.ymax += distance
-
-    def split_extent(self):
-        """List of extent terms (xmin, ymin, xmax, ymax)"""
-        return self.xmin, self.ymin, self.xmax, self.ymax
 
     def copy(self):
         """Return a copy of the extent"""
@@ -99,10 +96,13 @@ class Extent:
 
     def shape(self, cs):
         """Return number of rows and columns of the extent
+
         Args:
             cs: cellsize (default to env.cellsize if not set)
+
         Returns:
             tuple of raster rows and columns
+
         """
         cols = int(round(abs((self.xmin - self.xmax) / cs), 0))
         rows = int(round(abs((self.ymax - self.ymin) / -cs), 0))
@@ -123,7 +123,7 @@ class Extent:
         return polygon
 
     def intersect_point(self, xy):
-        """"Test if Point XY intersects the extent"""
+        """Test if Point XY intersects the extent"""
         if ((xy[0] > self.xmax) or
             (xy[0] < self.xmin) or
             (xy[1] > self.ymax) or
@@ -131,6 +131,89 @@ class Extent:
             return False
         else:
             return True
+
+    # def intersects(self, target, target_type):
+    #     """Test if the extent intersects the target"""
+    #     if target_type.lower() == 'xy':
+    #         if ((xy[0] > self.xmax) or
+    #             (xy[0] < self.xmin) or
+    #             (xy[1] > self.ymax) or
+    #             (xy[1] < self.ymin)):
+    #             return False
+    #         else:
+    #             return True
+    #     elif target_type.lower() == 'extent':
+
+    def clip(self, clip_extent):
+        """Clip/limit the extent base"""
+        self.xmin = max(self.xmin, clip_extent.xmin)
+        self.ymin = max(self.ymin, clip_extent.ymin)
+        self.xmax = min(self.xmax, clip_extent.xmax)
+        self.ymax = min(self.ymax, clip_extent.ymax)
+
+    def project(self, input_osr, output_osr, input_cs=None):
+        """Project extent to different spatial reference / coordinate system
+
+        Parameters
+        ----------
+        input_extent :
+            The input gdal_common.extent to be reprojected
+        input_osr :
+            OSR spatial reference of the input extent
+        output_osr :
+            OSR spatial reference of the desired output
+        input_cs : float
+            The cell size used to calculate the new extent.
+            If None, function will place 1000 points between corners.
+            This cell size is in the input spatial reference.
+
+        Returns
+        -------
+        tuple: :class:`gdal_common.extent` in the desired projection
+
+        """
+        # Build an in memory feature to project to
+        mem_driver = ogr.GetDriverByName('Memory')
+        output_ds = mem_driver.CreateDataSource('')
+        output_lyr = output_ds.CreateLayer(
+            'projected_extent', geom_type=ogr.wkbPolygon)
+        feature_defn = output_lyr.GetLayerDefn()
+
+        # Place points at every "cell" between pairs of corner points
+        ring = ogr.Geometry(ogr.wkbLinearRing)
+        corners = self.corner_points()
+        for point_a, point_b in zip(corners, corners[1:] + [corners[0]]):
+            if input_cs is None:
+                steps = 1000
+            else:
+                steps = float(max(
+                    abs(point_b[0] - point_a[0]),
+                    abs(point_b[1] - point_a[1]))) / input_cs
+
+            # steps = float(abs(point_b[0] - point_a[0])) / cellsize
+            for x, y in zip(np.linspace(point_a[0], point_b[0], steps + 1),
+                            np.linspace(point_a[1], point_b[1], steps + 1)):
+                ring.AddPoint(x, y)
+        ring.CloseRings()
+
+        # Set the ring geometry into a polygon
+        polygon = ogr.Geometry(ogr.wkbPolygon)
+        polygon.AddGeometry(ring)
+
+        # Project the geometry
+        tx = osr.CoordinateTransformation(input_osr, output_osr)
+        polygon.Transform(tx)
+
+        # Create a new feature and set the geometry into it
+        feature = ogr.Feature(feature_defn)
+        feature.SetGeometry(polygon)
+
+        # Add the feature to the output layer
+        output_lyr.CreateFeature(feature)
+
+        # Get the extent from the projected polygon
+        f_extent = Extent(output_lyr.GetExtent())
+        return f_extent.ogrenv_swap()
 
 
 def get_gdal_driver(raster_path):
@@ -810,56 +893,6 @@ def raster_ds_shape(raster_ds):
         tuple of raster rows and columns
     """
     return raster_ds.RasterYSize, raster_ds.RasterXSize
-
-
-def project_extent(input_extent, input_osr, output_osr, cellsize=None):
-    """Project extent to different spatial reference / coordinate system
-
-    Args:
-        input_extent (): the input gdal_common.extent to be reprojected
-        input_osr (): OSR spatial reference of the input extent
-        output_osr (): OSR spatial reference of the desired output
-        cellsize (): the cellsize used to calculate the new extent.
-            If None, function will place 1000 points between corners.
-            This cellsize is in the input spatial reference.
-
-    Returns:
-        tuple: :class:`gdal_common.extent` in the desired projection
-    """
-    # Build an in memory feature to project to
-    mem_driver = ogr.GetDriverByName('Memory')
-    output_ds = mem_driver.CreateDataSource('')
-    output_lyr = output_ds.CreateLayer(
-        'projected_extent', geom_type=ogr.wkbPolygon)
-    feature_defn = output_lyr.GetLayerDefn()
-    # Place points at every "cell" between pairs of corner points
-    ring = ogr.Geometry(ogr.wkbLinearRing)
-    corners = input_extent.corner_points()
-    for point_a, point_b in zip(corners, corners[1:] + [corners[0]]):
-        if cellsize is None:
-            steps = 1000
-        else:
-            steps = float(max(
-                abs(point_b[0] - point_a[0]),
-                abs(point_b[1] - point_a[1]))) / cellsize
-        # steps = float(abs(point_b[0] - point_a[0])) / cellsize
-        for x, y in zip(np.linspace(point_a[0], point_b[0], steps + 1),
-                        np.linspace(point_a[1], point_b[1], steps + 1)):
-            ring.AddPoint(x, y)
-    ring.CloseRings()
-    # Set the ring geometry into a polygon
-    polygon = ogr.Geometry(ogr.wkbPolygon)
-    polygon.AddGeometry(ring)
-    # Project the geometry
-    tx = osr.CoordinateTransformation(input_osr, output_osr)
-    polygon.Transform(tx)
-    # Create a new feature and set the geometry into it
-    feature = ogr.Feature(feature_defn)
-    feature.SetGeometry(polygon)
-    # Add the feature to the output layer
-    output_lyr.CreateFeature(feature)
-    # Get the extent from the projected polygon
-    return feature_lyr_extent(output_lyr)
 
 
 def block_gen(rows, cols, bs=64):
