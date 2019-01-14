@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
 import configparser
-import datetime as dt
 import logging
 import os
-import sys
-
-import numpy as np
 import pandas as pd
+import sys
 
 import crop_coefficients
 import crop_parameters
@@ -29,47 +26,24 @@ class CropETData:
         # Check that INI file can be read
         config = configparser.RawConfigParser()
         try:
-            ini = config.readfp(open(ini_path))
+            config.read_file(open(ini_path))
         except:
             logging.error('\nERROR: Config file could not be read, ' +
                           'is not an input file, or does not exist\n')
             sys.exit()
 
-        # # Copies ini to test_cet.cfg file
-        # if debug_flag:
-        #     cfg_path = os.path.join(os.getcwd(), "test_cet.cfg")
-        #     with open(cfg_path, 'wb') as cf:
-        #         config.write(cf)
-
         # Check that all sections are present
-        project_sec = 'PROJECT'    # required for revised configuration file
-        meta_sec = 'CET_META'    # required for revised configuration file
         crop_et_sec = 'CROP_ET'  # required
         weather_sec = 'WEATHER'  # required
-        hist_temps_sec = 'HISTTEMPS'
         refet_sec = 'REFET'  # required
-        cfgSecs = config.sections()
+        cfg_secs = config.sections()
 
-        # verify if using original or revised configuration file
-        
-        if project_sec not in cfgSecs or meta_sec not in cfgSecs:
-            # assume that user is using original configuration file
-            original = True
-            p_sec = crop_et_sec
-            m_sec = crop_et_sec
-        else:
-            original = False
-            if project_sec not in cfgSecs or meta_sec not in cfgSecs:
-                logging.error(
-                    '\nERROR:input file must have following sections:\n' +
-                    '  [{}] and [{}]'.format(project_sec, meta_sec))
-                sys.exit()
-            p_sec = project_sec
-            m_sec = meta_sec
-            
+        # Original INI Format (What is Phenology option?)
+        original = True
+
         # verify existence of common required sections
-        if crop_et_sec not in cfgSecs or refet_sec not in cfgSecs or \
-                weather_sec not in cfgSecs:
+        if crop_et_sec not in cfg_secs or refet_sec not in cfg_secs or \
+                weather_sec not in cfg_secs:
             logging.error(
                 '\nERROR:input file must have following sections:\n' +
                 '  [{}], [{}], and [{}]'.format(crop_et_sec, weather_sec,
@@ -77,7 +51,7 @@ class CropETData:
 
         # project specifications
         try:
-            self.project_ws = config.get(p_sec, 'project_folder')
+            self.project_ws = config.get(crop_et_sec, 'project_folder')
         except:
             logging.error(
                 'ERROR: project_folder ' +
@@ -86,7 +60,6 @@ class CropETData:
 
         # project folder needs to be full/absolute path
         # check existence
-
         if not os.path.isdir(self.project_ws):
             logging.critical(
                 'ERROR:project folder does not exist\n  %s' % self.project_ws)
@@ -94,68 +67,43 @@ class CropETData:
 
         # Basin
         try:
-            self.basin_id = config.get(p_sec, 'basin_id')
+            self.basin_id = config.get(crop_et_sec, 'basin_id')
             if self.basin_id is None or self.basin_id == 'None':
                 self.basin_id = 'Default Basin'
         except:
             self.basin_id = 'Default Basin'
         logging.info('  Basin: {}'.format(self.basin_id))
 
-        # Timestep - specify in ini in DMI units
-        # options are 'minute', 'hour', 'day', 'month', 'year'
-        if original:
-            self.time_step = 'day'
-        else:
-            try:
-                self.time_step = config.get(project_sec, 'timestep')
-                if self.time_step is None or self.time_step == 'None':
-                    self.time_step = 'day'
-            except:
-                self.time_step = 'day'
-        logging.info('  Time step: {}'.format(self.time_step))
+        # Timestep -
+        self.time_step = 'day'
 
         # Timestep quantity - specify an integer
-
-        if original:
-            self.ts_quantity = int(1)
-        else:
-            try:
-                tsq = config.getint(project_sec, 'ts_quantity')
-                if tsq is None or tsq == 'None':
-                    self.ts_quantity = int(1)
-                else:
-                    self.ts_quantity = int(tsq)
-            except:
-                self.ts_quantity = int(1)
-        logging.info('  Time step quantity: {}'.format(self.ts_quantity))
-
-        if self.time_step == 'minute':
-            self_dmi_timestep = 'instant'
-        else:
-            self.dmi_timestep = str(self.ts_quantity) + self.time_step
+        self.ts_quantity = int(1)
 
         # user starting date
-
         try:
-            sdt = config.get(p_sec, 'start_date')
-            if sdt == 'None': sdt = None
+            sdt = config.get(crop_et_sec, 'start_date')
+            if sdt == 'None':
+                sdt = None
         except:
             sdt = None
-        if sdt is None: self.start_dt = None
-        else: self.start_dt = pd.to_datetime(sdt)
+        if sdt is None:
+            self.start_dt = None
+        else:
+            self.start_dt = pd.to_datetime(sdt)
 
         # ending date
-
         try:
-            edt = config.get(p_sec, 'end_date')
+            edt = config.get(crop_et_sec, 'end_date')
             if edt == 'None': edt = None
         except:
             edt = None
-        if edt is None: self.end_dt = None
-        else: self.end_dt = pd.to_datetime(edt)
+        if edt is None:
+            self.end_dt = None
+        else:
+            self.end_dt = pd.to_datetime(edt)
        
         # historic (constant) phenology option
-
         if original:
             self.phenology_option = 0
         else:
@@ -170,7 +118,7 @@ class CropETData:
 
         # static (aka) meta data specifications
         try:
-            self.static_folder = config.get(m_sec, 'static_folder')
+            self.static_folder = config.get(crop_et_sec, 'static_folder')
             if self.static_folder is None or self.static_folder == 'None':
                 logging.warning("Static workspace set to default 'static'")
                 self.static_folder = 'static'
@@ -182,10 +130,9 @@ class CropETData:
                                               self.static_folder)
 
         # elevation units
-
         try:
-            self.elev_units = config.get(m_sec, 'elev_units')
-            if self.elev_unit is None or self.elev_units == 'None':
+            self.elev_units = config.get(crop_et_sec, 'elev_units')
+            if self.elev_units is None or self.elev_units == 'None':
                 self.elev_units = 'feet'
         except:
             self.elev_units = 'feet'
@@ -193,7 +140,8 @@ class CropETData:
         # et cells properties
         
         try:
-            cell_properties_name = config.get(m_sec, 'cell_properties_name')
+            cell_properties_name = config.get(crop_et_sec,
+                                              'cell_properties_name')
             if cell_properties_name is None or cell_properties_name == 'None':
                 logging.error('ERROR: ET Cells properties data file must be'
                               ' specified')
@@ -204,7 +152,6 @@ class CropETData:
             sys.exit()
 
         # test joined path
-        
         self.cell_properties_path = os.path.join(self.static_folder,
                                                  cell_properties_name)
         if not os.path.isfile(self.cell_properties_path):
@@ -217,64 +164,15 @@ class CropETData:
                 sys.exit()
         logging.info('  ET Cell Properties file: {}'
                      .format(self.cell_properties_path))
-        if original:
-            self.cell_properties_delimiter = '\t'
-            self.cell_properties_ws = ''
-            self.cell_properties_names_line = 1
-            self.cell_properties_header_lines = 1
-        else:
-            if '.xls' in self.cell_properties_path.lower():
-                self.cell_properties_delimiter = ','
-                try:
-                    self.cell_properties_ws = config.get(meta_sec,
-                                                         'cell_properties_ws')
-                    if self.cell_properties_ws is None or\
-                            self.cell_properties_ws == 'None':
-                        logging.error('\nERROR: Worksheet name must be'
-                                      ' specified for\n' +
-                                      self.cell_properties_path + ".\n")
-                        sys.exit()
-                except:
-                    logging.error('\nERROR: Worksheet name must be specified'
-                                  ' for\n' + self.cell_properties_path + ".\n")
-                    sys.exit()
-            else:
-                try:
-                    self.cell_properties_delimiter = \
-                        config.get(meta_sec, 'cell_properties_delimiter')
-                    if self.cell_properties_delimiter is None or \
-                            self.cell_properties_delimiter == 'None':
-                        self.cell_properties_delimiter = ','
-                    else:
-                        if self.cell_properties_delimiter not in \
-                                [' ', ',', '\\t']:
-                            self.cell_properties_delimiter = ','
-                        if "\\" in self.cell_properties_delimiter and \
-                                "t" in self.cell_properties_delimiter:
-                            self.cell_properties_delimiter = \
-                                self.cell_properties_delimiter.replace('\\t',
-                                                                       '\t')
-                except:
-                    self.cell_properties_delimiter = ','
-            try:
-                self.cell_properties_header_lines = \
-                    config.getint(meta_sec, 'cell_properties_header_lines')
-                if self.cell_properties_header_lines is None:
-                    self.cell_properties_header_lines = 1
-            except:
-                self.cell_properties_header_lines = 1
-            try:
-                self.cell_properties_names_line = \
-                    config.getint(meta_sec, 'cell_properties_names_line')
-                if self.cell_properties_names_line is None:
-                    self.cell_properties_names_line = 1
-            except:
-                self.cell_properties_names_line = 1
+
+        self.cell_properties_delimiter = '\t'
+        self.cell_properties_ws = ''
+        self.cell_properties_names_line = 1
+        self.cell_properties_header_lines = 1
 
         # et cells crops
-        
         try:
-            cell_crops_name = config.get(m_sec, 'cell_crops_name')
+            cell_crops_name = config.get(crop_et_sec, 'cell_crops_name')
             if cell_crops_name is None or cell_crops_name == 'None':
                 logging.error('ERROR:  ET Cells crops data file must be'
                               ' specified')
@@ -290,61 +188,15 @@ class CropETData:
                               .format(self.self.cell_crops_path))
                 sys.exit()
         logging.info('  ET Cell crops file: {}'.format(self.cell_crops_path))
-        if original:
-            self.cell_crops_delimiter = '\t'
-            self.cell_crops_ws = ''
-            self.cell_crops_header_lines = 3
-            self.cell_crops_names_line = 2
-        else:
-            if '.xls' in self.cell_crops_path.lower():
-                self.cell_crops_delimiter = ','
-                try:
-                    self.cell_crops_ws = config.get(meta_sec, 'cell_crops_ws')
-                    if self.cell_crops_ws is None or self.cell_crops_ws == \
-                            'None':
-                        logging.error('\nERROR: Worksheet name must be'
-                                      ' specified for\n' +
-                                      self.cell_crops_path + ".\n")
-                        sys.exit()
-                except:
-                    logging.error('\nERROR: Worksheet name must be specified'
-                                  ' for\n' + self.cell_crops_path + ".\n")
-                    sys.exit()
-            else:
-                try:
-                    self.cell_crops_delimiter = \
-                        config.get(meta_sec, 'cell_crops_delimiter')
-                    if self.cell_crops_delimiter is None or \
-                            self.cell_crops_delimiter == 'None':
-                        self.cell_crops_delimiter = ','
-                    else:
-                        if self.cell_crops_delimiter not in [' ', ',', '\\t']:
-                            self.cell_crops_delimiter = ','
-                        if "\\" in self.cell_crops_delimiter and \
-                                "t" in self.cell_crops_delimiter:
-                            self.cell_crops_delimiter = \
-                                self.cell_crops_delimiter.replace('\\t', '\t')
-                except:
-                    self.cell_crops_delimiter = ','
-            try:
-                self.cell_crops_header_lines = \
-                    config.getint(meta_sec, 'cell_crops_header_lines')
-                if self.cell_crops_header_lines is None:
-                    self.cell_crops_header_lines = 3
-            except:
-                self.cell_crops_header_lines = 3
-            try:
-                self.cell_crops_names_line = \
-                    config.getint(meta_sec, 'cell_crops_names_line')
-                if self.cell_crops_names_line is None:
-                    self.cell_crops_names_line = 2
-            except:
-                self.cell_crops_names_line = 2
+
+        self.cell_crops_delimiter = '\t'
+        self.cell_crops_ws = ''
+        self.cell_crops_header_lines = 3
+        self.cell_crops_names_line = 2
 
         # et cells cuttings
-        
         try:
-            cell_cuttings_name = config.get(m_sec, 'cell_cuttings_name')
+            cell_cuttings_name = config.get(crop_et_sec, 'cell_cuttings_name')
             if cell_cuttings_name is None or cell_cuttings_name == 'None':
                 logging.error('ERROR:  ET Cells cuttings data file must be'
                               ' specified')
@@ -363,65 +215,16 @@ class CropETData:
                 sys.exit()
         logging.info('  ET Cell cuttings file: {}'
                      .format(self.cell_cuttings_path))
-        if original:
-            self.cell_cuttings_delimiter = '\t'
-            self.cell_cuttings_ws = ''
-            self.cell_cuttings_header_lines = 2
-            self.cell_cuttings_names_line = 2
-        else:
-            if '.xls' in self.cell_cuttings_path.lower():
-                self.cell_cuttings_delimiter = ','
-                try:
-                    self.cell_cuttings_ws = \
-                        config.get(meta_sec, 'cell_cuttings_ws')
-                    if self.cell_cuttings_ws is None or \
-                            self.cell_cuttings_ws == 'None':
-                        logging.error('\nERROR: Worksheet name must be'
-                                      ' specified for\n' +
-                                      self.cell_cuttings_path + ".\n")
-                        sys.exit()
-                except:
-                    logging.error('\nERROR: Worksheet name must be specified'
-                                  ' for\n' + self.cell_cuttings_path + ".\n")
-                    sys.exit()
-            else:
-                try:
-                    self.cell_cuttings_delimiter =\
-                        config.get(meta_sec, 'cell_cuttings_delimiter')
-                    if self.cell_cuttings_delimiter is None or \
-                            self.cell_cuttings_delimiter == 'None':
-                        self.cell_cuttings_delimiter = ','
-                    else:
-                        if self.cell_cuttings_delimiter not in \
-                                [' ', ',', '\\t']:
-                            self.cell_cuttings_delimiter = ','
-                        if "\\" in self.cell_cuttings_delimiter and \
-                                "t" in self.cell_cuttings_delimiter:
-                            self.cell_cuttings_delimiter = \
-                                self.cell_cuttings_delimiter.replace('\\t',
-                                                                     '\t')
-                except:
-                    self.cell_cuttings_delimiter = ','
-            try:
-                self.cell_cuttings_header_lines = \
-                    config.getint(meta_sec, 'cell_cuttings_header_lines')
-                if self.cell_cuttings_header_lines is None:
-                    self.cell_cuttings_header_lines = 1
-            except:
-                self.cell_cuttings_header_lines = 2
-            try:
-                self.cell_cuttings_names_line = \
-                    config.getint(meta_sec, 'cell_cuttings_names_line')
-                if self.cell_cuttings_names_line is None:
-                    self.cell_cuttings_names_line = 1
-            except:
-                self.cell_cuttings_names_line = 2
+
+        self.cell_cuttings_delimiter = '\t'
+        self.cell_cuttings_ws = ''
+        self.cell_cuttings_header_lines = 2
+        self.cell_cuttings_names_line = 2
 
         # set crop parameter specs
-        
         try:
             crop_params_name = \
-                config.get(m_sec, 'crop_params_name')
+                config.get(crop_et_sec, 'crop_params_name')
             if crop_params_name is None or crop_params_name == 'None':
                 logging.error('ERROR:  Crop parameters data file must be'
                               ' specified')
@@ -443,58 +246,10 @@ class CropETData:
             self.crop_params_ws = ''
             self.crop_params_header_lines = 4
             self.crop_params_names_line = 3
-        else:
-            if '.xls' in self.crop_params_path.lower():
-                self.crop_params_delimiter = ','
-                try:
-                    self.crop_params_ws = \
-                        config.get(meta_sec, 'crop_params_ws')
-                    if self.crop_params_ws is None or self.crop_params_ws == \
-                            'None':
-                        logging.error('\nERROR: Worksheet name must be '
-                                      'specified for\n' +
-                                      self.crop_params_path + ".\n")
-                        sys.exit()
-                except:
-                    logging.error('\nERROR: Worksheet name must be specified'
-                                  ' for\n' + self.crop_params_path + ".\n")
-                    sys.exit()
-            else:
-                try:
-                    self.crop_params_delimiter = \
-                        config.get(meta_sec, 'crop_params_delimiter')
-                    if self.crop_params_delimiter is None or \
-                            self.crop_params_delimiter == 'None':
-                        self.crop_params_delimiter = ','
-                    else:
-                        if self.crop_params_delimiter not in \
-                                [' ', ',', '\\t']:
-                            self.crop_params_delimiter = ','
-                        if "\\" in self.crop_params_delimiter and "t" in \
-                                self.crop_params_delimiter:
-                            self.crop_params_delimiter = \
-                                self.crop_params_delimiter.replace('\\t', '\t')
-                except:
-                    self.crop_params_delimiter = ','
-            try:
-                self.crop_params_header_lines = \
-                    config.getint(meta_sec, 'crop_params_header_lines')
-                if self.crop_params_header_lines is None:
-                    self.crop_params_header_lines = 4
-            except:
-                self.crop_params_header_lines = 4
-            try:
-                self.crop_params_names_line = \
-                    config.getint(meta_sec, 'crop_params_names_line')
-                if self.crop_params_names_line is None:
-                    self.crop_params_names_line = 3
-            except:
-                self.crop_params_names_line = 3
         
         # set crop coefficient specs
-        
         try:
-            crop_coefs_name = config.get(m_sec, 'crop_coefs_name')
+            crop_coefs_name = config.get(crop_et_sec, 'crop_coefs_name')
             if crop_coefs_name is None or crop_coefs_name == 'None':
                 logging.error('ERROR:  Crop coefficients data file must be'
                               ' specified')
@@ -512,91 +267,42 @@ class CropETData:
                 sys.exit()
         logging.info('  Crop coefficients file: {}'
                      .format(self.crop_coefs_path))
-        if original:
-            self.crop_coefs_delimiter = '\t'
-            self.crop_coefs_ws = ''
-            self.crop_coefs_names_line = 1
-            self.crop_coefs_header_lines = 1
-        else:
-            if '.xls' in self.crop_coefs_path.lower():
-                self.crop_coefs_delimiter = ','
-                try:
-                    self.crop_coefs_ws = \
-                        config.get(meta_sec, 'crop_coefs_ws')
-                    if self.crop_coefs_ws is None or \
-                            self.crop_coefs_ws == 'None':
-                        logging.error('\nERROR: Worksheet name must be '
-                                      'specified for\n' +
-                                      self.crop_coefs_path + ".\n")
-                        sys.exit()
-                except:
-                    logging.error('\nERROR: Worksheet name must be specified '
-                                  'for\n' + self.crop_coefs_path + ".\n")
-                    sys.exit()
-            else:
-                try:
-                    self.crop_coefs_delimiter = \
-                        config.get(meta_sec, 'crop_coefs_delimiter')
-                    if self.crop_coefs_delimiter is None or \
-                            self.crop_coefs_delimiter == 'None':
-                        self.crop_coefs_delimiter = ','
-                    else:
-                        if self.crop_coefs_delimiter not in \
-                                [' ', ',', '\\t']:
-                            self.crop_coefs_delimiter = ','
-                        if "\\" in self.crop_coefs_delimiter and \
-                                "t" in self.crop_coefs_delimiter:
-                            self.crop_coefs_delimiter = \
-                                self.crop_coefs_delimiter.replace('\\t', '\t')
-                except:
-                    self.crop_coefs_delimiter = ','
-            try:
-                self.crop_coefs_header_lines = \
-                    config.getint(meta_sec, 'crop_coefs_header_lines')
-                if self.crop_coefs_header_lines is None:
-                    self.crop_coefs_header_lines = 1
-            except:
-                self.crop_coefs_header_lines = 1
-            try:
-                self.crop_coefs_names_line = \
-                    config.getint(meta_sec, 'crop_coefs_names_line')
-                if self.crop_coefs_names_line is None:
-                    self.crop_coefs_names_line = 1
-            except:
-                self.crop_coefs_names_line = 1
+
+        self.crop_coefs_delimiter = '\t'
+        self.crop_coefs_ws = ''
+        self.crop_coefs_names_line = 1
+        self.crop_coefs_header_lines = 1
 
         # reference ET adjustment ratios
-        if original:
-            try:
-                et_ratios_name = config.get(crop_et_sec,
-                                             'et_ratios_name')
-                self.refet_ratios_path = os.path.join(self.static_folder,
-                                                      et_ratios_name)
-            except configparser.NoOptionError:
-                logging.info('\net_ratios_name not found in INI.'
-                             'Setting to None.')
-                self.refet_ratios_path = None
+        try:
+            et_ratios_name = config.get(crop_et_sec,
+                                         'et_ratios_name')
+            self.refet_ratios_path = os.path.join(self.static_folder,
+                                                  et_ratios_name)
+        except configparser.NoOptionError:
+            logging.info('\net_ratios_name not found in INI.'
+                         'Setting to None.')
+            self.refet_ratios_path = None
 
-            if self.refet_ratios_path and not os.path.isfile(
-                    self.refet_ratios_path):
-                logging.error('Warning:  ET Ratios file not found.'
-                              ' ET scaling will not be applied.')
-                self.refet_ratios_path = None
+        if self.refet_ratios_path and not os.path.isfile(
+                self.refet_ratios_path):
+            logging.error('Warning:  ET Ratios file not found.'
+                          ' ET scaling will not be applied.')
+            self.refet_ratios_path = None
 
-            # Default et_ratios file format
-            self.et_ratios_delimiter = '\t'
-            self.et_ratios_ws = ''
-            self.et_ratios_header_lines = 1
-            self.et_ratios_names_line = 1
-            self.et_ratios_id_field = 'Met Node ID'
-            self.et_ratios_name_field = 'Met Node Name'
-            self.et_ratios_month_field = 'Month'
-            self.et_ratios_ratio_field = 'ratio'
+        # Default et_ratios file format
+        self.et_ratios_delimiter = '\t'
+        self.et_ratios_ws = ''
+        self.et_ratios_header_lines = 1
+        self.et_ratios_names_line = 1
+        self.et_ratios_id_field = 'Met Node ID'
+        self.et_ratios_name_field = 'Met Node Name'
+        self.et_ratios_month_field = 'Month'
+        self.et_ratios_ratio_field = 'ratio'
 
         # crop et specifications
 
         # cet output flags
-        
         self.cet_out = {}
         try:
             self.cet_out['daily_output_flag'] = \
@@ -624,7 +330,6 @@ class CropETData:
             self.gs_output_flag = False
 
         #  Allow user to only run annual or perennial crops
-        
         try:
             self.annual_skip_flag = \
                 config.getboolean(crop_et_sec, 'annual_skip_flag')
@@ -639,7 +344,6 @@ class CropETData:
             self.perennial_skip_flag = False
 
         # For testing, allow user to process a subset of crops
-
         try:
             self.crop_skip_list = list(util.parse_int_set(
                 config.get(crop_et_sec, 'crop_skip_list')))
@@ -654,13 +358,11 @@ class CropETData:
             self.crop_test_list = []
             
         # Bare soils must be in crop list for computing winter cover
-        
         if self.crop_test_list:
             self.crop_test_list = sorted(list(set(
                 self.crop_test_list + [44, 45, 46])))
 
         # For testing, allow the user to process a subset of cells
-
         try:
             self.cell_skip_list = config.get(
                 crop_et_sec, 'cell_skip_list').split(',')
@@ -677,7 +379,6 @@ class CropETData:
             self.cell_test_list = []
 
         # Input/output folders
-        
         if self.cet_out['daily_output_flag']:
             try:
                 self.cet_out['daily_output_ws'] = os.path.join(
@@ -720,7 +421,6 @@ class CropETData:
                 self.gs_output_ws = 'growing_season_stats'
 
         # cet file type specifications
-        
         try:
             self.cet_out['file_type'] = config.get(
                 crop_et_sec, 'file_type').upper()
@@ -782,7 +482,6 @@ class CropETData:
             self.cet_out['delimiter'] = '.'
             
         # pick up user growing season file specifications
-        
         if self.gs_output_flag:
             try:
                 self.gs_name_format = config.get(
@@ -870,39 +569,45 @@ class CropETData:
             if self.cet_out['daily_date_format'] is None or \
                     self.cet_out['daily_date_format'] == 'None':
                 self.cet_out['daily_date_format'] = '%Y-%m-%d'
-        except: self.cet_out['daily_date_format'] = '%Y-%m-%d'
+        except:
+            self.cet_out['daily_date_format'] = '%Y-%m-%d'
         try: 
             self.cet_out['daily_float_format'] = config.get(
                 crop_et_sec, 'daily_float_format')
             if self.cet_out['daily_float_format'] == 'None':
                 self.cet_out['daily_float_format'] = None
-        except: self.cet_out['daily_float_format'] = None
+        except:
+            self.cet_out['daily_float_format'] = None
         try:
             self.cet_out['monthly_date_format'] = config.get(
                 crop_et_sec, 'monthly_date_format')
             if self.cet_out['monthly_date_format'] is None or \
                     self.cet_out['monthly_date_format'] == 'None':
                 self.cet_out['monthly_date_format'] = '%Y-%m'
-        except: self.cet_out['monthly_date_format'] = '%Y-%m'
+        except:
+            self.cet_out['monthly_date_format'] = '%Y-%m'
         try: 
             self.cet_out['monthly_float_format'] = config.get(
                 crop_et_sec, 'monthly_float_format')
             if self.cet_out['monthly_float_format'] == 'None':
                 self.cet_out['monthly_float_format'] = None
-        except: self.cet_out['monthly_float_format'] = None
+        except:
+            self.cet_out['monthly_float_format'] = None
         try:
             self.cet_out['annual_date_format'] = config.get(
                 crop_et_sec, 'annual_date_format')
             if self.cet_out['monthly_date_format'] is None or \
                     self.cet_out['monthly_date_format'] == 'None':
                 self.cet_out['annual_date_format'] = '%Y'
-        except: self.cet_out['annual_date_format'] = '%Y'
+        except
+            self.cet_out['annual_date_format'] = '%Y'
         try: 
             self.cet_out['annual_float_format'] = \
                 config.get(crop_et_sec, 'annual_float_format')
             if self.cet_out['annual_float_format'] == 'None':
                 self.cet_out['annual_float_format'] = None
-        except: self.cet_out['annual_float_format'] = None
+        except:
+            self.cet_out['annual_float_format'] = None
 
         # RefET parameters
         
@@ -911,7 +616,7 @@ class CropETData:
         self.refet['units'] = {}
         self.refet['ws'] = config.get(refet_sec, 'refet_folder')
         # refet folder could be full or relative path
-        # Assume relative paths or fromproject folder
+        # Assume relative paths or from project folder
 
         if os.path.isdir(self.refet['ws']):
             pass
@@ -999,20 +704,6 @@ class CropETData:
                 self.refet['fnspec'] = self.refet['fields']['etref']
         except:
             self.refet['fnspec'] = self.refet['fields']['etref']
-        if self.refet['file_type'].lower() == 'xls' or \
-                self.refet['file_type'].lower() == 'wb':
-            try: 
-                self.refet['wsspec'] = \
-                    config.get(refet_sec, 'etref_ws')
-                if self.refet['wsspec'] is None or \
-                        self.refet['wsspec'] == 'None':
-                    logging.error('  ERROR:  refet: reference et worksheet name'
-                                  ' must be specified for workboook file type')
-                    sys.exit()
-            except:
-                logging.error('  ERROR:  refet: reference et worksheet name'
-                              ' must be specified for workboook file type')
-                sys.exit()
         try:
            self.refet['units']['etref'] = config.get(refet_sec, 'etref_units')
         except:
@@ -1020,7 +711,6 @@ class CropETData:
             sys.exit()
 
         # Check RefET parameters
-
         if not os.path.isdir(self.refet['ws']):
             logging.error(
                 ('  ERROR:RefET data folder does not ' +
@@ -1028,7 +718,6 @@ class CropETData:
             sys.exit()
 
         # Check fields and units
-
         elif self.refet['units']['etref'].lower() not in ['mm/day', 'mm']:
             logging.error(
                 '  ERROR:  Ref ET units {0} are not currently '
@@ -1169,27 +858,6 @@ class CropETData:
             else:
                 self.weather['fnspec'][f_name] = 'Unused'
 
-        # get worksheets if data are in a workbook
-        
-        if self.weather['file_type'].lower() == 'xls' or \
-                self.weather['file_type'].lower() == 'wb':
-            for f_name in field_list:
-                if f_name == 'date':
-                    continue
-                elif self.weather['fields'][f_name] is not None:
-                    try: 
-                        self.weather['wsspec'][f_name] = \
-                            config.get(weather_sec, f_name + '_ws')
-                        if self.weather['wsspec'][f_name] is None or \
-                                self.weather['wsspec'][f_name] == 'None':
-                            logging.info('  INFO:  WEATHER: worksheet name'
-                                         ' set to ' + f_name)
-                            self.weather['wsspec'][f_name] = f_name
-                    except:
-                        logging.info('  INFO:  WEATHER: worksheet name set to'
-                                     ' ' + f_name)
-                        self.weather['wsspec'][f_name] = f_name
-
         # Snow and snow depth are optional
 
         try:
@@ -1208,20 +876,6 @@ class CropETData:
                                                                  'snow_name')
                 except: self.weather['fnspec']['snow'] = \
                     self.weather['fields']['snow']
-                if self.weather['file_type'].lower() == 'xls' or \
-                        self.weather['file_type'].lower() == 'wb':
-                    try: 
-                        self.weather['wsspec']['snow'] = \
-                            config.get(weather_sec, 'snow_ws')
-                        if self.weather['wsspec']['snow'] is None or \
-                                self.weather['wsspec']['snow'] == 'None':
-                            logging.info('  INFO:  WEATHER: snow worksheet'
-                                         ' name set to Snow')
-                            self.weather['wsspec']['snow'] = 'Snow'
-                    except:
-                        logging.info('  INFO:  WEATHER: snow worksheet name'
-                                     ' set to Snow')
-                        self.weather['wsspec']['snow'] = 'Snow'
         except:
             self.weather['fields']['snow'] = 'Snow'
             self.weather['units']['snow'] = 'mm/day'
@@ -1236,33 +890,17 @@ class CropETData:
                 self.weather['units']['snow_depth'] = 'mm'
                 self.weather['fnspec']['snow_depth'] = 'Estimated'
             else:
-                try: self.weather['units']['snow_depth'] = \
+                try:
+                    self.weather['units']['snow_depth'] = \
                     config.get(weather_sec, 'depth_units')
-                except: self.weather['units']['snow_depth'] = 'mm'
-                try: self.weather['fnspec']['snow_depth'] = \
+                except:
+                    self.weather['units']['snow_depth'] = 'mm'
+                try:
+                    self.weather['fnspec']['snow_depth'] = \
                     config.get(weather_sec, 'depth_name')
-                except: self.weather['fnspec']['snow_depth'] = \
+                except:
+                    self.weather['fnspec']['snow_depth'] = \
                     self.weather['fields']['snow_depth']
-                if self.weather['file_type'].lower() == 'xls' or \
-                        self.weather['file_type'].lower() == 'wb':
-                    try: self.weather['wsspec']['snow_depth'] = \
-                        config.get(weather_sec, 'depth_ws')
-                    except:
-                        logging.error('  ERROR: INMET {}ws (worksheet name)'
-                                      ' must be set in  INI'.format(depth_ws))
-                        sys.exit()
-                    try: 
-                        self.weather['wsspec']['snow_depth'] = \
-                            config.get(weather_sec, 'depth_ws')
-                        if self.weather['wsspec']['snow_depth'] is None or \
-                                self.weather['wsspec']['snow_depth'] == 'None':
-                            logging.info('  INFO:  WEATHER: snow depth'
-                                         ' worksheet name set to SDepth')
-                            self.weather['wsspec']['snow_depth'] = 'SDepth'
-                    except:
-                        logging.info('  INFO:  WEATHER: snow depth worksheet'
-                                     ' name set to SDepth')
-                        self.weather['wsspec']['snow_depth'] = 'SDepth'
         except:
             self.weather['fields']['snow_depth'] = 'SDep'
             self.weather['units']['snow_depth'] = 'mm'
@@ -1566,7 +1204,6 @@ class CropETData:
                 sys.exit()
 
             # Field names
-
             field_list = ['mint', 'maxt']
             for f_name in field_list:
                 try:
@@ -1578,7 +1215,6 @@ class CropETData:
                     sys.exit()
 
             # Units
-        
             for f_name in field_list:
                 if f_name == 'date':
                     continue
@@ -1593,7 +1229,6 @@ class CropETData:
                         sys.exit()
 
             # fnspec - parameter extension to file name specification
-        
             for f_name in field_list:
                 if f_name == 'date':
                     continue
@@ -1606,29 +1241,7 @@ class CropETData:
                 else:
                     self.hist_temps['fnspec'][f_name] = 'Unused'
 
-            # get worksheets if data are in a workbook
-        
-            if self.hist_temps['file_type'].lower() == 'xls' or \
-                    self.hist_temps['file_type'].lower() == 'wb':
-                for f_name in field_list:
-                    if f_name == 'date':
-                        continue
-                    elif self.hist_temps['fields'][f_name] is not None:
-                        try: 
-                            self.hist_temps['wsspec'][f_name] = \
-                                config.get(hist_temps_sec, f_name + '_ws')
-                            if self.hist_temps['wsspec'][f_name] is None or \
-                                    self.hist_temps['wsspec'][f_name] == 'None':
-                                logging.info('  INFO:  HIST_TEMPS: worksheet'
-                                             ' name set to ' + f_name)
-                                self.hist_temps['wsspec'][f_name] = f_name
-                        except:
-                            logging.info('  INFO:  HIST_TEMPS: worksheet'
-                                         ' name set to ' + f_name)
-                            self.hist_temps['wsspec'][f_name] = f_name
-
             # Check hist_temps parameters
-        
             if not os.path.isdir(self.hist_temps['ws']):
                 logging.error(
                     ('  ERROR:hist_temps data folder does not ' +
@@ -1658,18 +1271,11 @@ class CropETData:
     def set_crop_params(self):
         """ List of <CropParameter> instances """
         logging.info('  Reading crop parameters from\n' + self.crop_params_path)
-        if ".xls" in self.crop_params_path.lower():
-            params_df = pd.read_excel(self.crop_params_path,
-                                      sheetname=self.crop_params_ws,
-                    header = None, skiprows=self.crop_params_header_lines - 1,
-                                      na_values=['NaN'])
-        else:
-            params_df = pd.read_table(self.crop_params_path,
-                                      delimiter=self.crop_params_delimiter,
-                                      header=None,
-                                      skiprows=
-                                      self.crop_params_header_lines - 1,
-                                      na_values=['NaN'])
+        params_df = pd.read_table(self.crop_params_path,
+                                  delimiter=self.crop_params_delimiter,
+                                  header=None,
+                                  skiprows=self.crop_params_header_lines - 1,
+                                  na_values=['NaN'])
         params_df.applymap(str)
         params_df.fillna('0', inplace=True)
         self.crop_params = {}
@@ -1697,12 +1303,8 @@ class CropETData:
     def set_crop_coeffs(self):
         """ List of <CropCoeff> instances """
         logging.info('  Reading crop coefficients')
-        if ".xls" in self.crop_coefs_path.lower():
-            self.crop_coeffs = \
-                crop_coefficients.read_crop_coefs_xls_xlrd(self)
-        else:
-            self.crop_coeffs = \
-                crop_coefficients.read_crop_coefs_txt(self)
+        self.crop_coeffs = \
+            crop_coefficients.read_crop_coefs_txt(self)
 
     def set_crop_co2(self):
         """Set crop CO2 type using values in INI"""
@@ -1722,10 +1324,10 @@ class CropETData:
             self.crop_params[crop_num] = crop_param
 
 
-def console_logger(logger = logging.getLogger(''), log_level = logging.INFO):
+def console_logger(logger=logging.getLogger(''), log_level=logging.INFO):
     # Create console logger
     logger.setLevel(log_level)
-    log_console = logging.StreamHandler(stream = sys.stdout)
+    log_console = logging.StreamHandler(stream=sys.stdout)
     log_console.setLevel(log_level)
     log_console.setFormatter(logging.Formatter('%(message)s'))
     logger.addHandler(log_console)
@@ -1734,7 +1336,7 @@ def console_logger(logger = logging.getLogger(''), log_level = logging.INFO):
 def do_tests():
     # Simple testing of functions as developed
     # logger = console_logger(log_level = 'DEBUG')
-    logger = console_logger(log_level = logging.DEBUG)
+    logger = console_logger(log_level=logging.DEBUG)
     ini_path = os.getcwd() + os.sep + "cet_template.ini"
     cfg = CropETData()
     cfg.read_cet_ini(ini_path, True)
