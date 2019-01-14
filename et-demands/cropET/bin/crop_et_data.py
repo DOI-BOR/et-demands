@@ -599,7 +599,7 @@ class CropETData:
             if self.cet_out['monthly_date_format'] is None or \
                     self.cet_out['monthly_date_format'] == 'None':
                 self.cet_out['annual_date_format'] = '%Y'
-        except
+        except:
             self.cet_out['annual_date_format'] = '%Y'
         try: 
             self.cet_out['annual_float_format'] = \

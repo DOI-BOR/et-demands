@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 import xlrd
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../lib')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             '../../lib')))
 import crop_et_data
 import util
 import mod_dmis
@@ -40,42 +41,50 @@ class ETCellData():
         Returns:
             None
         """
-        logging.info('\nReading ET Cells properties data from\n' + data.cell_properties_path)
+        logging.info('\nReading ET Cells properties data from\n' +
+                     data.cell_properties_path)
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_properties_header_lines)
                         if (i + 1) != data.cell_properties_names_line]
-            if '.xls' in data.cell_properties_path.lower(): 
-                df = pd.read_excel(data.cell_properties_path, 
-                        sheetname = data.cell_properties_ws, 
-                        header = data.cell_properties_names_line - len(skiprows) - 1, 
-                        skiprows = skiprows, na_values = ['NaN'])
-                        # skiprows = 0, na_values = ['NaN'])
+            if '.xls' in data.cell_properties_path.lower():
+                df = pd.read_excel(data.cell_properties_path,
+                                   sheetname=data.cell_properties_ws,
+                                   header=data.cell_properties_names_line -
+                                   len(skiprows) - 1,
+                                   skiprows=skiprows, na_values=['NaN'])
             else:
-                df = pd.read_table(data.cell_properties_path, engine = 'python', 
-                        header = data.cell_properties_names_line - len(skiprows) - 1, 
-                        skiprows = skiprows, sep = data.cell_properties_delimiter)
+                df = pd.read_table(data.cell_properties_path, engine='python',
+                                   header=data.cell_properties_names_line -
+                                   len(skiprows) - 1,
+                                   skiprows=skiprows,
+                                   sep=data.cell_properties_delimiter)
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
 
             # remove excess baggage from column names
             
-            columns = [x.replace(' (feet)', '').replace('in/hr', '').replace('in/ft', '').replace(' - in', '').replace('decimal ','') for x in columns]
-            columns = [x.replace('met ', '').replace(' - ', '').replace(" (a='coarse'  b='medium')", '').replace(" (1='coarse' 2='medium')", '') for x in columns]
-            columns = [x.replace(' (fromhuntington plus google)', '').replace('  ',' ') for x in columns]
+            columns = [x.replace(' (feet)', '').replace('in/hr', '').replace(
+                'in/ft', '').replace(' - in', '').replace('decimal ','') for
+                       x in columns]
+            columns = [x.replace('met ', '').replace(' - ', '').replace(
+                " (a='coarse'  b='medium')", '').replace(
+                " (1='coarse' 2='medium')", '') for x in columns]
+            columns = [x.replace(' (fromhuntington plus google)', '').replace(
+                '  ', ' ') for x in columns]
             
             # parse et cells properties for each cell
-
             for rc, row in df.iterrows():
-                row_list = row.tolist()
+                # row_list = row.tolist()
                 cell = ETCell()
-                if not(cell.read_cell_properties_from_row(row.tolist(), columns, 
-                        data.elev_units)): 
+                if not(cell.read_cell_properties_from_row(row.tolist(), columns,
+                                                          data.elev_units)):
                     sys.exit()
                 self.et_cells_dict[cell.cell_id] = cell
         except: 
-            logging.error('Unable to read ET Cells Properties from ' + data.cell_properties_path)
+            logging.error('Unable to read ET Cells Properties from ' +
+                          data.cell_properties_path)
             logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred\n')
             sys.exit()
 
@@ -103,17 +112,16 @@ class ETCellData():
             None
         """
         logging.info('\nReading cell crop flags from\n' + data.cell_crops_path)
-        a = np.loadtxt(data.cell_crops_path, delimiter = data.cell_crops_delimiter, dtype = 'str')
+        a = np.loadtxt(data.cell_crops_path,
+                       delimiter=data.cell_crops_delimiter, dtype='str')
         crop_numbers = a[data.cell_crops_names_line - 1, 4:].astype(int)
-        crop_names = a[data.cell_crops_names_line ,4:]
+        crop_names = a[data.cell_crops_names_line, 4:]
         a = a[data.cell_crops_names_line + 1:]
         for i, row in enumerate(a):
             cell_id = row[0]
-            # print('cell id: {}').format(cell_id)
-            # print(self.et_cells_dict.keys())
-            # sys.exit()
             if cell_id not in self.et_cells_dict.keys():
-                logging.error('read_et_cells_crops(), cell_id %s not found' % cell_id)
+                logging.error('read_et_cells_crops(), cell_id %s not found'
+                              % cell_id)
                 sys.exit()
             cell = self.et_cells_dict[cell_id]
             cell.init_crops_from_row(row, crop_numbers)
@@ -138,21 +146,25 @@ class ETCellData():
         Returns:
             None
         """
-        logging.info('\nReading cell crop flags from\n' + data.cell_crops_path)
+        logging.info('\nReading cell crop flags from\n' +
+                     data.cell_crops_path)
         wb = xlrd.open_workbook(data.cell_crops_path)
         ws = wb.sheet_by_name(data.cell_crops_ws)
         num_crops = int(ws.cell_value(data.cell_crops_names_line - 1, 1))
         crop_names = []
         crop_numbers = []
         for col_index in range(4, num_crops + 4):
-            crop_type_number = int(ws.cell_value(data.cell_crops_names_line - 1, col_index))
+            crop_type_number = int(ws.cell_value(data.cell_crops_names_line - 1,
+                                                 col_index))
             crop_numbers.append(crop_type_number)
-            crop_type_name = str(ws.cell_value(data.cell_crops_names_line, col_index)).replace('"', '').split("-")[0].strip()
+            crop_type_name = str(ws.cell_value(data.cell_crops_names_line,
+                                               col_index)).replace(
+                '"', '').split("-")[0].strip()
             crop_names.append(crop_type_name)
         crop_numbers = np.asarray(crop_numbers)
         crop_names = np.asarray(crop_names)
         for row_index in range(data.cell_crops_header_lines, ws.nrows):
-            row = np.asarray(ws.row_values(row_index), dtype = np.str)
+            row = np.asarray(ws.row_values(row_index), dtype=np.str)
             for col_index in range(3, num_crops + 4):
                 row[col_index] = row[col_index].replace(".0", "")
             cell_id = row[0]
@@ -162,7 +174,6 @@ class ETCellData():
             cell.crop_names = crop_names
 
             # make List of active crop numbers (i.e. flag is True) in cell
-            
             cell.crop_num_list = sorted(
                 [k for k,v in cell.crop_flags.items() if v])
             self.crop_num_list.extend(cell.crop_num_list)
@@ -176,22 +187,27 @@ class ETCellData():
         Returns:
             None
         """
-        logging.info('\nReading cell crop cuttings from\n' + data.cell_cuttings_path)
+        logging.info('\nReading cell crop cuttings from\n' +
+                     data.cell_cuttings_path)
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_cuttings_header_lines)
                         if i + 1 != data.cell_cuttings_names_line]
             if '.xls' in data.cell_cuttings_path.lower(): 
-                df = pd.read_excel(data.cell_cuttings_path, sheetname = data.cell_cuttings_ws, 
-                        header = data.cell_cuttings_names_line- len(skiprows)  - 1, 
-                        skiprows = skiprows, na_values = ['NaN'], parse_cols = [0, 1, 2, 3, 4])
-                        # skiprows = 0, na_values = ['NaN'], parse_cols = [0, 1, 2, 3, 4])
+                df = pd.read_excel(data.cell_cuttings_path,
+                                   sheetname=data.cell_cuttings_ws,
+                        header=data.cell_cuttings_names_line -
+                               len(skiprows) - 1,
+                        skiprows=skiprows, na_values=['NaN'],
+                                   parse_cols=[0, 1, 2, 3, 4])
             else:
-                df = pd.read_table(data.cell_cuttings_path, engine = 'python', na_values = ['NaN'],
-                        header = data.cell_cuttings_names_line - len(skiprows) - 1, 
-                        skiprows = skiprows, sep = data.cell_cuttings_delimiter, 
-                        usecols = [0, 1, 2, 3, 4])
+                df = pd.read_table(data.cell_cuttings_path, engine='python',
+                                   na_values=['NaN'],
+                        header=data.cell_cuttings_names_line -
+                               len(skiprows) - 1,
+                        skiprows =skiprows, sep=data.cell_cuttings_delimiter,
+                        usecols=[0, 1, 2, 3, 4])
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
             cell_col = columns.index('et cell id')
@@ -199,18 +215,19 @@ class ETCellData():
             beef_col = columns.index('number beef')
             
             # parse et cells cuttings for each cell
-
             for rc, row in df.iterrows():
                 row_list = row.tolist()
                 cell_id = str(row[cell_col])
                 if cell_id not in self.et_cells_dict.keys():
-                    logging.error('crop_et_data.static_mean_cuttings(), cell_id %s not found' % cell_id)
+                    logging.error('crop_et_data.static_mean_cuttings(), cell'
+                                  '_id %s not found' % cell_id)
                     sys.exit()
                 cell = self.et_cells_dict[cell_id]
                 cell.dairy_cuttings = int(row[dairy_col])
                 cell.beef_cuttings = int(row[beef_col])
         except: 
-            logging.error('Unable to read ET Cells cuttings from ' + data.cell_cuttings_path)
+            logging.error('Unable to read ET Cells cuttings from ' +
+                          data.cell_cuttings_path)
             logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred\n')
             sys.exit()
 
@@ -219,7 +236,6 @@ class ETCellData():
         crop_numbers = set(self.crop_num_list)
 
         # Update master crop list
-
         if data.annual_skip_flag:
             annual_crops = set(
                 crop_num
@@ -289,8 +305,8 @@ class ETCellData():
                     cell_id_len, cell_id))
                 del self.et_cells_dict[cell_id]
             elif not set(self.crop_num_list) & set(cell.crop_num_list):
-                logging.info('  CellID: {1:{0}s} skipping (no active crops)'.format(
-                    cell_id_len, cell_id))
+                logging.info('  CellID: {1:{0}s} skipping (no active crops)'.
+                             format(cell_id_len, cell_id))
                 del self.et_cells_dict[cell_id]
 
     def set_static_crop_params(self, crop_params):
@@ -327,7 +343,8 @@ class ETCellData():
 
         #Check to see if crop_dbf_dict is empty
         if not crop_dbf_dict:
-            logging.error('\nSpatially Varying Calibration Files Do Not Exist. Run build_spatial_crop_params_arcpy.py')
+            logging.error('\nSpatially Varying Calibration Files Do Not Exist.'
+                          ' Run build_spatial_crop_params_arcpy.py')
             sys.exit()
             # return False
   
@@ -339,20 +356,21 @@ class ETCellData():
                 except:
                     pass
 
-        #Check to see that all "active" crops have shapefiles in spatially varying calibration folder
-        missing_set=set(self.crop_num_list)-set(crop_dbf_dict.keys())
-        # if self.crop_num_list not in crop_dbf_dict.keys(): ###WHY DOESN't THIS WORK (Data Type Issue???)
+        # Check to see that all "active" crops have shapefiles in spatially
+        #  varying calibration folder
+        missing_set = set(self.crop_num_list)-set(crop_dbf_dict.keys())
+        # if self.crop_num_list not in crop_dbf_dict.keys():
+        # ###WHY DOESN't THIS WORK (Data Type Issue???)
         if len(missing_set) > 0:
-            logging.error(('\nMissing Crop Shapefiles In Calibration Folder. Re-Run build_spatial_crop_params_arcpy.py'))
-            missing_set_str=', '.join(str(s) for s in missing_set)
+            logging.error(('\nMissing Crop Shapefiles In Calibration Folder. '
+                           'Re-Run build_spatial_crop_params_arcpy.py'))
+            missing_set_str =', '.join(str(s) for s in missing_set)
             logging.error(('Missing Crops: ' + missing_set_str))
             sys.exit()
             # return False  
-            
 
         # DEADBEEF - This really shouldn't be hard coded here
         # Dictionary to convert shapefile field names to crop parameters
-
         param_field_dict = {
             'Name':      'name',
             'ClassNum':  'class_number',
@@ -387,7 +405,6 @@ class ETCellData():
             'CN_Fine':   'cn_fine_soil'}
             
         # Cuttings values can also be updated spatially
-        
         cutting_field_dict = {
             'Beef_Cut':  'beef_cuttings',
             'Dairy_Cur': 'dairy_cuttings'}
@@ -408,7 +425,8 @@ class ETCellData():
             # Process using shapefile/pyshp
 
             crop_f = shapefile.Reader(crop_dbf)
-            crop_fields = [f[0] for f in crop_f.fields if f[0] != 'DeletionFlag']
+            crop_fields = [f[0] for f in crop_f.fields if f[0] !=
+                           'DeletionFlag']
             for record in crop_f.iterRecords():
                 cell_id = record[crop_fields.index(cell_id_field)]
 
@@ -418,7 +436,7 @@ class ETCellData():
                     continue
                 for field_name, row_value in zip(crop_fields, record):
                     # DEADBEEF - I really want to skip non-crop parameter fields
-                    #   but also tell the user if a crop parameter field is missing
+                    # but also tell the user if a crop param field is missing
 
                     try:
                         param_name = param_field_dict[field_name]
@@ -431,14 +449,16 @@ class ETCellData():
                     if param_name is not None:
                         try:
                             setattr(
-                                self.et_cells_dict[cell_id].crop_params[crop_num],
-                                param_name, float(row_value))
+                                self.et_cells_dict[cell_id].crop_params[
+                                    crop_num], param_name, float(row_value))
                         except:
                             logging.warning(
-                                ('  The spatial crop parameter was not updated\n' +
-                                 '    cell_id:    {0}\n    crop_num:   {1}\n' +
-                                 '    field_name: {2}\n    parameter:  {3}').format(
-                                 cell_id, crop_num, field_name, param_name))
+                                ('  The spatial crop parameter was not '
+                                 'updated\n' + '    cell_id:    {0}\n'
+                                               '    crop_num:   {1}\n' +
+                                 '    field_name: {2}\n    parameter:  {3}').
+                                    format(cell_id, crop_num, field_name,
+                                           param_name))
                     elif cutting_name is not None:
                         try:
                             setattr(
@@ -446,10 +466,12 @@ class ETCellData():
                                 cutting_name, float(row_value))
                         except:
                             logging.warning(
-                                ('  The spatial cutting parameter was not updated\n' +
+                                ('  The spatial cutting parameter was not '
+                                 'updated\n' +
                                  '    cell_id:    {0}\n    crop_num:   {1}\n' +
-                                 '    field_name: {2}\n    parameter:  {3}').format(
-                                 cell_id, crop_num, field_name, cutting_name))
+                                 '    field_name: {2}\n    parameter:  {3}').
+                                    format(cell_id, crop_num, field_name,
+                                           cutting_name))
         return True
 
 class ETCell():
@@ -512,12 +534,14 @@ class ETCell():
         
         self.air_pressure = util.pair_from_elev(0.3048 * self.elevation)
         if 'area weighted average permeability' in columns:
-            self.permeability = float(row[columns.index('area weighted average permeability')])
+            self.permeability = float(row[columns.index('area weighted average'
+                                                        ' permeability')])
         else:
             logging.error('Unable to read area weighted average permeability')
             return False
         if 'area weighted average whc' in columns:
-            self.stn_whc = float(row[columns.index('area weighted average whc')])
+            self.stn_whc = float(row[columns.index('area weighted average'
+                                                   ' whc')])
         else:
             logging.error('Unable to read area weighted average WHC')
             return False
@@ -527,12 +551,14 @@ class ETCell():
             logging.error('Unable to read average soil depth')
             return False
         if 'hydrologic group (a-c)' in columns:
-            self.stn_hydrogroup_str = str(row[columns.index('hydrologic group (a-c)')])
+            self.stn_hydrogroup_str = str(row[columns.index('hydrologic group'
+                                                            ' (a-c)')])
         else:
             logging.error('Unable to read Hydrologic Group (A-C)')
             return False
         if 'hydrologic group (1-3)' in columns:
-            self.stn_hydrogroup = int(row[columns.index('hydrologic group (1-3)')])
+            self.stn_hydrogroup = int(row[columns.index('hydrologic group'
+                                                        ' (1-3)')])
         else:
             logging.error('Unable to read Hydrologic Group (1-3)')
             return False
@@ -563,8 +589,10 @@ class ETCell():
     def init_crops_from_row(self, data, crop_numbers):
         """Parse row of data
 
-        Code exists in kcb_daily to adjust cgdd_term using crop flag as a multiplier.
-        This code is currently commented out and crop_flags are being read in as booleans.
+        Code exists in kcb_daily to adjust cgdd_term using crop flag as a
+         multiplier.
+        This code is currently commented out and crop_flags are being read in
+         as booleans.
 
         """
         self.irrigation_flag = int(data[3])
@@ -650,11 +678,13 @@ class ETCell():
 
         # set date attributes
         
-        self.refet_df['doy'] = [int(ts.strftime('%j')) for ts in self.refet_df.index]
+        self.refet_df['doy'] = [int(ts.strftime('%j')) for ts in
+                                self.refet_df.index]
         return True
 
     def SF_P_refet_data(self, data):
-        """Read meteorological/climate data for single station with all parameters
+        """Read meteorological/climate data for single station with all
+         parameters
 
         Args:
             data: configuration data from INI file
@@ -662,7 +692,8 @@ class ETCell():
         Returns:
             success: True or False
         """
-        refet_path = os.path.join(data.refet['ws'], data.refet['name_format'] % self.refet_id)
+        refet_path = os.path.join(data.refet['ws'], data.refet['name_format']
+                                  % self.refet_id)
         logging.debug('  {0}'.format(refet_path))
 
         # Get list of 0 based line numbers to skip
@@ -671,8 +702,9 @@ class ETCell():
                     if i + 1 != data.refet['names_line']]
         try:
             self.refet_df = pd.read_table(
-                refet_path, engine = 'python', header = data.refet['names_line']- len(skiprows)  - 1,
-                skiprows = skiprows, delimiter = data.refet['delimiter'])
+                refet_path, engine='python',
+                header=data.refet['names_line'] - len(skiprows) - 1,
+                skiprows=skiprows, delimiter=data.refet['delimiter'])
         except IOError:
             logging.error(('  IOError: RefET data file could not be read ' +
                            'and may not exist\n  {}').format(refet_path))
@@ -681,7 +713,8 @@ class ETCell():
             logging.error(('  Unknown error reading RefET data ' +
                            'file\n {}').format(refet_path))
             sys.exit()
-        logging.debug('  Columns: {}'.format(', '.join(list(self.refet_df.columns))))
+        logging.debug('  Columns: {}'.format(', '.join(list(
+            self.refet_df.columns))))
 
         # Check that fields exist in data table
         
@@ -696,23 +729,25 @@ class ETCell():
                 
             # Rename dataframe fields
             
-            self.refet_df = self.refet_df.rename(columns = {field_name:field_key})
+            self.refet_df = self.refet_df.rename(columns={field_name:field_key})
 
         # Convert date strings to datetimes
         
         if data.refet['fields']['date'] is not None:
             self.refet_df['date'] = pd.to_datetime(self.refet_df['date'])
         else:
-            self.refet_df['date'] = self.refet_df[['year', 'month', 'day']].apply(
-                lambda s : datetime.datetime(*s),axis = 1)
-        self.refet_df.set_index('date', inplace = True)
+            self.refet_df['date'] = self.refet_df[['year', 'month', 'day']].\
+                apply(lambda s: datetime.datetime(*s), axis=1)
+        self.refet_df.set_index('date', inplace=True)
 
         # truncate period
         
         try:
-            self.refet_df = self.refet_df.truncate(before = data.start_dt, after = data.end_dt)
+            self.refet_df = self.refet_df.truncate(before=data.start_dt,
+                                                   after=data.end_dt)
         except:
-            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred truncating weather data')
+            logging.error('\nERROR: ' + str(sys.exc_info()[0]) +
+                          'occurred truncating weather data')
             return False
         if len(self.refet_df.index) < 1:
             logging.error('No data found reading ret data')
@@ -730,37 +765,51 @@ class ETCell():
         """
         self.refet_df = None
         if '%p' in data.refet['name_format']:
-            refet_path = os.path.join(data.refet['ws'], data.refet['name_format'].replace('%p', data.refet['fnspec']))
+            refet_path = os.path.join(data.refet['ws'],
+                                      data.refet['name_format'].
+                                      replace('%p', data.refet['fnspec']))
         else:
             refet_path = os.path.join(data.refet['ws'], data.refet['name_format'])
         if not os.path.isfile(refet_path):
-            logging.error('ERROR:  Reference ET data path {0} does not exist'.format(refet_path))
+            logging.error('ERROR:  Reference ET data path {0} does not exist'.
+                          format(refet_path))
             return False
         logging.debug('  Reference ET path is {0}'.format(refet_path))
         if data.refet['data_structure_type'].upper() == 'PF S.P':
             if data.refet['file_type'].lower() == 'csf':
                 param_df = mod_dmis.ReadOneColumnSlot(
-                    refet_path, data.refet['header_lines'], data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'], data.refet['units']['etref'], 1.0,
-                    'day', 1, data.refet['delimiter'], data.start_dt, data.end_dt)
+                    refet_path, data.refet['header_lines'],
+                    data.refet['names_line'],
+                    self.refet_id, data.refet['fields']['etref'],
+                    data.refet['units']['etref'], 1.0,
+                    'day', 1, data.refet['delimiter'], data.start_dt,
+                    data.end_dt)
             elif data.refet['file_type'].lower() == 'rdb':
                 param_df = mod_dmis.ReadOneTextRDB(
-                    refet_path, data.refet['header_lines'], data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'], data.refet['units']['etref'], 1.0,
-                    'day', 1, data.refet['delimiter'], data.start_dt, data.end_dt)
-            elif data.refet['file_type'].lower() == 'xls' or data.refet['file_type'].lower() == 'wb':
+                    refet_path, data.refet['header_lines'],
+                    data.refet['names_line'],
+                    self.refet_id, data.refet['fields']['etref'],
+                    data.refet['units']['etref'], 1.0,
+                    'day', 1, data.refet['delimiter'], data.start_dt,
+                    data.end_dt)
+            elif data.refet['file_type'].lower() == 'xls' or \
+                    data.refet['file_type'].lower() == 'wb':
                 param_df = mod_dmis.ReadOneExcelColumn(
-                    refet_path, data.refet['wsspec'], data.refet['header_lines'], data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'], data.refet['units']['etref'], 1.0,
+                    refet_path, data.refet['wsspec'],
+                    data.refet['header_lines'], data.refet['names_line'],
+                    self.refet_id, data.refet['fields']['etref'],
+                    data.refet['units']['etref'], 1.0,
                     'day', 1, data.start_dt, data.end_dt)
         else:
-            logging.error('ERROR:  File type {} is not supported'.format(data.refet['file_type']))
+            logging.error('ERROR:  File type {} is not supported'.
+                          format(data.refet['file_type']))
             return False
         if param_df is None:
             logging.error('ERROR:  unable to read {}'.format(refet_path))
             return False
         else:
-            self.refet_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt, data.end_dt)
+            self.refet_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
+                                                       data.end_dt)
             self.refet_df['etref'] = param_df[[0]].values
         return True
 
@@ -774,14 +823,20 @@ class ETCell():
         logging.info('  Reading ETo/ETr ratios')
         try:
             if ".xls" in data.refet_ratios_path.lower():
-                refet_ratios_df = pd.read_excel(data.refet_ratios_path, sheetname = data.et_ratios_ws,
-                        header = None, skiprows = data.et_ratios_header_lines - 1, na_values = ['NaN'])
+                refet_ratios_df = pd.read_excel(data.refet_ratios_path,
+                                                sheetname=data.et_ratios_ws,
+                                                header=None,
+                                                skiprows=
+                                                data.et_ratios_header_lines - 1,
+                                                na_values=['NaN'])
             else:
-                refet_ratios_df = pd.read_table(data.refet_ratios_path, delimiter = data.et_ratios_delimiter,
-                        header = 'infer', skiprows = data.et_ratios_header_lines - 1, na_values = ['NaN'])
-                # print(refet_ratios_df)
-                # print(refet_ratios_df[data.et_ratios_name_field])
-                # print(data.et_ratios_name_field)
+                refet_ratios_df = pd.read_table(data.refet_ratios_path,
+                                                delimiter=
+                                                data.et_ratios_delimiter,
+                                                header='infer',
+                                                skiprows=
+                                                data.et_ratios_header_lines - 1,
+                                                na_values=['NaN'])
             del refet_ratios_df[data.et_ratios_name_field]
         except IOError:
             logging.error(
@@ -796,32 +851,30 @@ class ETCell():
         # Remove duplicates
         # If there are duplicate station IDs, for now only use first instance
         # Eventually allow users to tie station IDs to cells
-        
-        if refet_ratios_df.duplicated(subset = data.et_ratios_id_field).any():
+        if refet_ratios_df.duplicated(subset=data.et_ratios_id_field).any():
             logging.warning(
                 '  There are duplicate station IDs in ETo Ratios file\n' 
                 '  Only the first instance of station ID will be applied')
-            refet_ratios_df.drop_duplicates(subset = data.et_ratios_id_field, inplace = True)
+            refet_ratios_df.drop_duplicates(subset=data.et_ratios_id_field,
+                                            inplace=True)
 
         # Flatten/flip data so that ratio values are in one column
-        
         refet_ratios_df = pd.melt(
             refet_ratios_df, id_vars=[data.et_ratios_id_field],
-            var_name = data.et_ratios_month_field, value_name = data.et_ratios_ratio_field)
-        refet_ratios_df[data.et_ratios_ratio_field] = refet_ratios_df[data.et_ratios_ratio_field].astype(np.float)
+            var_name=data.et_ratios_month_field,
+            value_name=data.et_ratios_ratio_field)
+        refet_ratios_df[data.et_ratios_ratio_field] = \
+            refet_ratios_df[data.et_ratios_ratio_field].astype(np.float)
         
         # Set any missing values to 1.0
-        
         refet_ratios_df.fillna(value=1.0, inplace=True)
 
         # Convert month abbreviations to numbers
-        
         refet_ratios_df[data.et_ratios_month_field] = [
             datetime.datetime.strptime(m, '%b').month
             for m in refet_ratios_df[data.et_ratios_month_field]]
-        # print(refet_ratios_df)
+
         # Filter to current station
-        
         refet_ratios_df = refet_ratios_df[
            refet_ratios_df[data.et_ratios_id_field] == self.refet_id]
         if refet_ratios_df.empty:
@@ -834,9 +887,9 @@ class ETCell():
         logging.info(refet_ratios_df)
 
         # Scale ETo/ETr values
-        #WHY 'Month' vs 'month' change needed? Input climate files have Year, Month, Day.
+        # Is 'Month' vs 'month' change needed?
+        # Input climate files have Year, Month, Day.
         self.refet_df = self.refet_df.join(refet_ratios_df, 'Month')
-
         self.refet_df['etref'] *= self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_month_field]
@@ -844,7 +897,8 @@ class ETCell():
         return True
 
     def set_weather_data(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station and fill missing values
+        """Read meteorological/climate data for single station and fill missing
+         values
 
         Args:
             cell_count: count of et cell being processed
@@ -860,7 +914,8 @@ class ETCell():
         else:
             success = self.DMI_weather_data(cell_count, data, cells)
         if not success:
-            logging.error('Unable to read and fill daily metereorological data.')
+            logging.error('Unable to read and fill daily metereorological '
+                          'data.')
             return False
         
         # Check/modify units
@@ -899,11 +954,13 @@ class ETCell():
             elif field_units.lower() in ['mpd', 'miles/d', 'miles/day']:
                 self.weather_df[field_key] /= mpdToMps
             else:
-                logging.error('\n ERROR: Unknown {0} units {1}'.format(field_key, field_units))
+                logging.error('\n ERROR: Unknown {0} units {1}'.
+                              format(field_key, field_units))
 
         # set date attributes
         
-        self.weather_df['doy'] = [int(ts.strftime('%j')) for ts in self.weather_df.index]
+        self.weather_df['doy'] = [int(ts.strftime('%j')) for ts in
+                                  self.weather_df.index]
 
         # Scale wind height to 2m if necessary
         
@@ -953,19 +1010,23 @@ class ETCell():
         # Set CO2 correction values to 1 if they are not in data
 
         if 'co2_grass' not in self.weather_df.columns:
-            logging.info('  Grass CO2 factor not in weather data, setting co2_grass = 1')
+            logging.info('  Grass CO2 factor not in weather data,
+             setting co2_grass = 1')
             self.weather_df['co2_grass'] = 1
         if 'co2_tree' not in self.weather_df.columns:
-            logging.info('  Tree CO2 factor not in weather data, setting co2_trees = 1')
+            logging.info('  Tree CO2 factor not in weather data,
+             setting co2_trees = 1')
             self.weather_df['co2_trees'] = 1
         if 'co2_c4' not in self.weather_df.columns:
-            logging.info('  C4 CO2 factor not in weather data, setting co2_c4 = 1')
+            logging.info('  C4 CO2 factor not in weather data,
+             setting co2_c4 = 1')
             self.weather_df['co2_c4'] = 1
         """
         return True
 
     def SF_P_weather_data(self, data):
-        """Read meteorological/climate data for single station with all parameters
+        """Read meteorological/climate data for single station with all
+         parameters
 
         Args:
             data: configuration data from INI file
@@ -973,7 +1034,8 @@ class ETCell():
         Returns:
             success: True or False
         """
-        weather_path = os.path.join(data.weather['ws'], data.weather['name_format'] % self.refet_id)
+        weather_path = os.path.join(data.weather['ws'],
+                                    data.weather['name_format'] % self.refet_id)
         logging.debug('  {0}'.format(weather_path))
 
         # Get list of 0 based line numbers to skip
@@ -981,9 +1043,9 @@ class ETCell():
         skiprows = [i for i in range(data.weather['header_lines'])
                     if i+1 != data.weather['names_line']]
         try:
-            self.weather_df = pd.read_table(weather_path, engine = 'python', 
-                    header = data.weather['names_line'] - len(skiprows) - 1,
-                    skiprows = skiprows, delimiter = data.weather['delimiter'])
+            self.weather_df = pd.read_table(weather_path, engine='python',
+                    header=data.weather['names_line'] - len(skiprows) - 1,
+                    skiprows=skiprows, delimiter=data.weather['delimiter'])
         except IOError:
             logging.error(('  IOError: Weather data file could not be read ' +
                            'and may not exist\n  {}').format(weather_path))
@@ -1012,24 +1074,24 @@ class ETCell():
                     field_name, os.path.basename(weather_path), field_key))
                 return False
             # Rename dataframe field
-            
             self.weather_df = self.weather_df.rename(columns = {field_name:field_key})
 
         # Convert date strings to datetimes
-        
         if data.weather['fields']['date'] is not None:
             self.weather_df['date'] = pd.to_datetime(self.weather_df['date'])
         else:
-            self.weather_df['date'] = self.weather_df[['year', 'month', 'day']].apply(
-                lambda s : datetime.datetime(*s),axis = 1)
-        self.weather_df.set_index('date', inplace = True)
+            self.weather_df['date'] = self.weather_df[['year', 'month',
+                                                       'day']].apply(
+                lambda s: datetime.datetime(*s), axis=1)
+        self.weather_df.set_index('date', inplace=True)
 
         # truncate period
-        
         try:
-            self.weather_df = self.weather_df.truncate(before = data.start_dt, after = data.end_dt)
+            self.weather_df = self.weather_df.truncate(before=data.start_dt,
+                                                       after=data.end_dt)
         except:
-            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred truncating weather data')
+            logging.error('\nERROR: ' + str(sys.exc_info()[0]) +
+                          'occurred truncating weather data')
             return False
         if len(self.weather_df.index) < 1:
             logging.error('No data found reading weather data')
@@ -1037,7 +1099,8 @@ class ETCell():
         return True
 
     def DMI_weather_data(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station using specified DMI format
+        """Read meteorological/climate data for single station using specified
+         DMI format
 
         Args:
             cell_count: count of et cell being processed
@@ -1053,69 +1116,96 @@ class ETCell():
         input_buffer = None
         field_count = 0
         for field_key, field_name in data.weather['fields'].items():
-            if field_name is None or field_name.lower() == 'date': continue
-            if field_name.lower() == 'year' or field_name.lower() == 'month': continue
-            if field_name.lower() == 'day' or field_name.lower() == 'doy': continue
-            if data.weather['fnspec'][field_key].lower() == 'estimated': continue
-            if data.weather['fnspec'][field_key].lower() == 'unused': continue
+            if field_name is None or field_name.lower() == 'date':
+                continue
+            if field_name.lower() == 'year' or field_name.lower() == 'month':
+                continue
+            if field_name.lower() == 'day' or field_name.lower() == 'doy':
+                continue
+            if data.weather['fnspec'][field_key].lower() == 'estimated':
+                continue
+            if data.weather['fnspec'][field_key].lower() == 'unused':
+                continue
 
             # pull data for field_name
-
             if cell_count == 1:
                 last_path = ''
                 if '%p' in data.weather['name_format']:
-                    weather_path = os.path.join(data.weather['ws'], 
-                        data.weather['name_format'].replace('%p', data.weather['fnspec'][field_key]))
+                    weather_path = os.path.join(data.weather['ws'],
+                                                data.weather['name_format'].
+                                                replace('%p', data.weather[
+                                                    'fnspec'][field_key]))
                 else:
-                    weather_path = os.path.join(data.weather['ws'], data.weather['name_format'])
+                    weather_path = os.path.join(data.weather['ws'],
+                                                data.weather['name_format'])
                 if not os.path.isfile(weather_path):
-                    logging.error('ERROR:  Weather data path for {0} is {1} does not exist'.format(field_key, weather_path))
+                    logging.error('ERROR:  Weather data path for {0} is {1}'
+                                  ' does not exist'.format(field_key,
+                                                           weather_path))
                     return False
-                logging.debug('  Weather data path for {0} is {1}'.format(field_key, weather_path))
+                logging.debug('  Weather data path for {0} is {1}'.
+                              format(field_key, weather_path))
                 if data.weather['data_structure_type'].upper() == 'PF S.P':
                     if data.weather['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(weather_path, data.weather['header_lines'],
+                        param_df = mod_dmis.ColumnSlotToDataframe(
+                            weather_path, data.weather['header_lines'],
                             data.weather['names_line'], 'day', 1,
-                            data.weather['delimiter'], data.start_dt, data.end_dt)
+                            data.weather['delimiter'], data.start_dt,
+                            data.end_dt)
                     elif data.weather['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(weather_path, data.weather['header_lines'],
+                        param_df = mod_dmis.TextRDBToDataframe(
+                            weather_path, data.weather['header_lines'],
                             data.weather['names_line'], 'day', 1,
                             data.weather['delimiter'], data.start_dt, data.end_dt)
-                    elif data.weather['file_type'].lower() == 'xls' or data.weather['file_type'].lower() == 'wb':
-                        # TODO weather_buffer Isn't Used; input_buffer no defined
-                        if '%p' in data.weather['name_format'] or field_count == 1:
+                    elif data.weather['file_type'].lower() == 'xls' or \
+                            data.weather['file_type'].lower() == 'wb':
+                        # Weather_buffer Isn't Used
+                        # input_buffer no defined
+                        if '%p' in data.weather['name_format'] or \
+                                field_count == 1:
                             weather_buffer = pd.ExcelFile(weather_path)
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(input_buffer, 
+                        param_df = mod_dmis.ExcelWorksheetToDataframe(
+                            input_buffer,
                             data.weather['wsspec'][field_key],
-                            data.weather['header_lines'], data.weather['names_line'],
+                            data.weather['header_lines'],
+                            data.weather['names_line'],
                             time_step='day', ts_quantity=1,
                             start_dt=data.start_dt, end_dt=data.end_dt)
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(data.weather['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.
+                                      format(data.weather['file_type']))
                         return False
                     if param_df is None:
-                        logging.error('ERROR:  unable to read {}'.format(weather_path))
+                        logging.error('ERROR:  unable to read {}'.format(
+                            weather_path))
                         return False
                     else:
                         if data.start_dt is None:
                             pydt = param_df.index[0]
-                            data.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
+                            data.start_dt = pd.to_datetime(datetime.datetime(
+                                pydt.year, pydt.month, pydt.day, pydt.hour,
+                                pydt.minute))
                         if data.end_dt is None: 
                             pydt = param_df.index[len(param_df) - 1]
-                            data.end_date = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-                        param_df = mod_dmis.ReduceDataframeToParameter(param_df, field_name)
+                            data.end_date = pd.to_datetime(datetime.datetime(
+                                pydt.year, pydt.month, pydt.day, pydt.hour,
+                                pydt.minute))
+                        param_df = mod_dmis.ReduceDataframeToParameter(
+                            param_df, field_name)
                         cells.et_cells_weather_data[field_key] = param_df
                     del param_df
         del input_buffer
 
         # pull et cell's data from parameter data frames
         
-        self.weather_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt, data.end_dt)
+        self.weather_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
+                                                     data.end_dt)
         for field_key, param_df in cells.et_cells_weather_data.items():
-            self.weather_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.refet_id, 
-                    data.weather['fields'][field_key], data.weather['units'][field_key], 1,
-                    'day', 1,
-                    data.start_dt, data.end_dt).values
+            self.weather_df[field_key] = mod_dmis.ReadOneDataframeColumn(
+                param_df, self.refet_id,
+                data.weather['fields'][field_key],
+                data.weather['units'][field_key], 1, 'day', 1,
+                data.start_dt, data.end_dt).values
         return True
 
     def set_historic_temps(self, cell_count, data, cells):
@@ -1156,11 +1246,13 @@ class ETCell():
 
         # set date attributes
         
-        self.hist_temps_df['doy'] = [int(ts.strftime('%j')) for ts in self.hist_temps_df.index]
+        self.hist_temps_df['doy'] = [int(ts.strftime('%j')) for ts in
+                                     self.hist_temps_df.index]
         return True
 
     def SF_P_historic_temps(self, data):
-        """Read meteorological/climate data for single station with all parameters
+        """Read meteorological/climate data for single station with all
+        parameters
 
         Args:
             data: configuration data from INI file
@@ -1168,7 +1260,9 @@ class ETCell():
         Returns:
             success: True or False
         """
-        historic_path = os.path.join(data.hist_temps['ws'], data.hist_temps['name_format'] % self.refet_id)
+        historic_path = os.path.join(data.hist_temps['ws'],
+                                     data.hist_temps['name_format'] %
+                                     self.refet_id)
         logging.debug('  {0}'.format(historic_path))
 
         # Get list of 0 based line numbers to skip
@@ -1176,9 +1270,9 @@ class ETCell():
         skiprows = [i for i in range(data.hist_temps['header_lines'])
                     if i+1 != data.hist_temps['names_line']]
         try:
-            self.hist_temps_df = pd.read_table(historic_path, engine = 'python', 
-                    header = data.hist_temps['names_line'] - len(skiprows) - 1,
-                    skiprows = skiprows, delimiter = data.hist_temps['delimiter'])
+            self.hist_temps_df = pd.read_table(historic_path, engine='python',
+                    header=data.hist_temps['names_line'] - len(skiprows) - 1,
+                    skiprows=skiprows, delimiter=data.hist_temps['delimiter'])
         except IOError:
             logging.error(('  IOError: historic data file could not be read ' +
                            'and may not exist\n  {}').format(historic_path))
@@ -1191,7 +1285,6 @@ class ETCell():
             ', '.join(list(self.hist_temps_df.columns))))
 
         # Check fields
-        
         for field_key, field_name in data.hist_temps['fields'].items():
             if (field_name is not None and
                     field_name not in self.hist_temps_df.columns):
@@ -1203,23 +1296,27 @@ class ETCell():
                 
             # Rename dataframe fields
             
-            self.hist_temps_df = self.hist_temps_df.rename(columns = {field_name:field_key})
+            self.hist_temps_df = self.hist_temps_df.rename(columns={
+                field_name: field_key})
 
         # Convert date strings to datetimes
-        
         if data.hist_temps['fields']['date'] is not None:
-            self.hist_temps_df['date'] = pd.to_datetime(self.hist_temps_df['date'])
+            self.hist_temps_df['date'] = pd.to_datetime(
+                self.hist_temps_df['date'])
         else:
-            self.hist_temps_df['date'] = self.hist_temps_df[['year', 'month', 'day']].apply(
-                lambda s : datetime.datetime(*s),axis = 1)
-        self.hist_temps_df.set_index('date', inplace = True)
+            self.hist_temps_df['date'] = self.hist_temps_df[['year',
+                                                             'month',
+                                                             'day']].apply(
+                lambda s: datetime.datetime(*s), axis=1)
+        self.hist_temps_df.set_index('date', inplace=True)
 
         # truncate period
-        
         try:
-            self.hist_temps_df = self.hist_temps_df.truncate(before = data.start_dt, after = data.end_dt)
+            self.hist_temps_df = self.hist_temps_df.truncate(
+                before=data.start_dt, after=data.end_dt)
         except:
-            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred truncating historic data')
+            logging.error('\nERROR: ' + str(sys.exc_info()[0]) +
+                          'occurred truncating historic data')
             return False
         if len(self.hist_temps_df.index) < 1:
             logging.error('No data found reading historic temperature data')
@@ -1227,7 +1324,8 @@ class ETCell():
         return True
 
     def DMI_historic_temps(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station using specified DMI format
+        """Read meteorological/climate data for single station using specified
+         DMI format
 
         Args:
             cell_count: count of et cell being processed
@@ -1238,16 +1336,20 @@ class ETCell():
         """
 
         # Read data from files by fields
-
         self.hist_temps_df = None
         input_buffer = None
         field_count = 0
         for field_key, field_name in data.hist_temps['fields'].items():
-            if field_name is None or field_name.lower() == 'date': continue
-            if field_name.lower() == 'year' or field_name.lower() == 'month': continue
-            if field_name.lower() == 'day' or field_name.lower() == 'doy': continue
-            if data.hist_temps['fnspec'][field_key].lower() == 'estimated': continue
-            if data.hist_temps['fnspec'][field_key].lower() == 'unused': continue
+            if field_name is None or field_name.lower() == 'date':
+                continue
+            if field_name.lower() == 'year' or field_name.lower() == 'month':
+                continue
+            if field_name.lower() == 'day' or field_name.lower() == 'doy':
+                continue
+            if data.hist_temps['fnspec'][field_key].lower() == 'estimated':
+                continue
+            if data.hist_temps['fnspec'][field_key].lower() == 'unused':
+                continue
 
             # pull data for field_name
 
@@ -1255,59 +1357,76 @@ class ETCell():
                 last_path = ''
                 if '%p' in data.hist_temps['name_format']:
                     historic_path = os.path.join(data.hist_temps['ws'], 
-                    data.hist_temps['name_format'].replace('%p', data.hist_temps['fnspec'][field_key]))
+                    data.hist_temps['name_format'].replace(
+                        '%p', data.hist_temps['fnspec'][field_key]))
                 else:
-                    historic_path = os.path.join(data.hist_temps['ws'], data.hist_temps['name_format'])
+                    historic_path = os.path.join(
+                        data.hist_temps['ws'], data.hist_temps['name_format'])
                 if not os.path.isfile(historic_path):
-                    logging.error('ERROR:  historic data path for {0} is {1} does not exist'.format(field_key, historic_path))
+                    logging.error('ERROR:  historic data path for {0} is {1}'
+                                  ' does not exist'.format(field_key,
+                                                           historic_path))
                     return False
-                logging.debug('  historic data path for {0} is {1}'.format(field_key, historic_path))
-                # TODO Use keyword function calls
+                logging.debug('  historic data path for {0} is {1}'.format(
+                    field_key, historic_path))
+                # Use keyword function calls
                 if data.hist_temps['data_structure_type'].upper() == 'PF S.P':
                     if data.hist_temps['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(historic_path, data.hist_temps['header_lines'],
+                        param_df = mod_dmis.ColumnSlotToDataframe(
+                            historic_path, data.hist_temps['header_lines'],
                                 data.hist_temps['names_line'], 'day', 1, 
                                 data.hist_temps['delimiter'], data.start_dt, data.end_dt)
                     elif data.hist_temps['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(historic_path, data.hist_temps['header_lines'], 
-
+                        param_df = mod_dmis.TextRDBToDataframe(
+                            historic_path, data.hist_temps['header_lines'],
                                 data.hist_temps['names_line'], 'day', 1, 
-                                data.hist_temps['delimiter'], data.start_dt, data.end_dt)
-                    elif data.hist_temps['file_type'].lower() == 'xls' or data.hist_temps['file_type'].lower() == 'wb':
-                        if '%p' in data.hist_temps['name_format'] or field_count == 1:
-                            #TODO What are historic_buffer and last_path used for
+                                data.hist_temps['delimiter'], data.start_dt,
+                            data.end_dt)
+                    elif data.hist_temps['file_type'].lower() == 'xls' or \
+                            data.hist_temps['file_type'].lower() == 'wb':
+                        if '%p' in data.hist_temps['name_format'] or \
+                                field_count == 1:
+                            # What are historic_buffer and last_path used for
                             historic_buffer = pd.ExcelFile(historic_path)
                         last_path = historic_path
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(input_buffer, 
-                                data.hist_temps['wsspec'][field_key], 
-                                data.hist_temps['header_lines'], data.hist_temps['names_line'],
-                                'day', 1, data.start_dt, data.end_dt)
+                        param_df = mod_dmis.ExcelWorksheetToDataframe(
+                            input_buffer, data.hist_temps['wsspec'][field_key],
+                            data.hist_temps['header_lines'],
+                            data.hist_temps['names_line'],
+                            'day', 1, data.start_dt, data.end_dt)
                     else:
-                        logging.error('ERROR:  File type {} is not supported'.format(data.hist_temps['file_type']))
+                        logging.error('ERROR:  File type {} is not supported'.
+                                      format(data.hist_temps['file_type']))
                         return False
                     if param_df is None:
-                        logging.error('ERROR:  unable to read {}'.format(historic_path))
+                        logging.error('ERROR:  unable to read {}'.format(
+                            historic_path))
                         return False
                     else:
                         if data.start_dt is None:
                             pydt = param_df.index[0]
-                            data.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
+                            data.start_dt = pd.to_datetime(datetime.datetime(
+                                pydt.year, pydt.month, pydt.day, pydt.hour,
+                                pydt.minute))
                         if data.end_dt is None: 
                             pydt = param_df.index[len(param_df) - 1]
-                            data.end_date = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-                        param_df = mod_dmis.ReduceDataframeToParameter(param_df, field_name)
+                            data.end_date = pd.to_datetime(datetime.datetime(
+                                pydt.year, pydt.month, pydt.day, pydt.hour,
+                                pydt.minute))
+                        param_df = mod_dmis.ReduceDataframeToParameter(
+                            param_df, field_name)
                         cells.et_cells_historic_data[field_key] = param_df
                     del param_df
         del input_buffer
 
         # pull et cell's data from parameter data frames
-        
-        self.hist_temps_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt, data.end_dt)
+        self.hist_temps_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
+                                                        data.end_dt)
         for field_key, param_df in cells.et_cells_historic_data.items():
-            self.hist_temps_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.refet_id, 
-                    data.hist_temps['fields'][field_key], data.hist_temps['units'][field_key], 1,
-                    'day', 1, 
-                    data.start_dt, data.end_dt).values
+            self.hist_temps_df[field_key] = mod_dmis.ReadOneDataframeColumn(
+                param_df, self.refet_id, data.hist_temps['fields'][field_key],
+                data.hist_temps['units'][field_key], 1, 'day', 1,
+                data.start_dt, data.end_dt).values
         return True
 
     def process_climate(self, data):
@@ -1316,12 +1435,17 @@ class ETCell():
             adjust and check temperature data
             process alternative TMax and TMin
         Fill missing data with long term doy average (DAY LOOP)
-            Calculate an estimated depth of snow on ground using simple melt rate function))
-            compute main cumGDD for period of record for various bases for constraining earliest/latest planting or GU
-            only Tbase = 0 needs to be evaluated (used to est. GU for alfalfa, mint, hops)
+            Calculate an estimated depth of snow on ground using simple
+            melt rate function))
+            compute main cumGDD for period of record for various bases for
+            constraining earliest/latest planting or GU
+            only Tbase = 0 needs to be evaluated (used to est. GU for alfalfa,
+             mint, hops)
         compute long term mean cumGDD0 from sums (JDOY LOOP)
-        Time series data have reversed field names support historic (constant) phenology
-        maxt, mint, meant, 30T are historic equivalents of tmax, tmin, meant, t30
+        Time series data have reversed field names support historic (constant)
+         phenology
+        maxt, mint, meant, 30T are historic equivalents of tmax, tmin,
+         meant, t30
         Cumulative variables use 'hist' in lieu of 'main'
 
         Args:
@@ -1332,10 +1456,11 @@ class ETCell():
         """
         
         # Initialize climate dataframe
-        self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin', 'tdew', 'wind', 'rh_min', 'snow', 'snow_depth']].copy()
+        self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
+                                           'tdew', 'wind', 'rh_min', 'snow',
+                                           'snow_depth']].copy()
 
         # Extend to support historic (constant) phenology
-        
         if data.phenology_option > 0:
             self.climate_df['maxt'] = self.hist_temps_df['maxt'].values
             self.climate_df['mint'] = self.hist_temps_df['mint'].values
@@ -1347,13 +1472,13 @@ class ETCell():
         
         # pick up reference et
         self.climate_df['etref'] = self.refet_df['etref'].values
-	
+
         # Adjust T's downward if station is arid
-        
         if self.aridity_rating > 0:
             # Interpolate value for aridity adjustment
             
-            aridity_adj = [0., 0., 0., 0., 1., 1.5, 2., 3.5, 4.5, 3., 0., 0., 0.]
+            aridity_adj = [0., 0., 0., 0., 1., 1.5, 2., 3.5, 4.5, 3., 0.,
+                           0., 0.]
             month = np.array([dt.month for dt in self.climate_df.index])
             day = np.array([dt.day for dt in self.climate_df.index])
             moa_frac = np.clip((month + (day - 15) / 30.4), 1, 11)
@@ -1367,15 +1492,20 @@ class ETCell():
 
         # T30 stuff - done after temperature adjustments
         
-        self.climate_df['tmean'] = self.climate_df[["tmax", "tmin"]].mean(axis=1)
-        self.climate_df['meant'] = self.climate_df[["maxt", "mint"]].mean(axis=1)
-        # self.climate_df['t30'] = pd.rolling_mean(self.climate_df['tmean'], window = 30, min_periods = 1)
-        self.climate_df['t30'] = self.climate_df['tmean'].rolling(window = 30, min_periods=1).mean()
-        # self.climate_df['30t'] = pd.rolling_mean(self.climate_df['meant'], window = 30, min_periods = 1)
-        self.climate_df['30t'] = self.climate_df['meant'].rolling(window = 30, min_periods=1).mean()
+        self.climate_df['tmean'] = self.climate_df[["tmax", "tmin"]].mean(
+            axis=1)
+        self.climate_df['meant'] = self.climate_df[["maxt", "mint"]].mean(
+            axis=1)
+        # self.climate_df['t30'] = pd.rolling_mean(self.climate_df['tmean'],
+        #  window = 30, min_periods = 1)
+        self.climate_df['t30'] = self.climate_df['tmean'].rolling(
+            window=30, min_periods=1).mean()
+        # self.climate_df['30t'] = pd.rolling_mean(self.climate_df['meant'],
+        #  window = 30, min_periods = 1)
+        self.climate_df['30t'] = self.climate_df['meant'].rolling(
+            window=30, min_periods=1).mean()
 
         # Accumulate T30 over period of record
-        
         main_t30_lt = np.array(
             self.climate_df[['t30', 'doy']].groupby('doy').mean()['t30'])
         hist_t30_lt = np.array(
@@ -1390,17 +1520,20 @@ class ETCell():
 
         # Compute cumulative GDD for each year
         
-        self.climate_df['main_cgdd'] = self.climate_df[['doy', 'main_cgdd']].groupby(
+        self.climate_df['main_cgdd'] = self.climate_df[['doy',
+                                                        'main_cgdd']].groupby(
             self.climate_df.index.map(lambda x: x.year)).main_cgdd.cumsum()
-        self.climate_df['hist_cgdd'] = self.climate_df[['doy', 'hist_cgdd']].groupby(
+        self.climate_df['hist_cgdd'] = self.climate_df[['doy',
+                                                        'hist_cgdd']].groupby(
             self.climate_df.index.map(lambda x: x.year)).hist_cgdd.cumsum()
 
         # Compute mean cumulative GDD for each DOY
-
         main_cgdd_0_lt = np.array(
-            self.climate_df[['main_cgdd', 'doy']].groupby('doy').mean()['main_cgdd'])
+            self.climate_df[['main_cgdd', 'doy']].groupby('doy').mean()[
+                'main_cgdd'])
         hist_cgdd_0_lt = np.array(
-            self.climate_df[['hist_cgdd', 'doy']].groupby('doy').mean()['hist_cgdd'])
+            self.climate_df[['hist_cgdd', 'doy']].groupby('doy').mean()[
+                'hist_cgdd'])
 
         # Revert from indexing by I to indexing by DOY (for now)
         # Copy DOY 1 value into DOY 0
@@ -1416,11 +1549,13 @@ class ETCell():
         self.climate['hist_t30_lt'] = hist_t30_lt
         self.climate['hist_cgdd_0_lt'] = hist_cgdd_0_lt
 
-        # Calculate an estimated depth of snow on ground using simple melt rate function))
+        # Calculate an estimated depth of snow on ground using simple
+        # melt rate function))
 
         if np.any(self.climate_df['snow']):
             for i, doy in self.climate_df['doy'].iteritems():
-                # Calculate an estimated depth of snow on ground using simple melt rate function
+                # Calculate an estimated depth of snow on ground using simple
+                # melt rate function
                 
                 snow = self.climate_df['snow'][i]
                 snow_depth = self.climate_df['snow_depth'][i]
