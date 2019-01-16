@@ -58,7 +58,7 @@ section below).
 Weather Stations
 ----------------
 The example stations are single 4km cells selected from the `University of Idaho Gridded Surface Meteorological Data
-<http://metdata.northwestknowledge.net/>. Each ETZone was assigned a specific historical weather dataset in the 
+<http://metdata.northwestknowledge.net/>`_. Each ETZone was assigned a specific historical weather dataset in the 
 'STATION_ID' field of the Cell Shapefile. Note that it is possible to assign the same historical weather dataset to
 multiple ETZones. The historical weather data file naming format is specific using the 'name_format' variable
 in the model .INI file (huc_example.INI).
