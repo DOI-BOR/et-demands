@@ -76,32 +76,32 @@ For this example, the crop shapefile will be built from the 2015 Cropland Data L
 
 For this example the CDL raster will be downloaded directly to the project GIS folder. ::
 
-    > python ..\et-demands\prep\download_cdl_raster.py --ini cet_prep.ini -o
+    > python ..\..\et-demands\prep\download_cdl_raster.py --ini huc_example_prep.ini -o
 
 If the download script doesn't work, please try downloading the `2015_30m_cdls.zip <ftp://ftp.nass.usda.gov/download/res/2010_30m_cdls.zip>`_ file directly from your browser or using a dedicated FTP program.
 
 Clip the CDL raster to the cell shapefile extent::
 
-    > python ..\et-demands\prep\clip_cdl_raster.py --ini cet_prep.ini -o
+    > python ..\..\et-demands\prep\clip_cdl_raster.py --ini huc_example_prep.ini -o
 
 Convert the clipped CDL raster to a polygon, with the non-agricultural areas removed::
 
-    > python ..\et-demands\prep\build_ag_cdl_shapefile.py --ini cet_prep.ini -o
+    > python ..\..\et-demands\prep\build_ag_cdl_shapefile.py --ini huc_example_prep.ini -o
 
 Soils
 -----
 Download the pre-computed STATSGO2 shapefiles::
 
-    > python ..\et-demands\prep\download_statsgo_shapefiles.py --ini cet_prep.ini -o
+    > python ..\..\et-demands\prep\download_statsgo_shapefiles.py --ini huc_example_prep.ini -o
 
 Zonal Stats
 -----------
 Compute the soil properties and crop acreages for each ETZzone polygon. ::
 
-    > python ..\et-demands\prep\et_demands_zonal_stats.py --ini cet_prep.ini
+    > python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini huc_example_prep.ini
 
 Static Text Files
 -----------------
 Build the static text files from the templates in "et-demands\\static". ::
 
-    > python ..\et-demands\prep\build_static_files.py --ini cet_prep.ini --area_threshold 10
+    > python ..\..\et-demands\prep\build_static_files.py --ini huc_example.ini
