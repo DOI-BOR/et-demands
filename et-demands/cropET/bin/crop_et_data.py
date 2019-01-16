@@ -36,6 +36,10 @@ class CropETData:
         crop_et_sec = 'CROP_ET'  # required
         weather_sec = 'WEATHER'  # required
         refet_sec = 'REFET'  # required
+        # Temporary set to None
+        # What is phenology option and is it needed moving forward
+        hist_temps_sec = None
+
         cfg_secs = config.sections()
 
         # Original INI Format (What is Phenology option?)
