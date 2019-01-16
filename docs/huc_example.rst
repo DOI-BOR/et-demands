@@ -1,5 +1,5 @@
 
-HUC8 Example Workflow
+HUC8 Example Prep Workflow
 ===================
 The following documentation outlines the prep workflow for running ETDemands over 6 HUC8 watersheds in the Upper Colorado River Basin
 from 2017-2018. The example utilizes 2015 CDL crop layer information along with historical weather data from gridMET. Each HUC8 watershed
@@ -14,8 +14,7 @@ Clone the repository
 If you already have a local copy of the et-demands repository, make sure to pull the latest version from GitHub.  If you don't already
 have a local copy of the repository, either clone the repository locally or download a zip file of the scripts from Github.
 
-.. note::
-   For this example, it is assumed that the repository was cloned directly to the C: drive (i.e. C:\\et-demands).
+NOTE: For this example, it is assumed that the repository was cloned directly to the C: drive (i.e. C:\\et-demands).
 
 Command prompt / Terminal
 -------------------------
@@ -36,8 +35,7 @@ You may need to build the common folder if it doesn't exist::
 
 Building the Example
 --------------------
-.. note::
-   For this example, all scripts and tools will be executed from the "examples\huc8" folder.
+NOTE: For this example, all scripts and tools will be executed from the "examples\huc8" folder.
 
 Build the example folder if it doesn't exist::
 
@@ -54,21 +52,21 @@ For this example, ET-Demands will be run for a six HUC8 watersheds in the Upper 
 `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase. Each individual ETZone
 within the .shp must be assigned a unique 'CELL_ID'. The unique identfier is used throughout the model for
 identification and output file naming purposes. In addition to 'CELL_ID', the Cell Shapefile must also
-contain a STATION_ID field to pair each ETZone with its specific weather dataset (see Weather Stations
+contain a 'STATION_ID' field to pair each ETZone with its specific weather dataset (see Weather Stations
 section below).
 
 Weather Stations
 ----------------
 The example stations are single 4km cells selected from the `University of Idaho Gridded Surface Meteorological Data
 <http://metdata.northwestknowledge.net/>. Each ETZone was assigned a specific historical weather dataset in the 
-STATION_ID field of the Cell Shapefile. Note that it is possible to assign the same historical weather dataset to
+'STATION_ID' field of the Cell Shapefile. Note that it is possible to assign the same historical weather dataset to
 multiple ETZones. The historical weather data file naming format is specific using the 'name_format' variable
 in the model .INI file (huc_example.INI).
 
 For this example each weather station data file follows the format:
 'gridmet_historical_XXXXXX.csv' where XXXXXX represents a 6-digit wx station identifier.
 In the REFET section of the model .INI file, name_format = gridmet_historical_%s.csv.
-A similar ID/Filenaming structure should be used to link each STATION_ID with its corresponding timeseries file.
+A similar ID/Filenaming structure should be used to link each 'STATION_ID' with its corresponding timeseries file.
 
 Crop Shapefile
 --------------
@@ -96,7 +94,7 @@ Download the pre-computed STATSGO2 shapefiles::
 
 Zonal Stats
 -----------
-Compute the soil properties and crop acreages for each ETZzone polygon. ::
+Compute the soil properties and crop acreages for each ETZone polygon. ::
 
     > python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini huc_example_prep.ini
 
