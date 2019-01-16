@@ -220,7 +220,8 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag = False, mp_procs 
 
         # Get CO2 correction factor for each day
         
-        if data.co2_flag: foo_day.co2 = float(foo.co2.at[step_dt])
+        if data.co2_flag:
+            foo_day.co2 = float(foo.co2.at[step_dt])
 
         # Compute crop growing degree days
         
