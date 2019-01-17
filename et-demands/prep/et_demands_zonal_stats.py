@@ -364,23 +364,23 @@ def main(ini_path, overwrite_flag=False):
             # .simplify(simplify_threshold, preserve_topology=False)\
             # zone_crop_poly = cascaded_union(zone_crop_polys)
 
-        if zone_crop_poly.is_empty:
-            logging.debug('  ZONE FID: {} - empty polygon, skipping'.format(
-                zone_fid))
-            continue
+            if zone_crop_poly.is_empty:
+                logging.debug('  ZONE FID: {} - empty polygon, skipping'.format(
+                    zone_fid))
+                continue
 
-        if soil_crop_mask_flag:
-            # Save the crop masked zone to memory
-            zone_crop_rtree.insert(zone_fid, list(zone_crop_poly.bounds))
-            zone_crop_wkt_dict[zone_fid] = zone_crop_poly.wkt
+            if soil_crop_mask_flag:
+                # Save the crop masked zone to memory
+                zone_crop_rtree.insert(zone_fid, list(zone_crop_poly.bounds))
+                zone_crop_wkt_dict[zone_fid] = zone_crop_poly.wkt
 
-        if save_crop_mask_flag:
-            # Write the crop masked zone to shapefile
-            zone_ftr = ogr.Feature(zone_crop_lyr.GetLayerDefn())
-            zone_ftr.SetField('ZONE_FID', zone_fid)
-            zone_ftr.SetGeometry(ogr.CreateGeometryFromWkt(zone_crop_poly.wkt))
-            zone_crop_lyr.CreateFeature(zone_ftr)
-            zone_ftr = None
+            if save_crop_mask_flag:
+                # Write the crop masked zone to shapefile
+                zone_ftr = ogr.Feature(zone_crop_lyr.GetLayerDefn())
+                zone_ftr.SetField('ZONE_FID', zone_fid)
+                zone_ftr.SetGeometry(ogr.CreateGeometryFromWkt(zone_crop_poly.wkt))
+                zone_crop_lyr.CreateFeature(zone_ftr)
+                zone_ftr = None
 
     if save_crop_mask_flag:
         zone_crop_ds.ExecuteSQL("RECOMPUTE EXTENT ON {}".format(
