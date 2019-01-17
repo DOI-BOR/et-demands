@@ -67,6 +67,13 @@ For this example each weather station data file follows the format:
 In the REFET section of the model .INI file, name_format = gridmet_historical_%s.csv.
 A similar ID/Filenaming structure should be used to link each 'STATION_ID' with its corresponding timeseries file.
 
+NOTE: The user should take caution when applying large gridded climate datasets to irrigated agricultural settings. 
+Gridded climate datasets often represent larger scale natural landscape conditions and do not factor in the impacts of
+localized irrigation (i.e. evaportive cooling, changes in surface roughness, increased vapor pressure, etc.). ETDemands
+offers options to scale (or bias correct) the input ETo/ETr values based on comparisons with local weather
+station data. Please refer to 'et_ratios' functionality in the XXXXX documentation for further details.
+
+
 Crop Shapefile
 --------------
 For this example, the crop shapefile will be built from the 2015 Cropland Data Layer (CDL) raster.
