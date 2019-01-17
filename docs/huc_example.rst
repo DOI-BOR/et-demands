@@ -50,8 +50,8 @@ Cell Shapefile
 For this example, ET-Demands will be run for a six HUC8 watersheds in the Upper Colordo River Basin
 (14080001, 14080002, 14080003, 14080004, 14080005). These ETZones were extracted from the full
 `USGS Watershed Boundary Dataset <http://nhd.usgs.gov/wbd.html>`_ (WBD) geodatabase. Each individual ETZone
-within the .shp must be assigned a unique 'CELL_ID'. The unique identfier is used throughout the model for
-identification and output file naming purposes. In addition to 'CELL_ID', the Cell Shapefile must also
+within the .shp must be assigned a unique 'CELL_ID' and 'CELL_NAME'. These unique identfiers are used
+throughout the model for identification and output file naming. In addition to 'CELL_ID', the Cell .shp must also
 contain a 'STATION_ID' field to pair each ETZone with its specific weather dataset (see Weather Stations
 section below).
 
