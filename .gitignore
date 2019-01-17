@@ -75,6 +75,7 @@ examples/gridmet/summary_shapefiles
 examples/gridmet/cropweighted_shapefiles
 examples/gridmet/debug.txt
 examples/gridmet/gis/development
+examples/gridmet/climate/gridmet_hist*
 
 
 et-demands/tools/__init__.py
