@@ -9,9 +9,9 @@ python ..\..\et-demands\prep\build_ag_cdl_shapefile.py --ini gridmet_example_pre
 
 python ..\..\et-demands\prep\download_statsgo_shapefiles.py --ini gridmet_example_prep.ini
 
-python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini gridmet_example.ini
+python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini gridmet_example_prep.ini
 
-python ..\..\et-demands\prep\build_static_files.py --ini gridmet_example_prep.ini
+python ..\..\et-demands\prep\build_static_files.py --ini gridmet_example.ini
 # or 
 python ..\..\et-demands\prep\build_spatial_crop_params.py --ini XXXXX.ini
 
