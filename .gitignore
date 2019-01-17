@@ -58,6 +58,24 @@ examples/huc8/growing_season_stats
 examples/huc8/summary_shapefiles
 examples/huc8/cropweighted_shapefiles
 examples/huc8/debug.txt
+examples/common
+examples/gridmet/gis/cdl
+examples/gridmet/gis/scratch
+examples/gridmet/gis/soils
+examples/gridmet/gis/cdl
+examples/gridmet/gis/scratch
+examples/gridmet/gis/soils
+examples/gridmet/gis/cdl_crops*
+examples/gridmet/static
+examples/gridmet/daily_stats
+examples/gridmet/monthly_stats
+examples/gridmet/annual_stats
+examples/gridmet/growing_season_stats
+examples/gridmet/summary_shapefiles
+examples/gridmet/cropweighted_shapefiles
+examples/gridmet/debug.txt
+examples/gridmet/gis/development
+
 
 et-demands/tools/__init__.py
 et-demands/tools/legacy_scripts/__init__.py

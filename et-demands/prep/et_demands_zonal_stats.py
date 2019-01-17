@@ -115,14 +115,12 @@ def main(ini_path, overwrite_flag=False):
     zone_crops = defaultdict(list)
     # crop_zones = defaultdict(list)
 
-
     # # Copy the zone_path
     # if overwrite_flag and _arcpy.exists(et_cells_path):
     #     _arcpy.delete(et_cells_path)
     # # Just copy the input shapefile
     # if not _arcpy.exists(et_cells_path):
     #     _arcpy.copy(zone_path, et_cells_path)
-
 
     # Add lat/lon fields
     logging.info('\nAdding Fields')
@@ -204,11 +202,9 @@ def main(ini_path, overwrite_flag=False):
         input_lyr.AlterFieldDefn(i, copyDefn, (ogr.ALTER_WIDTH_PRECISION_FLAG))
     input_ds = None
 
-
     # Calculate lat/lon
     logging.info('\nCalculating ET zone lat/lon')
     cell_lat_lon_func(zone_path, cell_lat_field, cell_lon_field)
-
 
     # Load the ET zones shapefile geometries into memory
     # Build the spatial index in the zone spatial reference
@@ -239,7 +235,6 @@ def main(ini_path, overwrite_flag=False):
         zone_full_wkt_dict[zone_fid] = zone_geom.ExportToWkt()
     zone_full_ds = None
 
-
     # DEADBEEF - Commented out for testing
     # Read the crop shapefile and identify intersecting features
     logging.debug('\nReading crop shapefile features')
@@ -251,7 +246,8 @@ def main(ini_path, overwrite_flag=False):
     # crop_lyr_name = zones_lyr.GetName()
     for crop_ftr in crop_lyr:
         crop_fid = crop_ftr.GetFID()
-        if crop_fid % 100000 == 0:
+        if crop_fid % 100000 == 0 and crop_fid != 0:
+            print('test')
             logging.info('FID: {}'.format(crop_fid))
         crop_geom = crop_ftr.GetGeometryRef()
         proj_geom = crop_geom.Clone()
@@ -275,7 +271,6 @@ def main(ini_path, overwrite_flag=False):
         }
     crop_ds = None
 
-
     # Read ET demands crop number crosswalk
     # Link ET demands crop number (1-84) with input crop values (i.e. CDL)
     # Key is input crop number, value is crop number, ignore comment
@@ -286,7 +281,6 @@ def main(ini_path, overwrite_flag=False):
         cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
     # logging.debug(crop_num_dict)
 
-
     # Build the crop list
     # Because the spatial index is extent based,
     #   this may include crops that don't intersect the zones.
@@ -295,7 +289,6 @@ def main(ini_path, overwrite_flag=False):
         x for c in crop_dict.values() for x in cross_dict[c['value']])))
     logging.info('\nInput Crops: {}'.format(', '.join(map(str, input_crops))))
     logging.info('Demands Crops: {}'.format(', '.join(map(str, etd_crops))))
-
 
     # Build the crop clipped ET zones shapefile
     # The shapefile only needs to be saved if the soils are being masked to
@@ -306,7 +299,8 @@ def main(ini_path, overwrite_flag=False):
         if os.path.exists(zone_crop_path):
             shp_driver.DeleteDataSource(zone_crop_path)
         zone_crop_ds = shp_driver.CreateDataSource(zone_crop_path)
-        zone_crop_lyr_name = os.path.splitext(os.path.basename(zone_crop_path))[0]
+        zone_crop_lyr_name = os.path.splitext(
+            os.path.basename(zone_crop_path))[0]
         zone_crop_lyr = zone_crop_ds.CreateLayer(
             zone_crop_lyr_name, geom_type=ogr.wkbPolygon)
         zone_crop_lyr.CreateField(ogr.FieldDefn('ZONE_FID', ogr.OFTInteger))
@@ -315,12 +309,11 @@ def main(ini_path, overwrite_flag=False):
         zone_crop_rtree = rtree.index.Index()
         zone_crop_wkt_dict = dict()
 
-
     # Process crops (by zone) and compute area weighted stats
     # Write clipped zones (if necessary)
     logging.info('\nComputing crop area/type zonal stats')
     for zone_fid, crop_fid_list in sorted(zone_crops.items()):
-        if zone_fid % 1000 == 0:
+        if zone_fid % 1000 == 0 and zone_fid != 0:
             logging.info('ZONE FID: {}'.format(zone_fid))
         # logging.debug('ZONE FID: {}'.format(zone_fid))
 
@@ -368,7 +361,7 @@ def main(ini_path, overwrite_flag=False):
             # Combine all polygons/multipolygons into a single multipolygon
             zone_crop_poly = unary_union(zone_crop_polys)\
                 .buffer(simplify_threshold).buffer(-simplify_threshold)
-                # .simplify(simplify_threshold, preserve_topology=False)\
+            # .simplify(simplify_threshold, preserve_topology=False)\
             # zone_crop_poly = cascaded_union(zone_crop_polys)
 
         if zone_crop_poly.is_empty:
@@ -400,7 +393,6 @@ def main(ini_path, overwrite_flag=False):
         prj_osr.MorphToESRI()
         with open(zone_crop_path.replace('.shp', '.prj'), 'w') as prj_f:
             prj_f.write(prj_osr.ExportToWkt())
-
 
     # Rebuild the crop list from the stats
     crop_field_list = sorted(list(set([
@@ -437,7 +429,6 @@ def main(ini_path, overwrite_flag=False):
 
     logging.debug('\nWriting crop zonal stats to zones shapefile')
     _arcpy.update_cursor(zone_path, crop_stats)
-
 
     # NOTE - Defining here to avoid passing zone_stats as an input
     def zonal_stats(input_path, input_field, zone_wkt_dict, zone_rtree):
@@ -495,7 +486,8 @@ def main(ini_path, overwrite_flag=False):
 
     if soil_crop_mask_flag:
         # # Load the crop masked zone shapefile
-        # logging.debug('\nReading zone crop mask shapefile features into memory')
+        # logging.debug('\nReading zone crop mask shapefile features into
+        #  memory')
         # zone_crop_rtree = rtree.index.Index()
         # zone_crop_wkt_dict = dict()
         # zone_crop_ds = shp_driver.Open(zone_crop_path, 0)
@@ -529,12 +521,10 @@ def main(ini_path, overwrite_flag=False):
     logging.debug('\nWriting soil zonal stats to zones shapefile')
     _arcpy.update_cursor(zone_path, zone_stats)
 
-
     # Calculate AWC in in/feet
     logging.info('Calculating AWC in in/ft')
     _arcpy.calculate_field(
         zone_path, awc_in_ft_field, '!{}! * 12'.format(awc_field))
-
 
     # Calculate hydrologic group
     logging.info('Calculating hydrologic group')
