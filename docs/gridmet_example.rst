@@ -62,6 +62,14 @@ The example stations are single 4km cells selected from the `University of Idaho
 'STATION_ID' field of the Cell Shapefile. The historical weather data file naming format is specific using the
 'name_format' variable in the model .INI file (gridmet_example.INI).
 
+????? 
+Historical gridMET time series was aquired using the download_gridmet_ee.py tool found in the etr-biascorrect repository.
+The climate folder contains a .txt list of gridMET stations. This can be used with download_gridmet_ee.py to download station
+data from earth engine. Output format is ready for the INI. 
+python download_gridmet_ee.py -i D:\et-demands\examples\gridmet\climate\upperCarson_agpts.txt -o D:\et-demands\examples\gridmet\climate -y 2017-2018
+SHOULD WE INCLUDE CLIMATE DATA IN REPO? 70 stations = 70 csv files
+?????
+
 For this example each weather station data file follows the format:
 'gridmet_historical_XXXXXX.csv' where XXXXXX represents a 6-digit gridMET cell identifier.
 In the REFET section of the model .INI file, name_format = gridmet_historical_%s.csv.
