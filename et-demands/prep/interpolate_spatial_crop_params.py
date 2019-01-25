@@ -19,14 +19,11 @@ import _arcpy
 import _util as util
 
 
-def main(ini_path, zone_type='gridmet', overwrite_flag=False):
+def main(ini_path):
     """Interpolate Preliminary Calibration Zones to All Zones
 
     Args:
         ini_path (str): file path of the project INI file
-        zone_type (str): Zone type (huc8, huc10, county, gridmet)
-        overwrite_flag (bool): If True (default), overwrite existing files
-
     Returns:
         None
 
@@ -83,24 +80,6 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         sys.exit()
 
     logging.info('\nGIS Workspace:      {}'.format(gis_ws))
-
-    # Check input zone type (GRIDMET ONLY FOR NOW!!!!)
-    if zone_type == 'gridmet':
-        station_zone_field = 'GRIDMET_ID'
-        station_id_field = 'GRIDMET_ID'
-    elif zone_type == 'huc8':
-        station_zone_field = 'HUC8'
-        station_id_field = 'STATION_ID'
-    elif zone_type == 'huc10':
-        station_zone_field = 'HUC10'
-        station_id_field = 'STATION_ID'
-    elif zone_type == 'county':
-        station_zone_field = 'COUNTYNAME'
-        station_id_field = 'STATION_ID'
-    else:
-        logging.error(
-            '\nFUNCTION ONLY SUPPORTS GRIDMET ZONE TYPE AT THIS TIME\n')
-        sys.exit()
 
     # ET cells field names
     cell_id_field = 'CELL_ID'
@@ -200,7 +179,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
         for input_ftr in input_lyr:
             input_fid = input_ftr.GetFID()
             logging.debug('  FID: {}'.format(input_fid))
-            input_id = input_ftr.GetField(input_ftr.GetFieldIndex(cell_id_field))
+            input_id = input_ftr.GetField(input_ftr.GetFieldIndex(
+                cell_id_field))
             input_geom = input_ftr.GetGeometryRef()
             centroid_geom = input_geom.Clone()
             # Do distance calculations in decimal degrees to match Arc script
@@ -238,7 +218,8 @@ def main(ini_path, zone_type='gridmet', overwrite_flag=False):
                 # There is probably a better way of flagging these
                 d0 = [id for id, w in weight.items() if w == 0]
                 if d0:
-                    final_cal_data[cell_id][param] = subset_cal_data[d0[0]][param]
+                    final_cal_data[cell_id][param] = subset_cal_data[
+                        d0[0]][param]
                 else:
                     final_cal_data[cell_id][param] = sum([
                         data[param] * weight[id]
@@ -268,14 +249,6 @@ def arg_parse():
         '-i', '--ini', metavar='PATH',
         type=lambda x: util.is_valid_file(parser, x), help='Input file')
     parser.add_argument(
-        '--zone', default='county', metavar='', type=str,
-        choices=('huc8', 'huc10', 'county', 'gridmet'),
-        help='Zone type [{}]'.format(
-            ', '.join(['huc8', 'huc10', 'county', 'gridmet'])))
-    parser.add_argument(
-        '-o', '--overwrite', default=False, action='store_true',
-        help='Overwrite existing file')
-    parser.add_argument(
         '--debug', default=logging.INFO, const=logging.DEBUG,
         help='Debug level logging', action="store_const", dest="loglevel")
     args = parser.parse_args()
@@ -294,4 +267,4 @@ if __name__ == '__main__':
     logging.info('{0:<20s} {1}'.format(
         'Script:', os.path.basename(sys.argv[0])))
 
-    main(ini_path=args.ini, zone_type=args.zone, overwrite_flag=args.overwrite)
+    main(ini_path=args.ini)
