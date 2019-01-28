@@ -40,7 +40,6 @@ def main(ini_path, overwrite_flag=False):
     logging.debug('INI: {}'.format(ini_path))
     config = util.read_ini(ini_path, section='CROP_ET')
     zones_path = config.get('CROP_ET', 'cells_path')
-
     gis_ws = config.get('CROP_ET', 'gis_folder')
     cdl_input_ws = config.get('CROP_ET', 'cdl_folder')
     cdl_year = int(config.get('CROP_ET', 'cdl_year'))
