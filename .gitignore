@@ -81,3 +81,7 @@ examples/gridmet/climate/gridmet_hist*
 et-demands/tools/__init__.py
 et-demands/tools/legacy_scripts/__init__.py
 et-demands/__init__.py
+examples/gridmet/gis/uppercarson_agcells.dbf
+examples/huc8/gis/WBDHU8_32612.dbf
+examples/gridmet/gis/uppercarson_agcells.dbf
+examples/huc8/gis/WBDHU8_32612.dbf
