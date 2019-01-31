@@ -58,6 +58,7 @@ examples/huc8/growing_season_stats
 examples/huc8/summary_shapefiles
 examples/huc8/cropweighted_shapefiles
 examples/huc8/debug.txt
+examples/huc8/hist_temps
 examples/common
 examples/gridmet/gis/cdl
 examples/gridmet/gis/scratch
