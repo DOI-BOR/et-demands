@@ -36,13 +36,13 @@ class CropETData:
         crop_et_sec = 'CROP_ET'  # required
         weather_sec = 'WEATHER'  # required
         refet_sec = 'REFET'  # required
-        # Temporary set to None
-        # What is phenology option and is it needed moving forward
-        hist_temps_sec = None
+        # What is phenology option
+        # Historical Temps Section (currently set to None and not an option)
+        hist_temps_sec = 'HIST'  # optional
 
         cfg_secs = config.sections()
 
-        # Original INI Format (What is Phenology option?)
+        # Original INI Format (Add phenology (hist_temps_sec) to original INI)
         original = True
 
         # verify existence of common required sections
@@ -52,6 +52,9 @@ class CropETData:
                 '\nERROR:input file must have following sections:\n' +
                 '  [{}], [{}], and [{}]'.format(crop_et_sec, weather_sec,
                                                 refet_sec))
+        # Check if phenology section is present ('HIST'); Else NONE
+        if hist_temps_sec not in cfg_secs:
+            hist_temps_sec = None
 
         # project specifications
         try:
@@ -108,12 +111,10 @@ class CropETData:
             self.end_dt = pd.to_datetime(edt)
        
         # historic (constant) phenology option
-        if original:
-            self.phenology_option = 0
-        else:
+        if hist_temps_sec:
             try:
                 self.phenology_option = config.getint(
-                    project_sec, 'phenology_option')
+                    hist_temps_sec, 'phenology_option')
                 if self.phenology_option is None or \
                         self.phenology_option == 'None':
                     self.phenology_option = 0
@@ -1126,7 +1127,6 @@ class CropETData:
 
             # hist_temps folder could befull or relative path
             # Assume relative paths or fromproject folder
-
             if os.path.isdir(self.hist_temps['ws']):
                 pass
             elif (not os.path.isdir(self.hist_temps['ws']) and
@@ -1135,8 +1135,9 @@ class CropETData:
                 self.hist_temps['ws'] = os.path.join(self.project_ws,
                                                      self.hist_temps['ws'])
             else:
-                logging.error('ERROR:refet folder {} does not exist'.format(
-                    self.hist_temps['ws']))
+                logging.error('ERROR: Phenology option selected and  hist temp'
+                              ' folder {} does not exist'
+                              .format(self.hist_temps['ws']))
                 sys.exit()
             try:
                 self.hist_temps['file_type'] = config.get(
@@ -1154,6 +1155,7 @@ class CropETData:
                     self.hist_temps['data_structure_type'] = 'SF P'
             except:
                 self.hist_temps['data_structure_type'] = 'SF P'
+
             self.hist_temps['name_format'] = config.get(hist_temps_sec,
                                                         'name_format')
             self.hist_temps['header_lines'] = config.getint(hist_temps_sec,
@@ -1178,7 +1180,6 @@ class CropETData:
 
             # Field names and units
             # Date can be read directly or computed from year, month, and day
-
             try:
                 self.hist_temps['fields']['date'] = config.get(hist_temps_sec,
                                                                'date_field')
@@ -1271,7 +1272,6 @@ class CropETData:
             input('Press ENTER to continue or Ctrl+C to exit')
 
 
-
     def set_crop_params(self):
         """ List of <CropParameter> instances """
         logging.info('  Reading crop parameters from\n' + self.crop_params_path)
@@ -1337,6 +1337,7 @@ def console_logger(logger=logging.getLogger(''), log_level=logging.INFO):
     logger.addHandler(log_console)
     return logger
 
+
 def do_tests():
     # Simple testing of functions as developed
     # logger = console_logger(log_level = 'DEBUG')
@@ -1344,7 +1345,8 @@ def do_tests():
     ini_path = os.getcwd() + os.sep + "cet_template.ini"
     cfg = CropETData()
     cfg.read_cet_ini(ini_path, True)
-    
+
+
 if __name__ == '__main__':
     # testing during development
-    do_tests()        
+    do_tests()
