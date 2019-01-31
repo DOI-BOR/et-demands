@@ -1262,7 +1262,7 @@ class CropETData:
                          'currently supported').format(k, v))
                     sys.exit()
 
-        #Check if refet_type matches crop_coefs_name
+        # Check if refet_type matches crop_coefs_name
         if self.refet['type'] not in self.crop_coefs_path:
             logging.warning('\nRefET Type does not match crop_coefs file name.'
                             ' Check the ini')
