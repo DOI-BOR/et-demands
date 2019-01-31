@@ -153,22 +153,22 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                     func_str, int(step_doy), step_dt.date()))
 
             # Log RefET values at time step
-            logging.debug(
+            logging.debug((
                 '{}: PPT {:.6f}  Wind {:.6f}  ' +
                 'Tdew {:.6f} ETref {:.6f}').format(
                 func_str, et_cell.climate_df.at[step_dt, 'ppt'],
                 et_cell.climate_df.at[step_dt, 'wind'],
                 et_cell.climate_df.at[step_dt, 'tdew'],
-                et_cell.refet_df.at[step_dt, 'etref'])
+                et_cell.refet_df.at[step_dt, 'etref']))
 
             # Log climate values at time step
-            logging.debug(
+            logging.debug((
                 '{}: tmax {:.6f}  tmin {:.6f}  ' +
                 'tmean {:.6f}  t30 {:.6f}').format(
                 func_str, et_cell.climate_df.at[step_dt, 'tmax'],
                 et_cell.climate_df.at[step_dt, 'tmin'],
                 et_cell.climate_df.at[step_dt, 'tmean'],
-                et_cell.climate_df.at[step_dt, 't30'])
+                et_cell.climate_df.at[step_dt, 't30']))
 
         # End of season for each crop, set up for non-growing and dormant season
         
@@ -268,15 +268,15 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
         # Write final output file variables to DEBUG file
 
         if debug_flag:
-            logging.debug(
+            logging.debug((
                 '{}: ETref  {:.6f}  Precip {:.6f}  T30 {:.6f}').format(
-                    func_str, foo_day.etref, foo_day.precip, foo_day.t30)
-            logging.debug(
+                    func_str, foo_day.etref, foo_day.precip, foo_day.t30))
+            logging.debug((
                 '{}: ETact  {:.6f}  ETpot {:.6f}   ETbas {:.6f}').format(
-                    func_str, foo.etc_act, foo.etc_pot, foo.etc_bas)
-            logging.debug(
-                ('{}: Irrig  {:.6f}  Runoff {:.6f}  ' +
-                 'DPerc {:.6f}  NIWR {:.6f}').format(
+                    func_str, foo.etc_act, foo.etc_pot, foo.etc_bas))
+            logging.debug((
+                '{}: Irrig  {:.6f}  Runoff {:.6f}  ' +
+                'DPerc {:.6f}  NIWR {:.6f}').format(
                     func_str, foo.irr_sim, foo.sro, foo.dperc, foo.niwr))
 
         # Check that season started
