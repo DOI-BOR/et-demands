@@ -261,6 +261,8 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
         foo.crop_df.at[step_dt, 'irrigation'] = foo.irr_sim
         foo.crop_df.at[step_dt, 'runoff'] = foo.sro
         foo.crop_df.at[step_dt, 'dperc'] = foo.dperc
+        foo.crop_df.at[step_dt, 'p_rz'] = foo.p_rz
+        foo.crop_df.at[step_dt, 'p_eft'] = foo.p_eft
         foo.crop_df.at[step_dt, 'niwr'] = foo.niwr + 0
         foo.crop_df.at[step_dt, 'season'] = int(foo.in_season)
         foo.crop_df.at[step_dt, 'cutting'] = int(foo.cutting)
@@ -294,7 +296,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                         crop.class_number, foo_day.year))
 
     # Write output files
-    
     if (data.cet_out['daily_output_flag'] or 
             data.cet_out['monthly_output_flag'] or
             data.cet_out['annual_output_flag'] or 
@@ -340,6 +341,8 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
     gs_start_date_field = 'Start_Date'
     gs_end_date_field = 'End_Date'
     gs_length_field = 'GS_Length'
+    p_rz_field = 'P_rz'
+    p_eft_field = 'P_eft'
 
     # Merge crop and weather data frames to form daily output
 
@@ -362,6 +365,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             'et_bas': etbas_field, 'kc_act': kc_field, 'kc_bas': kcb_field,
             'niwr': niwr_field, 'irrigation': irrig_field,
             'runoff': runoff_field, 'dperc': dperc_field,
+            'p_rz': p_rz_field, 'p_eft': p_eft_field,
             'season': season_field, 'cutting': cutting_field})
             
     # Compute monthly and annual stats before modifying daily format below
@@ -371,8 +375,9 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             pmet_field: np.sum, etact_field: np.sum, etpot_field: np.sum,
             etbas_field: np.sum, kc_field: np.mean, kcb_field: np.mean,
             niwr_field: np.sum, precip_field: np.sum, irrig_field: np.sum,
-            runoff_field: np.sum, dperc_field: np.sum, season_field: np.sum,
-            cutting_field: np.sum}
+            runoff_field: np.sum, dperc_field: np.sum,
+            p_rz_field: np.sum, p_eft_field: np.sum,
+            season_field: np.sum, cutting_field: np.sum}
         # dri dm approach produces 'TypeError: ("'dict' object is not callable", 
         # a u'occurred at index DOY')
         monthly_output_df = daily_output_df.resample('MS').apply(
@@ -382,8 +387,9 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             pmet_field: np.sum, etact_field: np.sum, etpot_field: np.sum,
             etbas_field: np.sum, kc_field: np.mean, kcb_field: np.mean,
             niwr_field: np.sum, precip_field: np.sum, irrig_field: np.sum,
-            runoff_field: np.sum, dperc_field: np.sum, season_field: np.sum,
-            cutting_field: np.sum}
+            runoff_field: np.sum, dperc_field: np.sum,
+            p_rz_field: np.sum, p_eft_field: np.sum,
+            season_field: np.sum, cutting_field: np.sum}
         # dri dm approach produces 'TypeError: ("'dict' object is not callable", 
         # a u'occurred at index DOY')
         annual_output_df = daily_output_df.resample('AS').apply(
@@ -509,6 +515,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                etbas_field, kc_field, kcb_field,
                                                precip_field, irrig_field,
                                                runoff_field, dperc_field,
+                                               p_rz_field, p_eft_field,
                                                niwr_field, season_field]
             
         # Remove these (instead of appending) to preserve column order
@@ -572,6 +579,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                  kc_field, kcb_field,
                                                  precip_field, irrig_field,
                                                  runoff_field, dperc_field,
+                                                 p_rz_field, p_eft_field,
                                                  niwr_field, season_field]
         if data.cutting_flag and crop.cutting_crop:
             monthly_output_df[cutting_field] = \
@@ -608,10 +616,14 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                     '__', '_') % et_cell.cell_id)
             annual_output_df['Crop Num'] = crop.class_number
             annual_output_df['Crop Name'] = crop.name
-        annual_output_columns = base_columns + \
-            [year_field, pmet_field, etact_field, etpot_field, etbas_field,
-             kc_field, kcb_field, precip_field, irrig_field, runoff_field,
-             dperc_field, niwr_field, season_field]
+        annual_output_columns = base_columns + [year_field, pmet_field,
+                                                etact_field, etpot_field,
+                                                etbas_field, kc_field,
+                                                kcb_field, precip_field,
+                                                irrig_field, runoff_field,
+                                                dperc_field,
+                                                p_rz_field, p_eft_field,
+                                                niwr_field, season_field]
         try:
             annual_output_columns.remove('Date')
         except:
