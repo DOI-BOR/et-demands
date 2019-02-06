@@ -640,10 +640,10 @@ class ETCell():
         logging.debug('\nRead ETo/ETr data')
 
         logging.debug('Read meteorological/climate data')
-        if data.refet['data_structure_type'].upper() == 'SF P':
-            success = self.SF_P_refet_data(data)
-        else:
-            success = self.DMI_refet_data(data, cells)
+        # if data.refet['data_structure_type'].upper() == 'SF P':
+        success = self.SF_P_refet_data(data)
+        # else:
+        #     success = self.DMI_refet_data(data, cells)
         if not success:
             logging.error('Unable to read reference ET data.')
             return False
@@ -717,22 +717,19 @@ class ETCell():
             self.refet_df.columns))))
 
         # Check that fields exist in data table
-
         for field_key, field_name in data.refet['fields'].items():
             if (field_name is not None and
                     field_name not in self.refet_df.columns):
                 logging.error(
                     ('\n  ERROR: Field "{0}" was not found in {1}\n' +
                      '    Check{2}_field value inINI file').format(
-                    field_name, os.path.basename(temps_path), field_key))
+                        field_name, os.path.basename(temps_path), field_key))
                 sys.exit()
 
             # Rename dataframe fields
-
             self.refet_df = self.refet_df.rename(columns={field_name:field_key})
 
         # Convert date strings to datetimes
-
         if data.refet['fields']['date'] is not None:
             self.refet_df['date'] = pd.to_datetime(self.refet_df['date'])
         else:
@@ -741,7 +738,6 @@ class ETCell():
         self.refet_df.set_index('date', inplace=True)
 
         # truncate period
-
         try:
             self.refet_df = self.refet_df.truncate(before=data.start_dt,
                                                    after=data.end_dt)
@@ -754,64 +750,6 @@ class ETCell():
             return False
         return True
 
-    def DMI_refet_data(self, data):
-        """Read reference ET for single station using specified DMI format
-
-        Args:
-            data: configuration data from INI file
-
-        Returns:
-            success: True or False
-        """
-        self.refet_df = None
-        if '%p' in data.refet['name_format']:
-            refet_path = os.path.join(data.refet['ws'],
-                                      data.refet['name_format'].
-                                      replace('%p', data.refet['fnspec']))
-        else:
-            refet_path = os.path.join(data.refet['ws'], data.refet['name_format'])
-        if not os.path.isfile(refet_path):
-            logging.error('ERROR:  Reference ET data path {0} does not exist'.
-                          format(refet_path))
-            return False
-        logging.debug('  Reference ET path is {0}'.format(refet_path))
-        if data.refet['data_structure_type'].upper() == 'PF S.P':
-            if data.refet['file_type'].lower() == 'csf':
-                param_df = mod_dmis.ReadOneColumnSlot(
-                    refet_path, data.refet['header_lines'],
-                    data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'],
-                    data.refet['units']['etref'], 1.0,
-                    'day', 1, data.refet['delimiter'], data.start_dt,
-                    data.end_dt)
-            elif data.refet['file_type'].lower() == 'rdb':
-                param_df = mod_dmis.ReadOneTextRDB(
-                    refet_path, data.refet['header_lines'],
-                    data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'],
-                    data.refet['units']['etref'], 1.0,
-                    'day', 1, data.refet['delimiter'], data.start_dt,
-                    data.end_dt)
-            elif data.refet['file_type'].lower() == 'xls' or \
-                    data.refet['file_type'].lower() == 'wb':
-                param_df = mod_dmis.ReadOneExcelColumn(
-                    refet_path, data.refet['wsspec'],
-                    data.refet['header_lines'], data.refet['names_line'],
-                    self.refet_id, data.refet['fields']['etref'],
-                    data.refet['units']['etref'], 1.0,
-                    'day', 1, data.start_dt, data.end_dt)
-        else:
-            logging.error('ERROR:  File type {} is not supported'.
-                          format(data.refet['file_type']))
-            return False
-        if param_df is None:
-            logging.error('ERROR:  unable to read {}'.format(refet_path))
-            return False
-        else:
-            self.refet_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
-                                                       data.end_dt)
-            self.refet_df['etref'] = param_df[[0]].values
-        return True
 
     def set_refet_ratio_data(self, data):
         """Read ETo/ETr ratios static file
@@ -909,10 +847,10 @@ class ETCell():
             success: True or False
         """
         logging.debug('Read meteorological/climate data')
-        if data.weather['data_structure_type'].upper() == 'SF P':
-            success = self.SF_P_weather_data(data)
-        else:
-            success = self.DMI_weather_data(cell_count, data, cells)
+        # if data.weather['data_structure_type'].upper() == 'SF P':
+        success = self.SF_P_weather_data(data)
+        # else:
+        #     success = self.DMI_weather_data(cell_count, data, cells)
         if not success:
             logging.error('Unable to read and fill daily metereorological '
                           'data.')
@@ -963,11 +901,9 @@ class ETCell():
                                   self.weather_df.index]
 
         # Scale wind height to 2m if necessary
-
         if data.weather['wind_height'] != 2:
             self.weather_df['wind'] *=\
                 (4.87 / np.log(67.8 * data.weather['wind_height'] - 5.42))
-
 
         # Add snow and snow_depth if necessary
         if 'snow' not in self.weather_df.columns:
@@ -987,7 +923,6 @@ class ETCell():
             logging.info('\nUsing q for rh_min calculation.')
             self.weather_df['tdew'] = util.tdew_from_ea(util.ea_from_q(
                 self.air_pressure, self.weather_df['q'].values))
-
 
         # Compute rh_min from Tdew and Tmax
         if ('rh_min' not in self.weather_df.columns and
@@ -1096,116 +1031,6 @@ class ETCell():
         if len(self.weather_df.index) < 1:
             logging.error('No data found reading weather data')
             return False
-        return True
-
-    def DMI_weather_data(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station using specified
-         DMI format
-
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
-
-        Returns:
-            success: True or False
-        """
-
-        # Read data from files by fields
-
-        self.weather_df = None
-        input_buffer = None
-        field_count = 0
-        for field_key, field_name in data.weather['fields'].items():
-            if field_name is None or field_name.lower() == 'date':
-                continue
-            if field_name.lower() == 'year' or field_name.lower() == 'month':
-                continue
-            if field_name.lower() == 'day' or field_name.lower() == 'doy':
-                continue
-            if data.weather['fnspec'][field_key].lower() == 'estimated':
-                continue
-            if data.weather['fnspec'][field_key].lower() == 'unused':
-                continue
-
-            # pull data for field_name
-            if cell_count == 1:
-                last_path = ''
-                if '%p' in data.weather['name_format']:
-                    weather_path = os.path.join(data.weather['ws'],
-                                                data.weather['name_format'].
-                                                replace('%p', data.weather[
-                                                    'fnspec'][field_key]))
-                else:
-                    weather_path = os.path.join(data.weather['ws'],
-                                                data.weather['name_format'])
-                if not os.path.isfile(weather_path):
-                    logging.error('ERROR:  Weather data path for {0} is {1}'
-                                  ' does not exist'.format(field_key,
-                                                           weather_path))
-                    return False
-                logging.debug('  Weather data path for {0} is {1}'.
-                              format(field_key, weather_path))
-                if data.weather['data_structure_type'].upper() == 'PF S.P':
-                    if data.weather['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(
-                            weather_path, data.weather['header_lines'],
-                            data.weather['names_line'], 'day', 1,
-                            data.weather['delimiter'], data.start_dt,
-                            data.end_dt)
-                    elif data.weather['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(
-                            weather_path, data.weather['header_lines'],
-                            data.weather['names_line'], 'day', 1,
-                            data.weather['delimiter'], data.start_dt, data.end_dt)
-                    elif data.weather['file_type'].lower() == 'xls' or \
-                            data.weather['file_type'].lower() == 'wb':
-                        # Weather_buffer Isn't Used
-                        # input_buffer no defined
-                        if '%p' in data.weather['name_format'] or \
-                                field_count == 1:
-                            weather_buffer = pd.ExcelFile(weather_path)
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(
-                            input_buffer,
-                            data.weather['wsspec'][field_key],
-                            data.weather['header_lines'],
-                            data.weather['names_line'],
-                            time_step='day', ts_quantity=1,
-                            start_dt=data.start_dt, end_dt=data.end_dt)
-                    else:
-                        logging.error('ERROR:  File type {} is not supported'.
-                                      format(data.weather['file_type']))
-                        return False
-                    if param_df is None:
-                        logging.error('ERROR:  unable to read {}'.format(
-                            weather_path))
-                        return False
-                    else:
-                        if data.start_dt is None:
-                            pydt = param_df.index[0]
-                            data.start_dt = pd.to_datetime(datetime.datetime(
-                                pydt.year, pydt.month, pydt.day, pydt.hour,
-                                pydt.minute))
-                        if data.end_dt is None:
-                            pydt = param_df.index[len(param_df) - 1]
-                            data.end_date = pd.to_datetime(datetime.datetime(
-                                pydt.year, pydt.month, pydt.day, pydt.hour,
-                                pydt.minute))
-                        param_df = mod_dmis.ReduceDataframeToParameter(
-                            param_df, field_name)
-                        cells.et_cells_weather_data[field_key] = param_df
-                    del param_df
-        del input_buffer
-
-        # pull et cell's data from parameter data frames
-
-        self.weather_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
-                                                     data.end_dt)
-        for field_key, param_df in cells.et_cells_weather_data.items():
-            self.weather_df[field_key] = mod_dmis.ReadOneDataframeColumn(
-                param_df, self.refet_id,
-                data.weather['fields'][field_key],
-                data.weather['units'][field_key], 1, 'day', 1,
-                data.start_dt, data.end_dt).values
         return True
 
     def set_historic_temps(self, cell_count, data, cells):

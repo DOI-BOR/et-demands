@@ -121,28 +121,23 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
         logging.debug('  GDD trigger DOY: {}'.format(crop.gdd_trigger_doy))
 
     # 'foo' is holder of all these global variables for now
-    
     foo = InitializeCropCycle()
 
     # First time through for crop, load basic crop parameters and
     # process climate data
-
     foo.crop_load(data, et_cell, crop)
 
     # GetCO2 correction factors for each crop
-    
     if data.co2_flag:
         foo.setup_co2(et_cell, crop)
 
     # Initialize crop data frame
-
     foo.setup_dataframe(et_cell)
     foo_day = DayData()
     foo_day.sdays = 0
     foo_day.doy_prev = 0
 
     # At very start for crop, set up for next season
-        
     if not foo.in_season and foo.crop_setup_flag:
         foo.setup_crop(crop)
 
@@ -171,7 +166,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                 et_cell.climate_df.at[step_dt, 't30']))
 
         # End of season for each crop, set up for non-growing and dormant season
-        
         if not foo.in_season and foo.dormant_setup_flag:
             foo.setup_dormant(et_cell, crop)
         if debug_flag:
@@ -182,7 +176,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
 
         # Track variables for each day
         # For now, cast all values to native Python types
-        
         foo_day.sdays += 1
         foo_day.doy = int(step_doy)
         foo_day.year = int(step_dt.year)
@@ -229,12 +222,10 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
             foo_day.t30 = float(et_cell.climate_df.at[step_dt, '30t'])
 
         # Get CO2 correction factor for each day
-        
         if data.co2_flag:
             foo_day.co2 = float(foo.co2.at[step_dt])
 
         # Compute crop growing degree days
-        
         compute_crop_gdd.compute_crop_gdd(crop, foo, foo_day)
 
         # Calculate height of vegetation.  
@@ -252,7 +243,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
 
         # Retrieve values from foo_day and write to output data frame
         # Eventually let compute_crop_et() write directly to output df
-        
         foo.crop_df.at[step_dt, 'et_act'] = foo.etc_act
         foo.crop_df.at[step_dt, 'et_pot'] = foo.etc_pot
         foo.crop_df.at[step_dt, 'et_bas'] = foo.etc_bas
@@ -268,7 +258,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
         foo.crop_df.at[step_dt, 'cutting'] = int(foo.cutting)
 
         # Write final output file variables to DEBUG file
-
         if debug_flag:
             logging.debug((
                 '{}: ETref  {:.6f}  Precip {:.6f}  T30 {:.6f}').format(
@@ -345,7 +334,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
     p_eft_field = 'P_eft'
 
     # Merge crop and weather data frames to form daily output
-
     if (data.cet_out['daily_output_flag'] or 
             data.cet_out['monthly_output_flag'] or
             data.cet_out['annual_output_flag'] or 
@@ -356,7 +344,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             left_index=True, right_index=True)
 
         # Rename output columns
-        
         daily_output_df.index.rename('Date', inplace=True)
         daily_output_df[year_field] = daily_output_df.index.year
         daily_output_df = daily_output_df.rename(columns={
@@ -369,7 +356,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             'season': season_field, 'cutting': cutting_field})
             
     # Compute monthly and annual stats before modifying daily format below
-    
     if data.cet_out['monthly_output_flag']:
         monthly_resample_func = {
             pmet_field: np.sum, etact_field: np.sum, etpot_field: np.sum,
@@ -453,30 +439,18 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             gs_output_df.at[group.index[0], gs_length_field] = int(
                 sum(group[season_field].values))
 
-    if data.cet_out['data_structure_type'].upper() == 'DRI':
-        base_columns = []
-        open_mode = 'w'
-        print_index = True
-        print_header = True
-    else:    # RDB
-        base_columns = ['Crop Num', 'Crop Name', 'Date']
-        if crop_count == 1:
-            open_mode = 'w'
-            print_header = True
-        else:
-            open_mode = 'a'
-            print_header = False
-        print_index = False
+    base_columns = []
+    open_mode = 'w'
+    print_index = True
+    print_header = True
 
     # Write daily cet
-    
     if data.cet_out['daily_output_flag']:
         daily_output_df[year_field] = daily_output_df.index.year
         daily_output_df[month_field] = daily_output_df.index.month
         daily_output_df[day_field] = daily_output_df.index.day
         
         # format date attributes if values are formatted
-                    
         if data.cet_out['daily_float_format'] is not None:
             daily_output_df[year_field] = daily_output_df[year_field].map(
                 lambda x: ' %4d' % x)
@@ -494,21 +468,12 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         # daily_output_df[niwr_field].values, 6)
         daily_output_df[season_field] = daily_output_df[season_field].map(
             lambda x: ' %1d' % x)
-        if data.cet_out['data_structure_type'].upper() == 'DRI':
-            daily_output_path = os.path.join(
-                data.cet_out['daily_output_ws'],
-                data.cet_out['name_format'].replace(
-                     '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
-        else:    # RDB
-            daily_output_path = os.path.join(
-                data.cet_out['daily_output_ws'],
-                data.cet_out['name_format'].replace('%c', '').replace(
-                    '__', '_') % et_cell.cell_id)
-            daily_output_df['Crop Num'] = crop.class_number
-            daily_output_df['Crop Name'] = crop.name
+        daily_output_path = os.path.join(
+            data.cet_out['daily_output_ws'],
+            data.cet_out['name_format'].replace(
+                 '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
 
         # Set output column order
-
         daily_output_columns = base_columns + [year_field, month_field,
                                                day_field, doy_field, pmet_field,
                                                etact_field, etpot_field,
@@ -519,7 +484,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                niwr_field, season_field]
             
         # Remove these (instead of appending) to preserve column order
-        
         if not data.kc_flag:
             daily_output_columns.remove(kc_field)
             daily_output_columns.remove(kcb_field)
@@ -527,18 +491,14 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             daily_output_columns.remove(niwr_field)
             
         # Most crops do not have cuttings, so append if needed
-        
         if data.cutting_flag and crop.cutting_crop:
             daily_output_df[cutting_field] = daily_output_df[cutting_field].map(
                 lambda x: ' %1d' % x)
             daily_output_columns.append(cutting_field)
             
         with open(daily_output_path, open_mode) as daily_output_f:
-            if data.cet_out['data_structure_type'].upper() == 'DRI': 
-                daily_output_f.write('# {0:2d} - {1}\n'.format(
-                    crop.class_number, crop.name))
-            else:    # RDB
-                daily_output_df.reset_index(inplace=True)
+            daily_output_f.write('# {0:2d} - {1}\n'.format(
+                crop.class_number, crop.name))
             daily_output_df.to_csv(
                 daily_output_f, header=print_header, index=print_index,
                 sep=',', columns=daily_output_columns,
@@ -547,13 +507,11 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         del daily_output_df, daily_output_path, daily_output_columns
 
     # Write monthly cet
-
     if data.cet_out['monthly_output_flag']:
         monthly_output_df[year_field] = monthly_output_df.index.year
         monthly_output_df[month_field] = monthly_output_df.index.month
         
         # format date attributes if values are formatted
-                    
         if data.cet_out['monthly_float_format'] is not None:
             monthly_output_df[year_field] = \
                 monthly_output_df[year_field].map(lambda x: ' %4d' % x)
@@ -561,18 +519,10 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 monthly_output_df[month_field].map(lambda x: ' %2d' % x)
             monthly_output_df[season_field] = \
                 monthly_output_df[season_field].map(lambda x: ' %2d' % x)
-        if data.cet_out['data_structure_type'].upper() == 'DRI':
-            monthly_output_path = os.path.join(
-                data.cet_out['monthly_output_ws'],
-                data.cet_out['name_format'].replace(
-                    '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
-        else:    # RDB
-            monthly_output_path = os.path.join(
-                data.cet_out['monthly_output_ws'],
-                data.cet_out['name_format'].replace('%c', '').replace(
-                    '__', '_') % et_cell.cell_id)
-            monthly_output_df['Crop Num'] = crop.class_number
-            monthly_output_df['Crop Name'] = crop.name
+        monthly_output_path = os.path.join(
+            data.cet_out['monthly_output_ws'],
+            data.cet_out['name_format'].replace(
+                '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
         monthly_output_columns = base_columns + [year_field, month_field,
                                                  pmet_field, etact_field,
                                                  etpot_field, etbas_field,
@@ -586,11 +536,8 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 monthly_output_df[cutting_field].map(lambda x: ' %1d' % x)
             monthly_output_columns.append(cutting_field)
         with open(monthly_output_path, open_mode) as monthly_output_f:
-            if data.cet_out['data_structure_type'].upper() == 'DRI': 
-                monthly_output_f.write('# {0:2d} - {1}\n'.format(
-                    crop.class_number, crop.name))
-            else:    # RDB
-                monthly_output_df.reset_index(inplace=True)
+            monthly_output_f.write('# {0:2d} - {1}\n'.format(
+                crop.class_number, crop.name))
             monthly_output_df.to_csv(
                 monthly_output_f, header=print_header,
                 index=print_index, sep=',', columns=monthly_output_columns,
@@ -599,23 +546,14 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         del monthly_output_df, monthly_output_path, monthly_output_columns
 
     # Write annual cet
-    
     if data.cet_out['annual_output_flag']:
         annual_output_df[year_field] = annual_output_df.index.year
         annual_output_df[season_field] = annual_output_df[season_field].map(
             lambda x: ' %3d' % x)
-        if data.cet_out['data_structure_type'].upper() == 'DRI':
-            annual_output_path = os.path.join(
-                data.cet_out['annual_output_ws'],
-                data.cet_out['name_format'].replace(
-                    '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
-        else:    # RDB
-            annual_output_path = os.path.join(
-                data.cet_out['annual_output_ws'],
-                data.cet_out['name_format'].replace('%c', '').replace(
-                    '__', '_') % et_cell.cell_id)
-            annual_output_df['Crop Num'] = crop.class_number
-            annual_output_df['Crop Name'] = crop.name
+        annual_output_path = os.path.join(
+            data.cet_out['annual_output_ws'],
+            data.cet_out['name_format'].replace(
+                '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)
         annual_output_columns = base_columns + [year_field, pmet_field,
                                                 etact_field, etpot_field,
                                                 etbas_field, kc_field,
@@ -633,11 +571,8 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 cutting_field].map(lambda x: ' %2d' % x)
             annual_output_columns.append(cutting_field)
         with open(annual_output_path, open_mode) as annual_output_f:
-            if data.cet_out['data_structure_type'].upper() == 'DRI': 
-                annual_output_f.write('# {0:2d} - {1}\n'.format(
-                    crop.class_number, crop.name))
-            else:    # RDB
-                annual_output_df.reset_index(inplace = True)
+            annual_output_f.write('# {0:2d} - {1}\n'.format(
+                crop.class_number, crop.name))
             annual_output_df.to_csv(
                 annual_output_f, header=print_header,
                 index=False, sep=',', columns=annual_output_columns,
@@ -646,7 +581,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         del annual_output_df, annual_output_path, annual_output_columns
 
     # Write growing season statistics
-    
     if data.gs_output_flag:
         def doy_2_date(test_year, test_doy):
             try:
@@ -663,13 +597,11 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 lambda s: doy_2_date(*s), axis=1)
         if data.gs_name_format is None:
             # default filename spec
-
             gs_output_path = os.path.join(
                 data.gs_output_ws, '{0}_gs_crop_{1:02d}.csv'.format(
                     et_cell.cell_id, int(crop.class_number)))
         else:
             # user filename spec or function of cet name spec
-
             gs_output_path = os.path.join(
                 data.gs_output_ws, data.gs_name_format.replace(
                     '%c', '%02d' % int(crop.class_number)) % et_cell.cell_id)

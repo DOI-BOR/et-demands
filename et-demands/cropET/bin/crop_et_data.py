@@ -426,92 +426,18 @@ class CropETData:
                 self.gs_output_ws = 'growing_season_stats'
 
         # cet file type specifications
-        try:
-            self.cet_out['file_type'] = config.get(
-                crop_et_sec, 'file_type').upper()
-            if self.cet_out['file_type'] is None or \
-                    self.cet_out['file_type'] == 'None':
-                self.cet_out['file_type'] = "csv"
-        except:
-            self.cet_out['file_type'] = "csv"
-        try:
-            self.cet_out['data_structure_type'] = config.get(
-                crop_et_sec, 'data_structure_type').upper()
-            if self.cet_out['data_structure_type'] is None or \
-                    self.cet_out['data_structure_type'] == 'None':
-                self.cet_out['data_structure_type'] = "DRI"
-        except:
-            self.cet_out['data_structure_type'] = "DRI"
-        try:
-            self.cet_out['name_format'] = config.get(crop_et_sec, 'name_format')
-            if self.cet_out['name_format'] is None or \
-                    self.cet_out['name_format'] == 'None':
-                if self.cet_out['data_structure_type'] == "DRI":
-                    self.cet_out['name_format'] = '%s_crop_%c.csv'
-                else:    # RDB format
-                    self.cet_out['name_format'] = '%s_crop.csv'
-        except:
-            if self.cet_out['data_structure_type'] == "DRI":
-                self.cet_out['name_format'] = '%s_crop_%c.csv'
-            else:    # RDB format
-                self.cet_out['name_format'] = '%s_crop.csv'
-        try:
-            self.cet_out['header_lines'] = config.getint(
-                crop_et_sec, 'header_lines')
-            if self.cet_out['header_lines'] is None or \
-                    self.cet_out['header_lines'] == 'None':
-                self.cet_out['header_lines'] = 1
-        except:
-            self.cet_out['header_lines'] = 1
-        try:
-            self.cet_out['names_line'] = \
-                config.getint(crop_et_sec, 'names_line')
-            if self.cet_out['names_line'] is None or \
-                    self.cet_out['names_line'] == 'None':
-                self.cet_out['names_line'] = 1
-        except:
-            self.cet_out['names_line'] = 1
-        try:
-            self.cet_out['delimiter'] = config.get(crop_et_sec, 'delimiter')
-            if self.cet_out['delimiter'] is None or \
-                    self.cet_out['delimiter'] == 'None':
-                self.cet_out['delimiter'] = '.'
-            else:
-                if self.cet_out['delimiter'] not in \
-                        [' ', ',', '\\t']: self.cet_out['delimiter'] = ','
-                if "\\" in self.cet_out['delimiter'] and \
-                        "t" in self.cet_out['delimiter']:
-                    self.cet_out['delimiter'] = \
-                        self.cet_out['delimiter'].replace('\\t', '\t')
-        except:
-            self.cet_out['delimiter'] = '.'
-            
+        self.cet_out['file_type'] = "csv"
+        # self.cet_out['data_structure_type'] = "DRI"
+        self.cet_out['name_format'] = '%s_crop_%c.csv'
+        self.cet_out['header_lines'] = 1
+        self.cet_out['names_line'] = 1
+        self.cet_out['delimiter'] = ','
+
         # pick up user growing season file specifications
         if self.gs_output_flag:
-            try:
-                self.gs_name_format = config.get(
-                    crop_et_sec, 'gs_name_format')
-                if self.gs_name_format is None or \
-                        self.gs_name_format == 'None':
-                    self.gs_name_format = \
-                        self.cet_out['name_format'].replace('%s', '%s_gs')
-            except:
-                self.gs_name_format = \
-                    self.cet_out['name_format'].replace('%s', '%s_gs')
-            if '%c' not in self.gs_name_format:
-                # cet is RDB format - need to add crop for gs
-                
-                try:
-                    if 'crop' in self.gs_name_format:
-                        self.gs_name_format = \
-                            self.gs_name_format.replace('crop', 'crop_%c')
-                    else:
-                        self.gs_name_format = \
-                            self.gs_name_format.replace('%s_gs',
-                                                        '%s_gs_crop_%c')
-                except:
-                    self.gs_name_format = None
-            
+            self.gs_name_format = self.cet_out['name_format'].replace(
+                '%s', '%s_gs')
+
         # computation switches
         
         # False sets crop 1 to alfalfa peak with no cuttings
@@ -640,21 +566,9 @@ class CropETData:
         if self.refet['type'] not in ['eto', 'etr']:
             logging.error('  ERROR: RefET type must be ETo or ETr')
             sys.exit()
-        try:
-            self.refet['file_type'] = config.get(refet_sec, 'file_type')
-            if self.refet['file_type'] is None or \
-                    self.refet['file_type'] == 'None':
-                self.refet['file_type'] = 'csv'
-        except:
-            self.refet['file_type'] = 'csv'
-        try:
-            self.refet['data_structure_type'] = \
-                config.get(refet_sec, 'data_structure_type')
-            if self.refet['data_structure_type'] is None or \
-                    self.refet['data_structure_type'] == 'None':
-                self.refet['data_structure_type'] = 'SF P'
-        except:
-            self.refet['data_structure_type'] = 'SF P'
+
+        self.refet['file_type'] = 'csv'
+        # self.refet['data_structure_type'] = 'SF P'
         self.refet['name_format'] = config.get(refet_sec, 'name_format')
         self.refet['header_lines'] = config.getint(refet_sec, 'header_lines')
         self.refet['names_line'] = config.getint(refet_sec, 'names_line')
@@ -753,24 +667,9 @@ class CropETData:
             logging.error('ERROR:refet folder {} does not exist'.format(
                 self.weather['ws']))
             sys.exit()
-        # DEADBEEF
-        # self.weather['ws'] = os.path.join(
-        #     .project_ws, config.get(weather_sec, 'weather_folder'))
-        try:
-            self.weather['file_type'] = config.get(weather_sec, 'file_type')
-            if self.weather['file_type'] is None or \
-                    self.weather['file_type'] == 'None':
-                self.weather['file_type'] = 'csv'
-        except:
-            self.weather['file_type'] = 'csv'
-        try:
-            self.weather['data_structure_type'] = \
-                config.get(weather_sec, 'data_structure_type')
-            if self.weather['data_structure_type'] is None or \
-                    self.weather['data_structure_type'] == 'None':
-                self.weather['data_structure_type'] = 'SF P'
-        except:
-            self.weather['data_structure_type'] = 'SF P'
+
+        self.weather['file_type'] = 'csv'
+         # self.weather['data_structure_type'] = 'SF P'
         self.weather['name_format'] = config.get(weather_sec, 'name_format')
         self.weather['header_lines'] = config.getint(weather_sec,
                                                      'header_lines')
@@ -792,7 +691,6 @@ class CropETData:
 
         # Field names and units
         # Date can be read directly or computed from year, month, and day
-
         try:
             self.weather['fields']['date'] = \
                 config.get(weather_sec, 'date_field')
@@ -1147,15 +1045,8 @@ class CropETData:
                     self.hist_temps['file_type'] = 'csv'
             except:
                 self.hist_temps['file_type'] = 'csv'
-            try:
-                self.hist_temps['data_structure_type'] = config.get(
-                    hist_temps_sec, 'data_structure_type')
-                if self.hist_temps['data_structure_type'] is None or \
-                        self.hist_temps['data_structure_type'] == 'None':
-                    self.hist_temps['data_structure_type'] = 'SF P'
-            except:
-                self.hist_temps['data_structure_type'] = 'SF P'
 
+            # self.hist_temps['data_structure_type'] = 'SF P'
             self.hist_temps['name_format'] = config.get(hist_temps_sec,
                                                         'name_format')
             self.hist_temps['header_lines'] = config.getint(hist_temps_sec,
