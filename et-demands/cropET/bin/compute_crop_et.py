@@ -888,6 +888,21 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     else:
         foo.niwr = foo.etc_act - (foo_day.precip - foo.sro - foo.dperc)
 
+    # Effective Precipitation Calcs
+    # p_rz = Precipitation residing in the root zone
+    # p_rz = P - Runoff - DPerc, where P is gross reported precip
+    foo.p_rz = foo_day.precip - foo.sro - foo.dperc
+    if foo.p_rz <= 0:
+        foo.p_rz = 0
+
+    # p_eft = prcp residing in the root zone available for transpiration
+    # p_eft = p_rz - surface evaporation losses
+    # p_eft = P - Runoff - DPerc - surface evaporation losses
+    # e_ppt = ke_ppt*foo_day.etref (evap component of prcp only)
+    foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e_ppt
+    if foo.p_eft <= 0:
+        foo.p_eft = 0
+
     # Note, at end of season (harvest or death), aw3 and zr need to be reset
     #   according to depl_root at that time and zr for dormant season.
     # This is done in setup_dormant().

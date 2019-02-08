@@ -313,11 +313,10 @@ def main(ini_path, overwrite_flag=False):
     # Write clipped zones (if necessary)
     logging.info('\nComputing crop area/type zonal stats')
     for zone_fid, crop_fid_list in sorted(zone_crops.items()):
-        if zone_fid % 1000 == 0 and zone_fid != 0:
-            logging.info('ZONE FID: {}'.format(zone_fid))
-        # logging.debug('ZONE FID: {}'.format(zone_fid))
-
-        # logging.debug('CROP FID: {}'.format(crop_fid_list))
+        # if zone_fid % 1000 == 0 and zone_fid != 0:
+        # logging.info('ZONE FID: {}'.format(zone_fid))
+        logging.info('ZONE FID: {}'.format(zone_fid))
+        logging.debug('CROP FID: {}'.format(crop_fid_list))
         if not crop_fid_list:
             logging.debug('  No crop FIDs, skipping zone')
             continue

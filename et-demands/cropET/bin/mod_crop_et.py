@@ -15,9 +15,10 @@ import crop_cycle
 import et_cell
 import util
 
-def main(ini_path, log_level = logging.WARNING, 
-        etcid_to_run ='ALL', debug_flag=False,
-        cal_flag=False, mp_procs=1):
+
+def main(ini_path, log_level=logging.WARNING,
+         etcid_to_run='ALL', debug_flag=False,
+         cal_flag=False, mp_procs=1):
     """ Main function for running crop ET model
 
     Args:
@@ -54,13 +55,11 @@ def main(ini_path, log_level = logging.WARNING,
     data.read_cet_ini(ini_path, debug_flag)
 
     # Start file logging once INI file has been read
-
     if debug_flag:
         logger = util.file_logger(
             logger, log_level=logging.DEBUG, output_ws=data.project_ws)
 
     # Growing season summary CSV files must be written
-
     if cal_flag:
         logging.warning('  Setting growing_season_stats_flag = True')
         data.gs_output_flag = True
@@ -69,7 +68,6 @@ def main(ini_path, log_level = logging.WARNING,
     # Crop coefficients are constant for all cells
     # Crop params can vary if CDL data are used but have base parameters
     # File paths are read from INI
-
     data.set_crop_params()
     data.set_crop_coeffs()
     if data.co2_flag:
@@ -127,13 +125,12 @@ def main(ini_path, log_level = logging.WARNING,
                 logging.warning("  Multiprocessing by crop")
                 crop_mp_flag = True
 
-    # loop thru et cells
-    
+    # loop through et cells
     logging.warning("")
     cell_count = 0
     for cell_id, cell in sorted(cells.et_cells_dict.items()):
         if etcid_to_run == 'ALL' or etcid_to_run == cell_id:
-            logging.info('  Processing node id' + cell_id + ' with name ' +
+            logging.info('\nProcessing node id' + cell_id + ' with name ' +
                          cell.cell_name)
             cell_count += 1
             if cell_mp_flag:
@@ -176,7 +173,8 @@ def main(ini_path, log_level = logging.WARNING,
                 gs_output_path = os.path.join(
                     data.gs_output_ws, '{0}_gs_crop_{1:02d}.csv'.format(
                         cell_id, int(crop.class_number)))
-                gs_df = pd.read_table(gs_output_path, header=0, comment='#', sep=',')
+                gs_df = pd.read_table(gs_output_path, header=0, comment='#',
+                                      sep=',')
                 gs_start_doy = int(round(gs_df['Start_DOY'].mean()))
                 gs_end_doy = int(round(gs_df['End_DOY'].mean()))
                 gs_start_dt = datetime.datetime.strptime(
@@ -185,8 +183,10 @@ def main(ini_path, log_level = logging.WARNING,
                     '2001_{:03d}'.format(gs_end_doy), '%Y_%j')
                 logging.warning(
                     ('  Crop {crop:2d}:' +
-                     '  {start_dt.month}/{start_dt.day} - {end_dt.month}/{end_dt.day}').format(
+                     '  {start_dt.month}/{start_dt.day} - {end_dt.month}/'
+                     '{end_dt.day}').format(
                         crop=crop_num, start_dt=gs_start_dt, end_dt=gs_end_dt))
+
 
 def cell_mp(tup):
     """Pool multiprocessing friendly function
@@ -196,7 +196,8 @@ def cell_mp(tup):
     """
     return cell_sp(*tup)
 
-def cell_sp(cell_count, data, cell, mp_procs = 1):
+
+def cell_sp(cell_count, data, cell, mp_procs=1):
     """Compute crop cycle for each cell
 
     Args:
@@ -211,11 +212,13 @@ def cell_sp(cell_count, data, cell, mp_procs = 1):
     print('CellID: {}'.format(cell.cell_id))
     crop_cycle.crop_cycle(data, cell, debug_flag=False, mp_procs=mp_procs)
 
+
 def is_valid_file(parser, arg):
     if not os.path.isfile(arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
+
 
 def is_valid_directory(parser, arg):
     if not os.path.isdir(arg):
@@ -223,30 +226,31 @@ def is_valid_directory(parser, arg):
     else:
         return arg
 
+
 def parse_args():
     """"""
     parser = argparse.ArgumentParser(
         description='Crop ET',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
-        '-i', '--ini', required=True, metavar = 'PATH',
-        type = lambda x: is_valid_file(parser, x), help = 'Input file')
+        '-i', '--ini', required=True, metavar='PATH',
+        type=lambda x: is_valid_file(parser, x), help='Input file')
     parser.add_argument(
-        '-d', '--debug', action="store_true", default = False,
-        help = "Save debug level comments to debug.txt")
+        '-d', '--debug', action="store_true", default=False,
+        help="Save debug level comments to debug.txt")
     parser.add_argument(
-        '-c', '--etcid', metavar='etcid_to_run', default = 'ALL',
+        '-c', '--etcid', metavar='etcid_to_run', default='ALL',
         help="User specified et cell id to run")
     parser.add_argument(
         '-v', '--verbose', action="store_const",
-        dest = 'log_level', const=logging.INFO, default=logging.WARNING,
-        help = "Print info level comments")
+        dest='log_level', const=logging.INFO, default=logging.WARNING,
+        help="Print info level comments")
     parser.add_argument(
         '-mp', '--multiprocessing', default=1, type=int,
         metavar='N', nargs='?', const=mp.cpu_count(),
         help='Number of processers to use')
     parser.add_argument(
-        '--cal', action='store_true', default = False,
+        '--cal', action='store_true', default=False,
         help="Display mean annual start/end dates to screen")
     args = parser.parse_args()
     
@@ -255,6 +259,7 @@ def parse_args():
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
     return args
+
 
 if __name__ == '__main__':
     args = parse_args()
