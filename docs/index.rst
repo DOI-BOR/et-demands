@@ -7,20 +7,17 @@ Table of Contents:
 .. toctree::
    :maxdepth: 2
 
-   static
-   structure
-   data
-   prep_tools
-   prep_example
-   spatial
-   run_ret
-   run_cet
-   run_aet
-   tools
-   refet
-   cropet
-   areaet
-
+   introduction
+   quickstart
+   model_overview
+   getting_started
+   model_calibration
+   model_inputs
+   model_outputs
+   model_run
+   model_description
+   data_sources
+   appendix
 Indices and tables
 ==================
 
