@@ -1530,7 +1530,7 @@ class RefETConfig():
                 self.output_met['fields']['tavg'] = config.get(output_met_sec, 'tavg_field')
                 if self.output_met['fields']['tavg'] is None or self.output_met['fields']['tavg'] == 'None':
                     self.output_met['fnspec']['tavg'] = 'Unused'
-                    self.output_met['fields']['tavg'] = 'TAvg'
+                    self.output_met['fields']['tavg'] = 'tmean'
                     self.output_met['units']['tavg'] = 'C'
                 else:    # tavg is being posted - get units and/or file name spec
                     try: 
@@ -1547,14 +1547,14 @@ class RefETConfig():
                         try: 
                             self.output_met['wsspec']['tavg'] = config.get(output_met_sec, 'tavg_ws')
                             if self.output_met['wsspec']['tavg'] is None or self.output_met['wsspec']['tavg'] == 'None':
-                                logging.info('  INFO:  OUTMET: tavg worksheet name set to TAvg')
-                                self.output_met['wsspec']['tavg'] = 'TAvg'
+                                logging.info('  INFO:  OUTMET: tavg worksheet name set to tmean')
+                                self.output_met['wsspec']['tavg'] = 'tmean'
                         except:
-                            logging.info('  INFO:  OUTMET: tavg worksheet name set to TAvg')
-                            self.output_met['wsspec']['tavg'] = 'TAvg'
+                            logging.info('  INFO:  OUTMET: tavg worksheet name set to tmean')
+                            self.output_met['wsspec']['tavg'] = 'tmean'
             except:
                 self.output_met['fnspec']['tavg'] = 'Unused'
-                self.output_met['fields']['tavg'] = 'TAvg'
+                self.output_met['fields']['tavg'] = 'tmean'
                 self.output_met['units']['tavg'] = 'C'
 
             self.output_met['wsspec']['ppt'] = None
