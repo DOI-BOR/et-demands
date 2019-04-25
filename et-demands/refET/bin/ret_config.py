@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ConfigParser
+import configparser
 import datetime
 import pandas as pd
 import logging
@@ -16,12 +16,12 @@ class RefETConfig():
         return '<RefETConfig>'
 
     # ref et configuration
-    
+
     def read_refet_ini(self, ini_path, debug_flag = False):
         """Read and parse INI file
-    
+
         This reads and processes configuration data
-    
+
         Args:
             ini_path: configuration (initialization) file path
             debug_flag (bool): If True, write debug level comments to debug.txt
@@ -33,11 +33,11 @@ class RefETConfig():
         logging.info('  INI: {}'.format(os.path.basename(ini_path)))
 
         # Check that INI file can be read
-        
-        config = ConfigParser.ConfigParser()
+
+        config = configparser.RawConfigParser()
         try:
             ini = config.readfp(open(ini_path))
-            if debug_flag: 
+            if debug_flag:
                 cfg_path = os.path.join(os.getcwd(), "test_ret.cfg")
                 with open(cfg_path, 'wb') as cf: config.write(cf)
         except:
@@ -48,37 +48,37 @@ class RefETConfig():
         meta_sec = 'RET_META'    # required
         input_met_sec = 'INMET'    # required
         output_ret_sec = 'OUTRET'    # required
-        output_met_sec = 'OUTMET'    # not required
+        output_retalt_sec = 'OUTRETALT'    # not required
         units_list = (
             ['c', 'f', 'k'] +
             ['mm', 'mm/d', 'mm/day', 'm/s', 'in*100'] +
             ['in', 'in/d', 'in/day', 'inches', 'inches/d', 'inches/day'] +
-            ['mj/m2', 'mj/m^2', 'mj/m2/d', 'mj/m^2/d', 'mj/m2/day', 'mj/m^2/day'] + 
+            ['mj/m2', 'mj/m^2', 'mj/m2/d', 'mj/m^2/d', 'mj/m2/day', 'mj/m^2/day'] +
             ['w/m2', 'w/m^2', 'cal/cm2', 'cal/cm2', 'cal/cm2/d', 'cal/cm^2/d'] +
             ['cal/cm2/day', 'cal/cm^2/day', 'langley'] +
             ['mps', 'm/d', 'm/day', 'mpd', 'miles/d', 'miles/day'] +
             ['m', 'meter', 'feet', 'kg/kg'])
-        
+
         # Check that required sections are present
-        
+
         cfgSecs = config.sections()
         if project_sec not in cfgSecs or meta_sec not in cfgSecs or input_met_sec not in cfgSecs or output_ret_sec not in cfgSecs:
             logging.error(
                 '\nERROR:  reference et ini file must have following sections:\n'+
                 '  [{}], [{}], and [{}]'.format(project_sec, meta_sec, input_met_sec, output_ret_sec))
             sys.exit()
-            
+
         # project specfications
-        
+
         #  project folder need to be full/absolute path
-        
+
         self.project_ws = config.get(project_sec, 'project_folder')
         if not os.path.isdir(self.project_ws):
             logging.critical('ERROR:  project folder does not exist\n  %s' % self.project_ws)
             sys.exit()
 
         # Basin
-        
+
         try:
             self.basin_id = config.get(project_sec, 'basin_id')
             if self.basin_id is None or self.basin_id == 'None': self.basin_id = 'Default Basin'
@@ -111,7 +111,7 @@ class RefETConfig():
             self_dmi_timestep = 'instant'
         else:
             self.dmi_timestep = str(self.ts_quantity) + self.time_step
-        
+
         # user starting date
 
         try:
@@ -133,26 +133,26 @@ class RefETConfig():
         else: self.end_dt = pd.to_datetime(edt)
 
         # Output met flag
-        
+
         try:
-            self.output_met_flag = config.getboolean(project_sec, 'output_met_flag')
+            self.output_retalt_flag = config.getboolean(project_sec, 'output_retalt_flag')
         except:
-            self.output_met_flag = False
+            self.output_retalt_flag = False
 
         # Set default value for data_structure_type to keep multiprocessing test happy
-        
-        self.output_met = {}
-        self.output_met['data_structure_type'] = 'SF P'
-            
+
+        self.refetalt_out = {}
+        self.refetalt_out['data_structure_type'] = 'SF P'
+
         # Average monthly output flag
 
         try:
-            self.avg_monthly_met_flag = config.getboolean(project_sec, 'avg_monthly_met_flag')
+            self.avg_monthly_flag = config.getboolean(project_sec, 'avg_monthly_flag')
         except:
-            self.avg_monthly_met_flag = False
+            self.avg_monthly_flag = False
 
         # static (aka) meta data specfications
-        
+
         try:
             self.static_folder = config.get(meta_sec, 'static_folder')
             if self.static_folder is None or self.static_folder == 'None':
@@ -165,7 +165,7 @@ class RefETConfig():
             self.static_folder = os.path.join(self.project_ws, self.static_folder)
 
         # Met nodes meta data specs
-        
+
         try:
             met_nodes_meta_data_name = config.get(meta_sec, 'met_nodes_meta_data_name')
             if met_nodes_meta_data_name is None or met_nodes_meta_data_name == 'None':
@@ -176,13 +176,13 @@ class RefETConfig():
             sys.exit()
 
         # test joined path
-        
+
         self.met_nodes_meta_data_path = os.path.join(self.static_folder, met_nodes_meta_data_name)
         if not os.path.isfile(self.met_nodes_meta_data_path):
             self.met_nodes_meta_data_path = met_nodes_meta_data_name
-            
+
             # test if fully specified path
-            
+
             if not os.path.isfile(self.met_nodes_meta_data_path):
                 logging.error('ERROR:  Met nodes meta data file {} does not exist'.format(self.met_nodes_meta_data_path))
                 sys.exit()
@@ -191,7 +191,7 @@ class RefETConfig():
             self.mnmd_delimiter = ','
             try:
                 self.met_nodes_meta_data_ws = config.get(meta_sec, 'met_nodes_meta_data_ws')
-                if self.met_nodes_meta_data_ws is None or self.met_nodes_meta_data_ws == 'None': 
+                if self.met_nodes_meta_data_ws is None or self.met_nodes_meta_data_ws == 'None':
                     logging.error('\nERROR: Worksheet name must be specified for\n' + self.met_nodes_meta_data_path + ".\n")
                     sys.exit()
             except:
@@ -200,7 +200,7 @@ class RefETConfig():
         else:
             try:
                 self.mnmd_delimiter = config.get(meta_sec, 'mnmd_delimiter')
-                if self.mnmd_delimiter is None or self.mnmd_delimiter == 'None': 
+                if self.mnmd_delimiter is None or self.mnmd_delimiter == 'None':
                     self.mnmd_delimiter = ','
                 else:
                     if self.mnmd_delimiter not in [' ', ',', '\\t']: self.mnmd_delimiter = ','
@@ -226,9 +226,9 @@ class RefETConfig():
             if self.elev_unit is None or self.elev_units == 'None': self.elev_units = 'feet'
         except:
             self.elev_units = 'feet'
-        
+
         # input met data parameters
-        
+
         self.input_met = {}
         self.input_met['fields'] = {}
         self.input_met['units'] = {}
@@ -238,10 +238,10 @@ class RefETConfig():
         self.input_met['fnspec'] = {}
         self.input_met['wsspec'] = {}
         self.input_met['ws'] = config.get(input_met_sec, 'input_met_folder')
-        
+
         # input met folder could be full or relative path
         # Assume relative paths or from  project folder
-        
+
         if os.path.isdir(self.input_met['ws']):
             pass
         elif (not os.path.isdir(self.input_met['ws']) and
@@ -254,7 +254,7 @@ class RefETConfig():
             logging.error(('  ERROR:  input met data folder does not ' +
                  'exist\n  %s') % self.input_met['ws'])
             sys.exit()
-            
+
         self.input_met['file_type'] = config.get(input_met_sec, 'file_type')
         self.input_met['data_structure_type'] = config.get(input_met_sec, 'data_structure_type').upper()
         self.input_met['name_format'] = config.get(input_met_sec, 'name_format')
@@ -262,7 +262,7 @@ class RefETConfig():
         self.input_met['names_line'] = config.getint(input_met_sec, 'names_line')
         try:
             self.input_met['delimiter'] = config.get(input_met_sec, 'delimiter')
-            if self.input_met['delimiter'] is None or self.input_met['delimiter'] == 'None': 
+            if self.input_met['delimiter'] is None or self.input_met['delimiter'] == 'None':
                 self.input_met['delimiter'] = ','
             else:
                 if self.input_met['delimiter'] not in [' ', ',', '\\t']: self.input_met['delimiter'] = ','
@@ -272,7 +272,7 @@ class RefETConfig():
                 self.input_met['delimiter'] = ','
 
         # Date can be read directly or computed from year, month, and day
-        
+
         try: self.input_met['fields']['date'] = config.get(input_met_sec, 'date_field')
         except: self.input_met['fields']['date'] = None
         try: self.input_met['fields']['year'] = config.get(input_met_sec, 'year_field')
@@ -292,8 +292,8 @@ class RefETConfig():
         else:
             logging.error('  ERROR: INMET date_field (or year, month, and '+
                           'day fields) must be set in  INI')
-            sys.exit()                  
-        
+            sys.exit()
+
         # Wind speeds measured at heights other than 2m are scaled
 
         try: self.input_met['wind_height'] = config.getfloat(input_met_sec, 'wind_height')
@@ -307,15 +307,15 @@ class RefETConfig():
         except: self.input_met['TR_b1'] = 0.1960418743712
         try: self.input_met['TR_b2'] = config.getfloat(input_met_sec, 'TR_b2')
         except: self.input_met['TR_b2'] = -0.2454592897026
-        
+
         # Data filling support files - all optional if all time series data of parameter exists
         # Files should exist in static data folder
 
         # average monthly maximum temperature file
-        
+
         try:
             fn = config.get(input_met_sec, 'avgm_tmax_name')
-            if fn is None or fn == 'None': 
+            if fn is None or fn == 'None':
                 self.input_met['avgm_tmax_path'] = None
                 self.input_met['avgm_tmax_header_lines'] = 1
                 self.input_met['avgm_tmax_delimitor'] = ','
@@ -330,7 +330,7 @@ class RefETConfig():
                     self.input_met['avgm_tmax_delimitor'] = ','
                     try:
                         self.input_met['avgm_tmax_ws'] = config.get(input_met_sec, 'avgm_tmax_ws')
-                        if self.input_met['avgm_tmax_ws'] is None or self.input_met['avgm_tmax_ws'] == 'None': 
+                        if self.input_met['avgm_tmax_ws'] is None or self.input_met['avgm_tmax_ws'] == 'None':
                             logging.error('\nERROR: Worksheet name must be specified for\n' + self.input_met['avgm_tmax_path'] + ".\n")
                             sys.exit()
                     except:
@@ -339,7 +339,7 @@ class RefETConfig():
                 else:
                     try:
                         self.input_met['avgm_tmax_delimitor'] = config.get(input_met_sec, 'avgm_tmax_delimiter')
-                        if self.input_met['avgm_tmax_delimitor'] is None or self.input_met['avgm_tmax_delimitor'] == 'None': 
+                        if self.input_met['avgm_tmax_delimitor'] is None or self.input_met['avgm_tmax_delimitor'] == 'None':
                             self.input_met['avgm_tmax_delimitor'] = ','
                         else:
                             if self.input_met['avgm_tmax_delimitor'] not in [' ', ',', '\\t']: self.input_met['avgm_tmax_delimitor'] = ','
@@ -353,10 +353,10 @@ class RefETConfig():
             self.input_met['avgm_tmax_header_lines'] = 1
 
         # average monthly minimum temperature file
-        
+
         try:
             fn = config.get(input_met_sec, 'avgm_tmin_name')
-            if fn is None or fn == 'None': 
+            if fn is None or fn == 'None':
                 self.input_met['avgm_tmin_path'] = None
                 self.input_met['avgm_tmin_header_lines'] = 1
                 self.input_met['avgm_tmin_delimitor'] = ','
@@ -371,7 +371,7 @@ class RefETConfig():
                     self.input_met['avgm_tmin_delimitor'] = ','
                     try:
                         self.input_met['avgm_tmin_ws'] = config.get(input_met_sec, 'avgm_tmin_ws')
-                        if self.input_met['avgm_tmin_ws'] is None or self.input_met['avgm_tmin_ws'] == 'None': 
+                        if self.input_met['avgm_tmin_ws'] is None or self.input_met['avgm_tmin_ws'] == 'None':
                             logging.error('\nERROR: Worksheet name must be specified for\n' + self.input_met['avgm_tmin_path'] + ".\n")
                             sys.exit()
                     except:
@@ -380,7 +380,7 @@ class RefETConfig():
                 else:
                     try:
                         self.input_met['avgm_tmin_delimitor'] = config.get(input_met_sec, 'avgm_tmin_delimiter')
-                        if self.input_met['avgm_tmin_delimitor'] is None or self.input_met['avgm_tmin_delimitor'] == 'None': 
+                        if self.input_met['avgm_tmin_delimitor'] is None or self.input_met['avgm_tmin_delimitor'] == 'None':
                             self.input_met['avgm_tmin_delimitor'] = ','
                         else:
                             if self.input_met['avgm_tmin_delimitor'] not in [' ', ',', '\\t']: self.input_met['avgm_tmin_delimitor'] = ','
@@ -394,10 +394,10 @@ class RefETConfig():
             self.input_met['avgm_tmin_header_lines'] = 1
 
         # average monthly Ko (dewpoint depression) file
-        
+
         try:
             fn = config.get(input_met_sec, 'avgm_Ko_name')
-            if fn is None or fn == 'None': 
+            if fn is None or fn == 'None':
                 self.input_met['avgm_Ko_path'] = None
                 self.input_met['avgm_Ko_header_lines'] = 1
                 self.input_met['avgm_Ko_delimitor'] = ','
@@ -412,7 +412,7 @@ class RefETConfig():
                     self.input_met['avgm_Ko_delimitor'] = ','
                     try:
                         self.input_met['avgm_Ko_ws'] = config.get(input_met_sec, 'avgm_Ko_ws')
-                        if self.input_met['avgm_Ko_ws'] is None or self.input_met['avgm_Ko_ws'] == 'None': 
+                        if self.input_met['avgm_Ko_ws'] is None or self.input_met['avgm_Ko_ws'] == 'None':
                             logging.error('\nERROR: Worksheet name must be specified for\n' + self.input_met['avgm_Ko_path'] + ".\n")
                             sys.exit()
                     except:
@@ -421,7 +421,7 @@ class RefETConfig():
                 else:
                     try:
                         self.input_met['avgm_Ko_delimitor'] = config.get(input_met_sec, 'avgm_Ko_delimiter')
-                        if self.input_met['avgm_Ko_delimitor'] is None or self.input_met['avgm_Ko_delimitor'] == 'None': 
+                        if self.input_met['avgm_Ko_delimitor'] is None or self.input_met['avgm_Ko_delimitor'] == 'None':
                             self.input_met['avgm_Ko_delimitor'] = ','
                         else:
                             if self.input_met['avgm_Ko_delimitor'] not in [' ', ',', '\\t']: self.input_met['avgm_Ko_delimitor'] = ','
@@ -435,10 +435,10 @@ class RefETConfig():
             self.input_met['avgm_Ko_header_lines'] = 1
 
         # average monthly wind file
-        
+
         try:
             fn = config.get(input_met_sec, 'avgm_wind_name')
-            if fn is None or fn == 'None': 
+            if fn is None or fn == 'None':
                 self.input_met['avgm_wind_path'] = None
                 self.input_met['avgm_wind_header_lines'] = 1
                 self.input_met['avgm_wind_delimitor'] = ','
@@ -453,7 +453,7 @@ class RefETConfig():
                     self.input_met['avgm_wind_delimitor'] = ','
                     try:
                         self.input_met['avgm_wind_ws'] = config.get(input_met_sec, 'avgm_wind_ws')
-                        if self.input_met['avgm_wind_ws'] is None or self.input_met['avgm_wind_ws'] == 'None': 
+                        if self.input_met['avgm_wind_ws'] is None or self.input_met['avgm_wind_ws'] == 'None':
                             logging.error('\nERROR: Worksheet name must be specified for\n' + self.input_met['avgm_wind_path'] + ".\n")
                             sys.exit()
                     except:
@@ -462,7 +462,7 @@ class RefETConfig():
                 else:
                     try:
                         self.input_met['avgm_wind_delimitor'] = config.get(input_met_sec, 'avgm_wind_delimiter')
-                        if self.input_met['avgm_wind_delimitor'] is None or self.input_met['avgm_wind_delimitor'] == 'None': 
+                        if self.input_met['avgm_wind_delimitor'] is None or self.input_met['avgm_wind_delimitor'] == 'None':
                             self.input_met['avgm_wind_delimitor'] = ','
                         else:
                             if self.input_met['avgm_wind_delimitor'] not in [' ', ',', '\\t']: self.input_met['avgm_wind_delimitor'] = ','
@@ -474,9 +474,9 @@ class RefETConfig():
             self.input_met['avgm_wind_path'] = None
             self.input_met['avgm_wind_delimitor'] = ','
             self.input_met['avgm_wind_header_lines'] = 1
-        
+
         # input met data file name specifications, field names, and units
-        
+
         # Required input met fields for computing reference et
 
         try:
@@ -490,7 +490,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['tmax'] = config.get(input_met_sec, 'tmax_name')
                 except: self.input_met['fnspec']['tmax'] = 'Estimated'
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['tmax'] = config.get(input_met_sec, 'tmax_ws')
                         if self.input_met['wsspec']['tmax'] is None or self.input_met['wsspec']['tmax'] == 'None':
                             logging.info('  INFO:  INMET: tmax worksheet name set to TMax')
@@ -513,7 +513,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['tmin'] = config.get(input_met_sec, 'tmin_name')
                 except: self.input_met['fnspec']['tmin'] = 'Estimated'
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['tmin'] = config.get(input_met_sec, 'tmin_ws')
                         if self.input_met['wsspec']['tmin'] is None or self.input_met['wsspec']['tmin'] == 'None':
                             logging.info('  INFO:  INMET: tmin worksheet name set to TMin')
@@ -526,7 +526,7 @@ class RefETConfig():
             sys.exit()
 
         # optional input met fields and units - unprovided fields are estimated if needed for ref et computations
-        
+
         try:
             self.input_met['fields']['ppt'] = config.get(input_met_sec, 'ppt_field')
             if self.input_met['fields']['ppt'] is None or self.input_met['fields']['ppt'] == 'None':
@@ -539,7 +539,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['ppt'] = config.get(input_met_sec, 'ppt_name')
                 except: self.input_met['fnspec']['ppt'] = 'Estimated'
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['ppt'] = config.get(input_met_sec, 'ppt_ws')
                         if self.input_met['wsspec']['ppt'] is None or self.input_met['wsspec']['ppt'] == 'None':
                             logging.info('  INFO:  INMET: precip worksheet name set to Prcp')
@@ -564,7 +564,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['wind'] = config.get(input_met_sec, 'wind_name')
                 except: self.input_met['fnspec']['wind'] = self.input_met['fields']['wind']
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['wind'] = config.get(input_met_sec, 'wind_ws')
                         if self.input_met['wsspec']['wind'] is None or self.input_met['wsspec']['wind'] == 'None':
                             logging.info('  INFO:  INMET: wind worksheet name set to Wind')
@@ -589,7 +589,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['rs'] = config.get(input_met_sec, 'rs_name')
                 except: self.input_met['fnspec']['rs'] = self.input_met['fields']['rs']
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['rs'] = config.get(input_met_sec, 'rs_ws')
                         if self.input_met['wsspec']['rs'] is None or self.input_met['wsspec']['rs'] == 'None':
                             logging.info('  INFO:  INMET: Rs worksheet name set to Rs')
@@ -601,7 +601,7 @@ class RefETConfig():
             self.input_met['fields']['rs'] = 'Rs'
             self.input_met['units']['rs'] = 'MJ/m2'
             self.input_met['fnspec']['rs'] = 'Estimated'
-        
+
         try:
             self.input_met['fields']['snow'] = config.get(input_met_sec, 'snow_field')
             if self.input_met['fields']['snow'] is None or self.input_met['fields']['snow'] == 'None':
@@ -614,7 +614,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['snow'] = config.get(input_met_sec, 'snow_name')
                 except: self.input_met['fnspec']['snow'] = self.input_met['fields']['snow']
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['snow'] = config.get(input_met_sec, 'snow_ws')
                         if self.input_met['wsspec']['snow'] is None or self.input_met['wsspec']['snow'] == 'None':
                             logging.info('  INFO:  INMET: snow worksheet name set to Snow')
@@ -643,7 +643,7 @@ class RefETConfig():
                     except:
                         logging.error('  ERROR: INMET {}ws (worksheet name) must be set in  INI'.format(depth_ws))
                         sys.exit()
-                    try: 
+                    try:
                         self.input_met['wsspec']['snow_depth'] = config.get(input_met_sec, 'depth_ws')
                         if self.input_met['wsspec']['snow_depth'] is None or self.input_met['wsspec']['snow_depth'] == 'None':
                             logging.info('  INFO:  INMET: snow depth worksheet name set to SDepth')
@@ -658,7 +658,7 @@ class RefETConfig():
 
         # Dewpoint temperature can be set or computed from Q (specific humidity)
         # Field that is provided is used to estimate humidity
-        
+
         try:
             self.input_met['fields']['tdew'] = config.get(input_met_sec, 'tdew_field')
             if self.input_met['fields']['tdew'] is None or self.input_met['fields']['tdew'] == 'None':
@@ -671,7 +671,7 @@ class RefETConfig():
                 try: self.input_met['fnspec']['tdew'] = config.get(input_met_sec, 'tdew_name')
                 except: self.input_met['fnspec']['tdew'] = self.input_met['fields']['tdew']
                 if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                    try: 
+                    try:
                         self.input_met['wsspec']['tdew'] = config.get(input_met_sec, 'tdew_ws')
                         if self.input_met['wsspec']['tdew'] is None or self.input_met['wsspec']['tdew'] == 'None':
                             logging.info('  INFO:  INMET: tdew worksheet name set to TDew')
@@ -698,7 +698,7 @@ class RefETConfig():
                     try: self.input_met['fnspec']['q'] = config.get(input_met_sec, 'q_name')
                     except: self.input_met['fnspec']['q'] = self.input_met['fields']['q']
                     if self.input_met['file_type'].lower() == 'xls' or self.input_met['file_type'].lower() == 'wb':
-                        try: 
+                        try:
                             self.input_met['wsspec']['q'] = config.get(input_met_sec, 'q_ws')
                             if self.input_met['wsspec']['q'] is None or self.input_met['wsspec']['q'] == 'None':
                                 logging.info('  INFO:  INMET: q worksheet name set to Q')
@@ -712,14 +712,14 @@ class RefETConfig():
                 self.input_met['fnspec']['q'] = 'Unused'
 
         # Check units
-        
-        for k, v in self.input_met['units'].iteritems():
+
+        for k, v in sorted(self.input_met['units'].items()):
             if v is not None and v.lower() not in units_list:
                 logging.error('  ERROR: {0} units {1} are not currently supported'.format(k,v))
                 sys.exit()
 
         # reference et parameters
-        
+
         self.refet_out = {}
         self.refet_out['fields'] = {}
         self.refet_out['units'] = {}
@@ -727,17 +727,17 @@ class RefETConfig():
         # fnspec - parameter extension to file name specification
 
         self.refet_out['fnspec'] = {}
-        
+
         # ref et folder could be full or relative path
         # Assume relative paths or from  project folder
-        
+
         # Output ref et flags
-        
+
         try:
             self.daily_refet_flag = config.getboolean(output_ret_sec, 'daily_refet_flag')
         except:
             logging.debug('    daily_refet_flag = False')
-            self.daily_refet_flag = False
+            self.daily_refet_flag = True
         try:
             self.monthly_refet_flag = config.getboolean(output_ret_sec, 'monthly_refet_flag')
         except:
@@ -754,7 +754,7 @@ class RefETConfig():
             self.refet_out_flag = False;
 
         # Output folders
-        
+
         if self.daily_refet_flag:
             try:
                 self.daily_refet_ws = os.path.join(
@@ -762,8 +762,8 @@ class RefETConfig():
                 if not os.path.isdir(self.daily_refet_ws):
                    os.makedirs(self.daily_refet_ws)
             except:
-                logging.debug('    daily_refet_folder = daily_stats')
-                self.daily_refet_ws = 'daily_stats'
+                logging.debug('    daily_refet_folder = daily_ret')
+                self.daily_refet_ws = 'daily_ret'
         if self.monthly_refet_flag:
             try:
                 self.monthly_refet_ws = os.path.join(
@@ -771,8 +771,8 @@ class RefETConfig():
                 if not os.path.isdir(self.monthly_refet_ws):
                    os.makedirs(self.monthly_refet_ws)
             except:
-                logging.debug('    monthly_refet_folder = monthly_stats')
-                self.monthly_refet_ws = 'monthly_stats'             
+                logging.debug('    monthly_refet_folder = monthly_ret')
+                self.monthly_refet_ws = 'monthly_ret'
         if self.annual_refet_flag:
             try:
                 self.annual_refet_ws = os.path.join(
@@ -780,8 +780,8 @@ class RefETConfig():
                 if not os.path.isdir(self.annual_refet_ws):
                    os.makedirs(self.annual_refet_ws)
             except:
-                logging.debug('    annual_refet_folder = annual_stats')
-                self.annual_refet_ws = 'annual_stats'
+                logging.debug('    annual_refet_folder = annual_ret')
+                self.annual_refet_ws = 'annual_ret'
         self.refet_out['data_structure_type'] = config.get(output_ret_sec, 'data_structure_type').upper()
         self.refet_out['name_format'] = config.get(output_ret_sec, 'name_format')
         self.refet_out['header_lines'] = config.getint(output_ret_sec, 'header_lines')
@@ -791,7 +791,7 @@ class RefETConfig():
         self.refet_out['names_line'] = config.getint(output_ret_sec, 'names_line')
         try:
             self.refet_out['delimiter'] = config.get(output_ret_sec, 'delimiter')
-            if self.refet_out['delimiter'] is None or self.refet_out['delimiter'] == 'None': 
+            if self.refet_out['delimiter'] is None or self.refet_out['delimiter'] == 'None':
                 self.refet_out['delimiter'] = ','
             else:
                 if self.refet_out['delimiter'] not in [' ', ',', '\\t']: self.refet_out['delimiter'] = ','
@@ -811,28 +811,28 @@ class RefETConfig():
 
         try:
             self.refet_out['daily_date_format'] = config.get(output_ret_sec, 'daily_date_format')
-            if self.refet_out['daily_date_format'] is None or self.refet_out['daily_date_format'] == 'None': 
+            if self.refet_out['daily_date_format'] is None or self.refet_out['daily_date_format'] == 'None':
                 self.refet_out['daily_date_format'] = '%Y-%m-%d'
         except: self.refet_out['daily_date_format'] = '%Y-%m-%d'
-        try: 
+        try:
             self.refet_out['daily_float_format'] = config.get(output_ret_sec, 'daily_float_format')
             if self.refet_out['daily_float_format'] == 'None': self.refet_out['daily_float_format'] = None
         except: self.refet_out['daily_float_format'] = None
         try:
             self.refet_out['monthly_date_format'] = config.get(output_ret_sec, 'monthly_date_format')
-            if self.refet_out['monthly_date_format'] is None or self.refet_out['monthly_date_format'] == 'None': 
+            if self.refet_out['monthly_date_format'] is None or self.refet_out['monthly_date_format'] == 'None':
                 self.refet_out['monthly_date_format'] = '%Y-%m'
         except: self.refet_out['monthly_date_format'] = '%Y-%m'
-        try: 
+        try:
             self.refet_out['monthly_float_format'] = config.get(output_ret_sec, 'monthly_float_format')
             if self.refet_out['monthly_float_format'] == 'None': self.refet_out['monthly_float_format'] = None
         except: self.refet_out['monthly_float_format'] = None
         try:
             self.refet_out['annual_date_format'] = config.get(output_ret_sec, 'annual_date_format')
-            if self.refet_out['monthly_date_format'] is None or self.refet_out['monthly_date_format'] == 'None': 
+            if self.refet_out['monthly_date_format'] is None or self.refet_out['monthly_date_format'] == 'None':
                 self.refet_out['annual_date_format'] = '%Y'
         except: self.refet_out['annual_date_format'] = '%Y'
-        try: 
+        try:
             self.refet_out['annual_float_format'] = config.get(output_ret_sec, 'annual_float_format')
             if self.refet_out['annual_float_format'] == 'None': self.refet_out['annual_float_format'] = None
         except: self.refet_out['annual_float_format'] = None
@@ -858,174 +858,24 @@ class RefETConfig():
         else:
             logging.error('  ERROR: refet date_field (or year, month, and ' +
                           'day fields) must be set in  INI')
-            sys.exit()                  
-        try: 
-            self.refet_out['ret_units'] = config.get(output_ret_sec, 'refet_units')
-        except: 
-            logging.error('  ERROR: OUTRET etref_units must set in  INI')
+            sys.exit()
+        try:
+            self.refet_out['output_units'] = config.get(output_ret_sec, 'output_units').lower()
+        except:
+            logging.error('  ERROR: OUTRET output_units must set in  INI')
+            sys.exit()
+        if self.refet_out['output_units'] not in ['english', 'metric']:
+            logging.error('  ERROR: {0} output units are not supported'.format(self.refet_out['output_units']))
             sys.exit()
 
-        # ref et methods
 
-        self.refet_out['ret_method'] = config.get(output_ret_sec, 'ret_method')
-        if self.refet_out['ret_method'] is None or self.refet_out['ret_method'] == 'None':
-            self.refet_out['ret_method'] = 'asceg'
-        if self.refet_out['ret_method'].lower() not in ['penm', 'kimo', 'kimr', 'pretay', 'fao56', 'ascer', 'asceg', 'harg']:
-            logging.error('  ERROR: RET method ' + self.refet_out['ret_method'] + ' is incorrect.')
-            sys.exit()
-        self.refet_out['etr_method'] = config.get(output_ret_sec, 'etr_method')
-        if self.refet_out['etr_method'] is None or self.refet_out['etr_method'] == 'None':
-            self.refet_out['etr_method'] = 'ASCEr'
-        if self.refet_out['etr_method'].lower() not in ['penm', 'kimr', 'pretay', 'fao56', 'ascer', 'harg']:
-            logging.error('  ERROR: ETr method ' + self.refet_out['etr_method'] + ' is incorrect.')
-            sys.exit()
-        self.refet_out['eto_method'] = config.get(output_ret_sec, 'eto_method')
-        if self.refet_out['eto_method'] is None or self.refet_out['eto_method'] == 'None':
-            self.refet_out['eto_method'] = 'asceg'
-        if self.refet_out['eto_method'].lower() not in ['penm', 'kimo', 'pretay', 'fao56', 'asceg', 'harg']:
-            logging.error('  ERROR: ETo method ' + self.refet_out['eto_method'] + ' is incorrect.')
-            sys.exit()
-            
-        # output ref data file name specifications, field names, and units - all optional but should have at least one
+        # output ref data file name specifications, field names, and units -
+        # all optional but should have at least one
 
         # generic ret, etr and eto output
 
-        self.refet_out['units']['ret'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['ret'] = config.get(output_ret_sec, 'ret_field')
-            if self.refet_out['fields']['ret'] is None or self.refet_out['fields']['ret'] == 'None':
-                self.refet_out['fnspec']['ret'] = 'Unused'
-                self.refet_out['fields']['ret'] = 'RET'
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['ret'] = 'RET'
-        except:
-            self.refet_out['fnspec']['ret'] = 'Unused'
-            self.refet_out['fields']['ret'] = 'RET'
-
-        self.refet_out['units']['etr'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['etr'] = config.get(output_ret_sec, 'etr_field')
-            if self.refet_out['fields']['etr'] is None or self.refet_out['fields']['etr'] == 'None':
-                self.refet_out['fnspec']['etr'] = 'Unused'
-                self.refet_out['fields']['etr'] = 'ETr'
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['etr'] = 'ETr'
-        except:
-            self.refet_out['fnspec']['etr'] = 'Unused'
-            self.refet_out['fields']['etr'] = 'ETr'
-
-        self.refet_out['units']['eto'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['eto'] = config.get(output_ret_sec, 'eto_field')
-            if self.refet_out['fields']['eto'] is None or self.refet_out['fields']['eto'] == 'None':
-                self.refet_out['fnspec']['eto'] = 'Unused'
-                self.refet_out['fields']['eto'] = 'ETo'
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['eto'] = 'ETo'
-        except:
-            self.refet_out['fnspec']['eto'] = 'Unused'
-            self.refet_out['fields']['eto'] = 'ETo'
-
-        # specific method output
-        
-        self.refet_out['units']['penm'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['penm'] = config.get(output_ret_sec, 'penm_field')
-            if self.refet_out['fields']['penm'] is None or self.refet_out['fields']['penm'] == 'None':
-                self.refet_out['fnspec']['penm'] = 'Unused'
-                self.refet_out['fields']['penm'] = 'Penman'
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['penm'] = 'Penman'
-        except:
-            self.refet_out['fnspec']['penm'] = 'Unused'
-            self.refet_out['fields']['penm'] = 'Penman'
-
-        self.refet_out['units']['pretay'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['pretay'] = config.get(output_ret_sec, 'pretay_field')
-            if self.refet_out['fields']['pretay'] is None or self.refet_out['fields']['pretay'] == 'None':
-                self.refet_out['fnspec']['pretay'] = 'Unused'
-                self.refet_out['fields']['pretay'] = 'PreTay'
-            else:    # pretay is being posted - set file name spec
-                self.refet_out['fnspec']['pretay'] = 'PreTay'
-        except:
-            self.refet_out['fnspec']['pretay'] = 'Unused'
-            self.refet_out['fields']['pretay'] = 'PreTay'
-
-        self.refet_out['units']['kimo'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['kimo'] = config.get(output_ret_sec, 'kimo_field')
-            if self.refet_out['fields']['kimo'] is None or self.refet_out['fields']['kimo'] == 'None':
-                self.refet_out['fnspec']['kimo'] = 'Unused'
-                self.refet_out['fields']['kimo'] = "KimbPeng"
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['kimo'] = "KimbPeng"
-        except:
-            self.refet_out['fnspec']['kimo'] = 'Unused'
-            self.refet_out['fields']['kimo'] = "KimbPeng"
-
-        self.refet_out['units']['kimr'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['kimr'] = config.get(output_ret_sec, 'kimr_field')
-            if self.refet_out['fields']['kimr'] is None or self.refet_out['fields']['kimr'] == 'None':
-                self.refet_out['fnspec']['kimr'] = 'Unused'
-                self.refet_out['fields']['kimr'] = "KimbPen"
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['kimr'] = "KimbPen"
-        except:
-            self.refet_out['fnspec']['kimr'] = 'Unused'
-            self.refet_out['fields']['kimr'] = "KimbPen"
-
-        self.refet_out['units']['fao56'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['fao56'] = config.get(output_ret_sec, 'fao56_field')
-            if self.refet_out['fields']['fao56'] is None or self.refet_out['fields']['fao56'] == 'None':
-                self.refet_out['fnspec']['fao56'] = 'Unused'
-                self.refet_out['fields']['fao56'] = "FAO56PM"
-            else:    # etr is being posted - set file name spec
-                self.refet_out['fnspec']['fao56'] = "FAO56PM"
-        except:
-            self.refet_out['fnspec']['fao56'] = 'Unused'
-            self.refet_out['fields']['fao56'] = "FAO56PM"
-
-        self.refet_out['units']['ascer'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['ascer'] = config.get(output_ret_sec, 'ascer_field')
-            if self.refet_out['fields']['ascer'] is None or self.refet_out['fields']['ascer'] == 'None':
-                self.refet_out['fnspec']['ascer'] = 'Unused'
-                self.refet_out['fields']['ascer'] = 'ASCEr'
-            else:    # ascer is being posted - set file name spec
-                self.refet_out['fnspec']['ascer'] = 'ASCEr'
-        except:
-            self.refet_out['fnspec']['ascer'] = 'Unused'
-            self.refet_out['fields']['ascer'] = 'ASCEr'
-
-        self.refet_out['units']['asceg'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['asceg'] = config.get(output_ret_sec, 'asceg_field')
-            if self.refet_out['fields']['asceg'] is None or self.refet_out['fields']['asceg'] == 'None':
-                self.refet_out['fnspec']['asceg'] = 'Unused'
-                self.refet_out['fields']['asceg'] = 'asceg'
-            else:    # ASCEo is being posted - set file name spec
-                self.refet_out['fnspec']['asceg'] = 'asceg'
-        except:
-            self.refet_out['fnspec']['asceg'] = 'Unused'
-            self.refet_out['fields']['asceg'] = 'asceg'
-
-        self.refet_out['units']['harg'] = self.refet_out['ret_units']
-        try:
-            self.refet_out['fields']['harg'] = config.get(output_ret_sec, 'harg_field')
-            if self.refet_out['fields']['harg'] is None or self.refet_out['fields']['harg'] == 'None':
-                self.refet_out['fnspec']['harg'] = 'Unused'
-                self.refet_out['fields']['harg'] = '85Harg'
-            else:    # harg is being posted - set file name spec
-                self.refet_out['fnspec']['harg'] = '85Harg'
-        except:
-            self.refet_out['fnspec']['harg'] = 'Unused'
-            self.refet_out['fields']['harg'] = '85Harg'
-
         # output met data file name specifications, field names, and units - all optional
-        
+
         try:
             self.refet_out['fields']['tmax'] = config.get(output_ret_sec, 'tmax_field')
             if self.refet_out['fields']['tmax'] is None or self.refet_out['fields']['tmax'] == 'None':
@@ -1034,10 +884,10 @@ class RefETConfig():
                 self.refet_out['units']['tmax'] = 'C'
             else:    # tmax is being posted - get units
                 self.refet_out['fnspec']['tmax'] = 'TMax'
-                try: 
-                    self.refet_out['units']['tmax'] = config.get(output_ret_sec, 'tmax_units')
-                    if self.refet_out['units']['tmax'] is None: self.refet_out['units']['tmax'] = 'C'
-                except: self.refet_out['units']['tmax'] = 'C'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['tmax'] = 'F'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['tmax'] = 'C'
         except:
             self.refet_out['fnspec']['tmax'] = 'Unused'
             self.refet_out['fields']['tmax'] = 'TMax'
@@ -1051,10 +901,10 @@ class RefETConfig():
                 self.refet_out['units']['tmin'] = 'C'
             else:    # tmin is being posted - get units
                 self.refet_out['fnspec']['tmin'] = 'TMin'
-                try: 
-                    self.refet_out['units']['tmin'] = config.get(output_ret_sec, 'tmin_units')
-                    if self.refet_out['units']['tmin'] is None: self.refet_out['units']['TMin'] = 'C'
-                except: self.refet_out['units']['tmin'] = 'C'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['tmin'] = 'F'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['tmin'] = 'C'
         except:
             self.refet_out['fnspec']['tmin'] = 'Unused'
             self.refet_out['fields']['tmin'] = 'TMin'
@@ -1065,51 +915,51 @@ class RefETConfig():
             if self.refet_out['fields']['ppt'] is None or self.refet_out['fields']['ppt'] == 'None':
                 self.refet_out['fnspec']['ppt'] = 'Unused'
                 self.refet_out['fields']['ppt'] = 'Precip'
-                self.refet_out['units']['ppt'] = 'In*100'
+                self.refet_out['units']['ppt'] = 'mm/day'
             else:    # ppt is being posted - get units
                 self.refet_out['fnspec']['ppt'] = 'Precip'
-                try: 
-                    self.refet_out['units']['ppt'] = config.get(output_ret_sec, 'ppt_units')
-                    if self.refet_out['units']['ppt'] is None: self.refet_out['units']['ppt'] = 'In*100'
-                except: self.refet_out['units']['ppt'] = 'In*100'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['ppt'] = 'in/day'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['ppt'] = 'mm/day'
         except:
             self.refet_out['fnspec']['ppt'] = 'Unused'
             self.refet_out['fields']['ppt'] = 'Precip'
-            self.refet_out['units']['ppt'] = 'In*100'
+            self.refet_out['units']['ppt'] = 'mm/day'
 
         try:
             self.refet_out['fields']['snow'] = config.get(output_ret_sec, 'snow_field')
             if self.refet_out['fields']['snow'] is None or self.refet_out['fields']['snow'] == 'None':
                 self.refet_out['fnspec']['snow'] = 'Unused'
                 self.refet_out['fields']['snow'] = 'Snow'
-                self.refet_out['units']['snow'] = 'In*100'
+                self.refet_out['units']['snow'] = 'mm/day'
             else:    # snow is being posted - get units
                 self.refet_out['fnspec']['snow'] = 'Snow'
-                try: 
-                    self.refet_out['units']['snow'] = config.get(output_ret_sec, 'snow_units')
-                    if self.refet_out['units']['snow'] is None: self.refet_out['units']['snow'] = 'In*100'
-                except: self.refet_out['units']['snow'] = 'In*100'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['snow'] = 'in/day'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['snow'] = 'mm/day'
         except:
             self.refet_out['fnspec']['snow'] = 'Unused'
             self.refet_out['fields']['snow'] = 'Snow'
-            self.refet_out['units']['snow'] = 'In*100'
+            self.refet_out['units']['snow'] = 'mm/day'
 
         try:
             self.refet_out['fields']['snow_depth'] = config.get(output_ret_sec, 'depth_field')
             if self.refet_out['fields']['snow_depth'] is None or self.refet_out['fields']['snow_depth'] == 'None':
                 self.refet_out['fnspec']['snow_depth'] = 'Unused'
                 self.refet_out['fields']['snow_depth'] = 'SDep'
-                self.refet_out['units']['snow_depth'] = 'In'
+                self.refet_out['units']['snow_depth'] = 'mm'
             else:    # snow depth is being posted - get units
                 self.refet_out['fnspec']['snow_depth'] = 'SDep'
-                try: 
-                    self.refet_out['units']['snow_depth'] = config.get(output_ret_sec, 'depth_units')
-                    if self.refet_out['units']['snow_depth'] is None: self.refet_out['units']['snow_depth'] = 'In'
-                except: self.refet_out['units']['snow_depth'] = 'In'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['snow_depth'] = 'In'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['snow_depth'] = 'mm'
         except:
             self.refet_out['fnspec']['snow_depth'] = 'Unused'
             self.refet_out['fields']['snow_depth'] = 'SDep'
-            self.refet_out['units']['snow_depth'] = 'In'
+            self.refet_out['units']['snow_depth'] = 'mm'
 
         try:
             self.refet_out['fields']['rs'] = config.get(output_ret_sec, 'rs_field')
@@ -1119,10 +969,10 @@ class RefETConfig():
                 self.refet_out['units']['rs'] = 'MJ/m2'
             else:    # rs is being posted - get units
                 self.refet_out['fnspec']['rs'] = 'Rs'
-                try: 
-                    self.refet_out['units']['rs'] = config.get(output_ret_sec, 'rs_units')
-                    if self.refet_out['units']['rs'] is None: self.refet_out['units']['rs'] = 'MJ/m2'
-                except: self.refet_out['units']['rs'] = 'MJ/m2'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['rs'] = 'langley'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['rs'] = 'MJ/m2'
         except:
             self.refet_out['fnspec']['rs'] = 'Unused'
             self.refet_out['fields']['rs'] = 'Rs'
@@ -1136,10 +986,10 @@ class RefETConfig():
                 self.refet_out['units']['wind'] = 'm/s'
             else:    # wind is being posted - get units
                 self.refet_out['fnspec']['wind'] = 'Wind'
-                try: 
-                    self.refet_out['units']['wind'] = config.get(output_ret_sec, 'wind_units')
-                    if self.refet_out['units']['wind'] is None: self.refet_out['units']['wind'] = 'm/s'
-                except: self.refet_out['units']['wind'] = 'm/s'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['wind'] = 'miles/d'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['wind'] = 'm/s'
         except:
             self.refet_out['fnspec']['wind'] = 'Unused'
             self.refet_out['fields']['wind'] = 'Wind'
@@ -1153,10 +1003,10 @@ class RefETConfig():
                 self.refet_out['units']['tdew'] = 'C'
             else:    # tmin is being posted - get units
                 self.refet_out['fnspec']['tdew'] = 'TDew'
-                try: 
-                    self.refet_out['units']['tdew'] = config.get(output_ret_sec, 'tdew_units')
-                    if self.refet_out['units']['tdew'] is None: self.refet_out['units']['TDew'] = 'C'
-                except: self.refet_out['units']['tdew'] = 'C'
+                if self.refet_out['output_units'] == 'english':
+                    self.refet_out['units']['tdew'] = 'F'
+                elif self.refet_out['output_units'] == 'metric':
+                    self.refet_out['units']['tdew'] = 'C'
         except:
             self.refet_out['fnspec']['tdew'] = 'Unused'
             self.refet_out['fields']['tdew'] = 'TDew'
@@ -1175,34 +1025,48 @@ class RefETConfig():
                     self.refet_out['units']['q'] = 'kg/kg'
                 else:    # q is being posted - get units
                     self.refet_out['fnspec']['q'] = 'q'
-                    try: 
-                        self.refet_out['units']['q'] = config.get(output_ret_sec, 'q_units')
-                        if self.refet_out['units']['q'] is None: self.refet_out['units']['q'] = 'kg/kg'
-                    except: self.refet_out['units']['q'] = 'kg/kg'
+                    if self.refet_out['output_units'] == 'english':
+                        self.refet_out['units']['q'] = 'kg/kg'
+                    elif self.refet_out['output_units'] == 'metric':
+                        self.refet_out['units']['q'] = 'kg/kg'
             except:
                 self.refet_out['fnspec']['q'] = 'Unused'
                 self.refet_out['fields']['q'] = 'q'
                 self.refet_out['units']['q'] = 'kg/kg'
-                
+
+        self.refet_out['fnspec']['ascer'] = 'ASCEr'
+        self.refet_out['fields']['ascer'] = 'ASCEr'
+        if self.refet_out['output_units'] == 'english':
+            self.refet_out['units']['ascer'] = 'in/day'
+        elif self.refet_out['output_units'] == 'metric':
+            self.refet_out['units']['ascer'] = 'mm/day'
+
+        self.refet_out['fnspec']['asceg'] = 'ASCEg'
+        self.refet_out['fields']['asceg'] = 'ASCEg'
+        if self.refet_out['output_units'] == 'english':
+            self.refet_out['units']['asceg'] = 'in/day'
+        elif self.refet_out['output_units'] == 'metric':
+            self.refet_out['units']['asceg'] = 'mm/day'
+
         # drop unused fields
 
-        all_refet_out_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'ret', 'etr', 'eto', 'penm', 'kimo', 'kimr', 'pretay', 'fao56', 'ascer', 'asceg', 'harg']
-        for k, v in self.refet_out['fnspec'].items():
+        all_refet_out_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'ascer', 'asceg']
+        for k, v in sorted(self.refet_out['fnspec'].items()):
             if not v is None:
                 try:
                     if v.lower() == "unused":
-                        del self.refet_out['units'][k] 
-                        del self.refet_out['fnspec'][k] 
-                        del self.refet_out['fields'][k] 
+                        del self.refet_out['units'][k]
+                        del self.refet_out['fnspec'][k]
+                        del self.refet_out['fields'][k]
                 except: pass
-        for k, v in self.refet_out['fields'].items():
+        for k, v in sorted(self.refet_out['fields'].items()):
             if v is None:
-                try: del self.refet_out['fields'][k] 
+                try: del self.refet_out['fields'][k]
                 except: pass
 
         # Check units
 
-        for k, v in self.refet_out['units'].iteritems():
+        for k, v in sorted(self.refet_out['units'].items()):
             if v is not None and v.lower() not in units_list:
                 logging.error('  ERROR: {0} units {1} are not currently supported'.format(k, v))
                 sys.exit()
@@ -1211,14 +1075,14 @@ class RefETConfig():
 
         self.used_refet_out_fields = [fn for fn in all_refet_out_fields if fn in self.refet_out['fields'].keys()]
         self.refet_out['data_out_fields'] = [fn for fn in self.used_refet_out_fields if fn not in ['date', 'year', 'month', 'day', 'doy']]
-        self.refet_out['refet_out_fields'] = [fn for fn in self.used_refet_out_fields if fn in ['ret', 'etr', 'eto', 'penm', 'kimo', 'kimr', 'pretay', 'fao56', 'ascer', 'asceg', 'harg']]
+        self.refet_out['refet_out_fields'] = [fn for fn in self.used_refet_out_fields if fn in ['ascer', 'asceg']]
         self.refet_out['out_data_fields'] = []
         if self.refet_out['header_lines'] == 2:
             for fc, fn in enumerate(self.used_refet_out_fields):
                 if fc == 0:
                     self.refet_out['daily_header1'] = self.refet_out['fields'][fn]
                     self.refet_out['daily_header2'] = "Units"
-                else: 
+                else:
                     self.refet_out['daily_header1'] = self.refet_out['daily_header1'] + self.refet_out['delimiter'] + self.refet_out['fields'][fn]
                     if fn in self.refet_out['data_out_fields']:
                         self.refet_out['daily_header2'] = self.refet_out['daily_header2'] + self.refet_out['delimiter'] + self.refet_out['units'][fn]
@@ -1229,7 +1093,7 @@ class RefETConfig():
             for fc, fn in enumerate(self.used_refet_out_fields):
                 if fc == 0:
                     self.refet_out['daily_header1'] = self.refet_out['fields'][fn]
-                else: 
+                else:
                     if fn in self.refet_out['data_out_fields']:
                         self.refet_out['daily_header1'] = self.refet_out['daily_header1'] + self.refet_out['delimiter'] + self.refet_out['fields'][fn]
                         if self.refet_out['units_in_header']:
@@ -1238,18 +1102,18 @@ class RefETConfig():
                     else:
                         self.refet_out['daily_header1'] = self.refet_out['daily_header1'] + self.refet_out['delimiter'] + self.refet_out['fields'][fn]
             self.refet_out['daily_header2'] = ""
-        if 'day' in self.refet_out['fields'] and self.refet_out['fields']['day'] is not None: 
+        if 'day' in self.refet_out['fields'] and self.refet_out['fields']['day'] is not None:
             drop_string = self.refet_out['delimiter'] + self.refet_out['fields']['day']
             self.refet_out['monthly_header1'] = self.refet_out['daily_header1'].replace(drop_string, '')
             self.refet_out['monthly_header2'] = self.refet_out['daily_header2'].replace(drop_string, '')
         else:
             self.refet_out['monthly_header1'] = self.refet_out['daily_header1']
             self.refet_out['monthly_header2'] = self.refet_out['daily_header2']
-        if 'doy' in self.refet_out['fields'] and self.refet_out['fields']['doy'] is not None: 
+        if 'doy' in self.refet_out['fields'] and self.refet_out['fields']['doy'] is not None:
             drop_string = self.refet_out['delimiter'] + self.refet_out['fields']['doy']
             self.refet_out['monthly_header1'] = self.refet_out['monthly_header1'].replace(drop_string, '')
             self.refet_out['monthly_header2'] = self.refet_out['monthly_header2'].replace(drop_string, '')
-        if 'month' in self.refet_out['fields'] and self.refet_out['fields']['month'] is not None: 
+        if 'month' in self.refet_out['fields'] and self.refet_out['fields']['month'] is not None:
             drop_string = self.refet_out['delimiter'] + self.refet_out['fields']['month']
             self.refet_out['annual_header1'] = self.refet_out['monthly_header1'].replace(drop_string, '')
             self.refet_out['annual_header2'] = self.refet_out['monthly_header2'].replace(drop_string, '')
@@ -1257,648 +1121,404 @@ class RefETConfig():
             self.refet_out['annual_header1'] = self.refet_out['monthly_header1']
             self.refet_out['annual_header2'] = self.refet_out['monthly_header2']
 
-        # output met parameters
-        
-        if self.output_met_flag:
-            logging.info('  OUTMET: Filled met data are being posted.')
-            
+        # output alt refet parameters
+
+        if self.output_retalt_flag:
+            logging.info('  OUTRETALT: Alt refet data are being posted.')
+
             # output met data parameters
-        
-            self.output_met = {}
-            self.output_met['fields'] = {}
-            self.output_met['units'] = {}
+
+            self.refetalt_out = {}
+            self.refetalt_out['fields'] = {}
+            self.refetalt_out['units'] = {}
 
             # fnspec - parameter extension to file name specification
 
-            self.output_met['fnspec'] = {}
-            self.output_met['wsspec'] = {}
-            
+            self.refetalt_out['fnspec'] = {}
+            self.refetalt_out['wsspec'] = {}
+
             # Output met flags
-        
+
             try:
-                self.daily_output_met_flag = config.getboolean(output_met_sec, 'daily_output_met_flag')
+                self.daily_refetalt_flag = config.getboolean(output_retalt_sec, 'daily_refetalt_flag')
             except:
-                logging.debug('    daily_output_met_flag = False')
-                self.daily_output_met_flag = False
+                logging.debug('    daily_refetalt_flag = False')
+                self.daily_refetalt_flag = False
             try:
-                self.monthly_output_met_flag = config.getboolean(output_met_sec, 'monthly_output_met_flag')
+                self.monthly_refetalt_flag = config.getboolean(output_retalt_sec, 'monthly_refetalt_flag')
             except:
-                logging.debug('    monthly_output_met_flag = False')
-                self.monthly_output_met_flag = False
+                logging.debug('    monthly_refetalt_flag = False')
+                self.monthly_refetalt_flag = False
             try:
-                self.annual_output_met_flag = config.getboolean(output_met_sec, 'annual_output_met_flag')
+                self.annual_refetalt_flag = config.getboolean(output_retalt_sec, 'annual_refetalt_flag')
             except:
-                logging.debug('    annual_output_met_flag = False')
-                self.annual_output_met_flag = False
+                logging.debug('    annual_refetalt_flag = False')
+                self.annual_refetalt_flag = False
 
             # Output folders
-        
-            if self.daily_output_met_flag:
+
+            if self.daily_refetalt_flag:
                 try:
-                    self.daily_output_met_ws = os.path.join(
-                        self.project_ws, config.get(output_met_sec, 'daily_output_met_folder'))
-                    if not os.path.isdir(self.daily_output_met_ws):
-                        os.makedirs(self.daily_output_met_ws)
+                    self.daily_refetalt_ws = os.path.join(
+                        self.project_ws, config.get(output_retalt_sec, 'daily_refetalt_folder'))
+                    if not os.path.isdir(self.daily_refetalt_ws):
+                        os.makedirs(self.daily_refetalt_ws)
                 except:
-                    logging.debug('    daily_output_met_folder = daily_stats')
-                    self.daily_output_met_ws = 'daily_stats'
-            if self.monthly_output_met_flag:
+                    logging.debug('    daily_refetalt_folder = daily_retalt')
+                    self.daily_refetalt_ws = 'daily_retalt'
+            if self.monthly_refetalt_flag:
                 try:
-                    self.monthly_output_met_ws = os.path.join(
-                        self.project_ws, config.get(output_met_sec, 'monthly_output_met_folder'))
-                    if not os.path.isdir(self.monthly_output_met_ws):
-                        os.makedirs(self.monthly_output_met_ws)
+                    self.monthly_refetalt_ws = os.path.join(
+                        self.project_ws, config.get(output_retalt_sec, 'monthly_refetalt_folder'))
+                    if not os.path.isdir(self.monthly_refetalt_ws):
+                        os.makedirs(self.monthly_refetalt_ws)
                 except:
-                    logging.debug('    monthly_output_met_folder = monthly_stats')
-                    self.monthly_output_met_ws = 'monthly_stats'             
-            if self.annual_output_met_flag:
+                    logging.debug('    monthly_refetalt_folder = monthly_retalt')
+                    self.monthly_refetalt_ws = 'monthly_retalt'
+            if self.annual_refetalt_flag:
                 try:
-                    self.annual_output_met_ws = os.path.join(
-                        self.project_ws, config.get(output_met_sec, 'annual_output_met_folder'))
-                    if not os.path.isdir(self.annual_output_met_ws):
-                        os.makedirs(self.annual_output_met_ws)
+                    self.annual_refetalt_ws = os.path.join(
+                        self.project_ws, config.get(output_retalt_sec, 'annual_refetalt_folder'))
+                    if not os.path.isdir(self.annual_refetalt_ws):
+                        os.makedirs(self.annual_refetalt_ws)
                 except:
-                    logging.debug('    annual_output_met_folder = annual_stats')
-                    self.annual_output_met_ws = 'annual_stats'
-            self.output_met['file_type'] = config.get(output_met_sec, 'file_type')
-            self.output_met['data_structure_type'] = config.get(output_met_sec, 'data_structure_type').upper()
-            self.output_met['name_format'] = config.get(output_met_sec, 'name_format')
-            self.output_met['header_lines'] = config.getint(output_met_sec, 'header_lines')
-            self.output_met['names_line'] = config.getint(output_met_sec, 'names_line')
-            self.output_met['delimiter'] = config.get(output_met_sec, 'delimiter')
+                    logging.debug('    annual_refetalt_folder = annual_retalt')
+                    self.annual_refetalt_out_ws = 'annual_retalt'
+            self.refetalt_out['file_type'] = config.get(output_retalt_sec, 'file_type')
+            self.refetalt_out['data_structure_type'] = config.get(output_retalt_sec, 'data_structure_type').upper()
+            self.refetalt_out['name_format'] = config.get(output_retalt_sec, 'name_format')
+            self.refetalt_out['header_lines'] = config.getint(output_retalt_sec, 'header_lines')
+            self.refetalt_out['names_line'] = config.getint(output_retalt_sec, 'names_line')
+            self.refetalt_out['delimiter'] = config.get(output_retalt_sec, 'delimiter')
             try:
-                self.output_met['delimiter'] = config.get(output_met_sec, 'delimiter')
-                if self.output_met['delimiter'] is None or self.output_met['delimiter'] == 'None': 
-                    self.output_met['delimiter'] = ','
+                self.refetalt_out['delimiter'] = config.get(output_retalt_sec, 'delimiter')
+                if self.refetalt_out['delimiter'] is None or self.refetalt_out['delimiter'] == 'None':
+                    self.refetalt_out['delimiter'] = ','
                 else:
-                    if self.output_met['delimiter'] not in [' ', ',', '\\t']: self.output_met['delimiter'] = ','
-                    if "\\" in self.output_met['delimiter'] and "t" in self.output_met['delimiter']:
-                        self.output_met['delimiter'] = self.output_met['delimiter'].replace('\\t', '\t')
+                    if self.refetalt_out['delimiter'] not in [' ', ',', '\\t']: self.refetalt_out['delimiter'] = ','
+                    if "\\" in self.refetalt_out['delimiter'] and "t" in self.refetalt_out['delimiter']:
+                        self.refetalt_out['delimiter'] = self.refetalt_out['delimiter'].replace('\\t', '\t')
             except:
-                    self.output_met['delimiter'] = ','
-            if self.output_met['header_lines'] == 1:
+                    self.refetalt_out['delimiter'] = ','
+            if self.refetalt_out['header_lines'] == 1:
                 try:
-                    self.output_met['units_in_header'] = config.getboolean(output_met_sec, 'units_in_header')
+                    self.refetalt_out['units_in_header'] = config.getboolean(output_retalt_sec, 'units_in_header')
                 except:
-                        self.output_met['units_in_header'] = False
+                        self.refetalt_out['units_in_header'] = False
             else:
-                self.output_met['units_in_header'] = False
+                self.refetalt_out['units_in_header'] = False
             # date and values formats, etc
 
             try:
-                self.output_met['daily_date_format'] = config.get(output_met_sec, 'daily_date_format')
-                if self.output_met['daily_date_format'] is None or self.output_met['daily_date_format'] == 'None':
-                    if self.output_met['file_type'] == 'xls':
-                        self.output_met['daily_date_format'] = 'm/d/yyyy'
+                self.refetalt_out['daily_date_format'] = config.get(output_retalt_sec, 'daily_date_format')
+                if self.refetalt_out['daily_date_format'] is None or self.refetalt_out['daily_date_format'] == 'None':
+                    if self.refetalt_out['file_type'] == 'xls':
+                        self.refetalt_out['daily_date_format'] = 'm/d/yyyy'
                     else:
-                        self.output_met['daily_date_format'] = '%Y-%m-%d'
+                        self.refetalt_out['daily_date_format'] = '%Y-%m-%d'
             except:
-                if self.output_met['file_type'] == 'xls':
-                    self.output_met['daily_date_format'] = 'm/d/yyyy'
+                if self.refetalt_out['file_type'] == 'xls':
+                    self.refetalt_out['daily_date_format'] = 'm/d/yyyy'
                 else:
-                    self.output_met['daily_date_format'] = '%Y-%m-%d'
+                    self.refetalt_out['daily_date_format'] = '%Y-%m-%d'
             try:
-                offset = config.getint(output_met_sec, 'daily_hour_offset')
+                offset = config.getint(output_retalt_sec, 'daily_hour_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['daily_hour_offset'] = int(0)
+                    self.refetalt_out['daily_hour_offset'] = int(0)
                 else:
-                    self.output_met['daily_hour_offset'] = int(offset)
-            except: self.output_met['daily_hour_offset'] = int(0)
+                    self.refetalt_out['daily_hour_offset'] = int(offset)
+            except: self.refetalt_out['daily_hour_offset'] = int(0)
             try:
-                offset = config.getint(output_met_sec, 'daily_minute_offset')
+                offset = config.getint(output_retalt_sec, 'daily_minute_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['daily_minute_offset'] = int(0)
+                    self.refetalt_out['daily_minute_offset'] = int(0)
                 else:
-                    self.output_met['daily_minute_offset'] = int(offset)
-            except: self.output_met['daily_minute_offset'] = int(0)
-            try: 
-                self.output_met['daily_float_format'] = config.get(output_met_sec, 'daily_float_format')
-                if self.output_met['daily_float_format'] == 'None': self.output_met['daily_float_format'] = None
-            except: self.output_met['daily_float_format'] = None
+                    self.refetalt_out['daily_minute_offset'] = int(offset)
+            except: self.refetalt_out['daily_minute_offset'] = int(0)
             try:
-                self.output_met['monthly_date_format'] = config.get(output_met_sec, 'monthly_date_format')
-                if self.output_met['monthly_date_format'] is None or self.output_met['monthly_date_format'] == 'None':
-                    if self.output_met['file_type'] == 'xls':
-                        self.output_met['monthly_date_format'] = 'm/yyyy'
+                self.refetalt_out['daily_float_format'] = config.get(output_retalt_sec, 'daily_float_format')
+                if self.refetalt_out['daily_float_format'] == 'None': self.refetalt_out['daily_float_format'] = None
+            except: self.refetalt_out['daily_float_format'] = None
+            try:
+                self.refetalt_out['monthly_date_format'] = config.get(output_retalt_sec, 'monthly_date_format')
+                if self.refetalt_out['monthly_date_format'] is None or self.refetalt_out['monthly_date_format'] == 'None':
+                    if self.refetalt_out['file_type'] == 'xls':
+                        self.refetalt_out['monthly_date_format'] = 'm/yyyy'
                     else:
-                        self.output_met['monthly_date_format'] = '%Y-%m'
+                        self.refetalt_out['monthly_date_format'] = '%Y-%m'
             except:
-                if self.output_met['file_type'] == 'xls':
-                    self.output_met['monthly_date_format'] = 'm/yyyy'
+                if self.refetalt_out['file_type'] == 'xls':
+                    self.refetalt_out['monthly_date_format'] = 'm/yyyy'
                 else:
-                    self.output_met['monthly_date_format'] = '%Y-%m'
+                    self.refetalt_out['monthly_date_format'] = '%Y-%m'
             try:
-                offset = config.getint(output_met_sec, 'monthly_hour_offset')
+                offset = config.getint(output_retalt_sec, 'monthly_hour_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['monthly_hour_offset'] = int(0)
+                    self.refetalt_out['monthly_hour_offset'] = int(0)
                 else:
-                    self.output_met['monthly_hour_offset'] = int(offset)
-            except: self.output_met['monthly_hour_offset'] = int(0)
+                    self.refetalt_out['monthly_hour_offset'] = int(offset)
+            except: self.refetalt_out['monthly_hour_offset'] = int(0)
             try:
-                offset = config.getint(output_met_sec, 'monthly_minute_offset')
+                offset = config.getint(output_retalt_sec, 'monthly_minute_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['monthly_minute_offset'] = int(0)
+                    self.refetalt_out['monthly_minute_offset'] = int(0)
                 else:
-                    self.output_met['monthly_minute_offset'] = int(offset)
-            except: self.output_met['monthly_minute_offset'] = int(0)
-            try: 
-                self.output_met['monthly_float_format'] = config.get(output_met_sec, 'monthly_float_format')
-                if self.output_met['monthly_float_format'] == 'None': self.output_met['monthly_float_format'] = None
-            except: self.output_met['monthly_float_format'] = None
+                    self.refetalt_out['monthly_minute_offset'] = int(offset)
+            except: self.refetalt_out['monthly_minute_offset'] = int(0)
             try:
-                self.output_met['annual_date_format'] = config.get(output_met_sec, 'annual_date_format')
-                if self.output_met['annual_date_format'] is None or self.output_met['annual_date_format'] == 'None':
-                    if self.output_met['file_type'] == 'xls':
-                        self.output_met['annual_date_format'] = 'm/yyyy'
+                self.refetalt_out['monthly_float_format'] = config.get(output_retalt_sec, 'monthly_float_format')
+                if self.refetalt_out['monthly_float_format'] == 'None': self.refetalt_out['monthly_float_format'] = None
+            except: self.refetalt_out['monthly_float_format'] = None
+            try:
+                self.refetalt_out['annual_date_format'] = config.get(output_retalt_sec, 'annual_date_format')
+                if self.refetalt_out['annual_date_format'] is None or self.refetalt_out['annual_date_format'] == 'None':
+                    if self.refetalt_out['file_type'] == 'xls':
+                        self.refetalt_out['annual_date_format'] = 'm/yyyy'
                     else:
-                        self.output_met['annual_date_format'] = '%Y-%m'
+                        self.refetalt_out['annual_date_format'] = '%Y-%m'
             except:
-                if self.output_met['file_type'] == 'xls':
-                    self.output_met['annual_date_format'] = 'm/yyyy'
+                if self.refetalt_out['file_type'] == 'xls':
+                    self.refetalt_out['annual_date_format'] = 'm/yyyy'
                 else:
-                    self.output_met['annual_date_format'] = '%Y-%m'
+                    self.refetalt_out['annual_date_format'] = '%Y-%m'
             try:
-                offset = config.getint(output_met_sec, 'annual_hour_offset')
+                offset = config.getint(output_retalt_sec, 'annual_hour_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['annual_hour_offset'] = int(0)
+                    self.refetalt_out['annual_hour_offset'] = int(0)
                 else:
-                    self.output_met['annual_hour_offset'] = int(offset)
-            except: self.output_met['annual_hour_offset'] = int(0)
+                    self.refetalt_out['annual_hour_offset'] = int(offset)
+            except: self.refetalt_out['annual_hour_offset'] = int(0)
             try:
-                offset = config.getint(output_met_sec, 'annual_minute_offset')
+                offset = config.getint(output_retalt_sec, 'annual_minute_offset')
                 if offset is None or offset == 'None':
-                    self.output_met['annual_minute_offset'] = int(0)
+                    self.refetalt_out['annual_minute_offset'] = int(0)
                 else:
-                    self.output_met['annual_minute_offset'] = int(offset)
-            except: self.output_met['annual_minute_offset'] = int(0)
-            try: 
-                self.output_met['annual_float_format'] = config.get(output_met_sec, 'annual_float_format')
-                if self.output_met['annual_float_format'] == 'None': self.output_met['annual_float_format'] = None
-            except: self.output_met['annual_float_format'] = None
+                    self.refetalt_out['annual_minute_offset'] = int(offset)
+            except: self.refetalt_out['annual_minute_offset'] = int(0)
+            try:
+                self.refetalt_out['annual_float_format'] = config.get(output_retalt_sec, 'annual_float_format')
+                if self.refetalt_out['annual_float_format'] == 'None': self.refetalt_out['annual_float_format'] = None
+            except: self.refetalt_out['annual_float_format'] = None
 
             # Date or Year, Month, Day or both and/or DOY can be posted
-        
-            try: self.output_met['fields']['date'] = config.get(output_met_sec, 'date_field')
-            except: self.output_met['fields']['date'] = None
-            try: self.output_met['fields']['year'] = config.get(output_met_sec, 'year_field')
-            except: self.output_met['fields']['year'] = None
-            try: self.output_met['fields']['month'] = config.get(output_met_sec, 'month_field')
-            except: self.output_met['fields']['month'] = None
-            try: self.output_met['fields']['day'] = config.get(output_met_sec, 'day_field')
-            except: self.output_met['fields']['day'] = None
-            try: self.output_met['fields']['doy'] = config.get(output_met_sec, 'doy_field')
-            except: self.output_met['fields']['doy'] = None
-            if self.output_met['fields']['date'] is not None:
-                logging.info('  OUTMET: Posting date from date column')
-            elif (self.output_met['fields']['year'] is not None and
-                  self.output_met['fields']['month'] is not None and
-                  self.output_met['fields']['day'] is not None):
-                logging.info('  OUTMET: Posting date from year, month, and day columns')
+
+            try: self.refetalt_out['fields']['date'] = config.get(output_retalt_sec, 'date_field')
+            except: self.refetalt_out['fields']['date'] = None
+            try: self.refetalt_out['fields']['year'] = config.get(output_retalt_sec, 'year_field')
+            except: self.refetalt_out['fields']['year'] = None
+            try: self.refetalt_out['fields']['month'] = config.get(output_retalt_sec, 'month_field')
+            except: self.refetalt_out['fields']['month'] = None
+            try: self.refetalt_out['fields']['day'] = config.get(output_retalt_sec, 'day_field')
+            except: self.refetalt_out['fields']['day'] = None
+            try: self.refetalt_out['fields']['doy'] = config.get(output_retalt_sec, 'doy_field')
+            except: self.refetalt_out['fields']['doy'] = None
+            if self.refetalt_out['fields']['date'] is not None:
+                logging.info('  OUTRETALT: Posting date from date column')
+            elif (self.refetalt_out['fields']['year'] is not None and
+                  self.refetalt_out['fields']['month'] is not None and
+                  self.refetalt_out['fields']['day'] is not None):
+                logging.info('  OUTRETALT: Posting date from year, month, and day columns')
             else:
-                logging.error('  ERROR: OUTMET date_field (or year, month, and ' +
+                logging.error('  ERROR: OUTRETALT date_field (or year, month, and ' +
                               'day fields) must be set in  INI')
-                sys.exit()                  
+                sys.exit()
 
-            # output met data file name specifications, field names, and units
-        
-            self.output_met['wsspec']['tmax'] = None
-            try:
-                self.output_met['fields']['tmax'] = config.get(output_met_sec, 'tmax_field')
-                if self.output_met['fields']['tmax'] is None or self.output_met['fields']['tmax'] == 'None':
-                    self.output_met['fnspec']['tmax'] = 'Unused'
-                    self.output_met['fields']['tmax'] = 'TMax'
-                    self.output_met['units']['tmax'] = 'C'
-                else:    # tmax is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['tmax'] = config.get(output_met_sec, 'tmax_units')
-                        if self.output_met['units']['tmax'] is None or self.output_met['units']['tmax'] == 'None':
-                            self.output_met['units']['tmax'] = 'C'
-                    except: self.output_met['units']['tmax'] = 'C'
-                    try:
-                        self.output_met['fnspec']['tmax'] = config.get(output_met_sec, 'tmax_name')
-                        if self.output_met['fnspec']['tmax'] is None or self.output_met['fnspec']['tmax'] == 'None':
-                            self.output_met['fnspec']['tmax'] = self.output_met['fields']['tmax']
-                    except: self.output_met['fnspec']['tmax'] = self.output_met['fields']['tmax']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['tmax'] = config.get(output_met_sec, 'tmax_ws')
-                            if self.output_met['wsspec']['tmax'] is None or self.output_met['wsspec']['tmax'] == 'None':
-                                logging.info('  INFO:  OUTMET: tmax worksheet name set to TMax')
-                                self.output_met['wsspec']['tmax'] = 'TMax'
-                        except:
-                            logging.info('  INFO:  OUTMET: tmax worksheet name set to TMax')
-                            self.output_met['wsspec']['tmax'] = 'TMax'
-            except:
-                self.output_met['fnspec']['tmax'] = 'Unused'
-                self.output_met['fields']['tmax'] = 'TMax'
-                self.output_met['units']['tmax'] = 'C'
+            # output alt refet data file name specifications, field names, and units
+            # uses same units and met fields from OUTREF (refet_out)
 
-            self.output_met['wsspec']['tmin'] = None
-            try:
-                self.output_met['fields']['tmin'] = config.get(output_met_sec, 'tmin_field')
-                if self.output_met['fields']['tmin'] is None or self.output_met['fields']['tmin'] == 'None':
-                    self.output_met['fnspec']['tmin'] = 'Unused'
-                    self.output_met['fields']['tmin'] = 'TMin'
-                    self.output_met['units']['tmin'] = 'C'
-                else:    # tmin is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['tmin'] = config.get(output_met_sec, 'tmin_units')
-                        if self.output_met['units']['tmin'] is None or self.output_met['units']['tmin'] == 'None':
-                            self.output_met['units']['tmin'] = 'C'
-                    except: self.output_met['units']['tmin'] = 'C'
-                    try:
-                        self.output_met['fnspec']['tmin'] = config.get(output_met_sec, 'tmin_name')
-                        if self.output_met['fnspec']['tmin'] is None or self.output_met['fnspec']['tmin'] == 'None':
-                            self.output_met['fnspec']['tmin'] = self.output_met['fields']['tmin']
-                    except: self.output_met['fnspec']['tmin'] = self.output_met['fields']['tmin']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['tmin'] = config.get(output_met_sec, 'tmin_ws')
-                            if self.output_met['wsspec']['tmin'] is None or self.output_met['wsspec']['tmin'] == 'None':
-                                logging.info('  INFO:  OUTMET: tmin worksheet name set to TMin')
-                                self.output_met['wsspec']['tmin'] = 'TMin'
-                        except:
-                            logging.info('  INFO:  OUTMET: tmin worksheet name set to TMin')
-                            self.output_met['wsspec']['tmin'] = 'TMin'
-            except:
-                self.output_met['fnspec']['tmin'] = 'Unused'
-                self.output_met['fields']['tmin'] = 'TMin'
-                self.output_met['units']['tmin'] = 'C'
+            self.refetalt_out['wsspec']['tmax'] = self.refet_out['fnspec']['tmax']
+            self.refetalt_out['fnspec']['tmax'] = self.refet_out['fnspec']['tmax']
+            self.refetalt_out['fields']['tmax'] = self.refet_out['fields']['tmax']
+            self.refetalt_out['units']['tmax'] = self.refet_out['units']['tmax']
 
-            self.output_met['wsspec']['tavg'] = None
-            try:
-                self.output_met['fields']['tavg'] = config.get(output_met_sec, 'tavg_field')
-                if self.output_met['fields']['tavg'] is None or self.output_met['fields']['tavg'] == 'None':
-                    self.output_met['fnspec']['tavg'] = 'Unused'
-                    self.output_met['fields']['tavg'] = 'tmean'
-                    self.output_met['units']['tavg'] = 'C'
-                else:    # tavg is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['tavg'] = config.get(output_met_sec, 'tavg_units')
-                        if self.output_met['units']['tavg'] is None or self.output_met['units']['tavg'] == 'None':
-                            self.output_met['units']['tavg'] = 'C'
-                    except: self.output_met['units']['tavg'] = 'C'
-                    try:
-                        self.output_met['fnspec']['tavg'] = config.get(output_met_sec, 'tavg_name')
-                        if self.output_met['fnspec']['tavg'] is None or self.output_met['fnspec']['tavg'] == 'None':
-                            self.output_met['fnspec']['tavg'] = self.output_met['fields']['tavg']
-                    except: self.output_met['fnspec']['tavg'] = self.output_met['fields']['tavg']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['tavg'] = config.get(output_met_sec, 'tavg_ws')
-                            if self.output_met['wsspec']['tavg'] is None or self.output_met['wsspec']['tavg'] == 'None':
-                                logging.info('  INFO:  OUTMET: tavg worksheet name set to tmean')
-                                self.output_met['wsspec']['tavg'] = 'tmean'
-                        except:
-                            logging.info('  INFO:  OUTMET: tavg worksheet name set to tmean')
-                            self.output_met['wsspec']['tavg'] = 'tmean'
-            except:
-                self.output_met['fnspec']['tavg'] = 'Unused'
-                self.output_met['fields']['tavg'] = 'tmean'
-                self.output_met['units']['tavg'] = 'C'
+            self.refetalt_out['wsspec']['tmin'] = self.refet_out['fnspec']['tmin']
+            self.refetalt_out['fnspec']['tmin'] = self.refet_out['fnspec']['tmin']
+            self.refetalt_out['fields']['tmin'] = self.refet_out['fields']['tmin']
+            self.refetalt_out['units']['tmin'] = self.refet_out['units']['tmin']
 
-            self.output_met['wsspec']['ppt'] = None
-            try:
-                self.output_met['fields']['ppt'] = config.get(output_met_sec, 'ppt_field')
-                if self.output_met['fields']['ppt'] is None or self.output_met['fields']['ppt'] == 'None':
-                    self.output_met['fnspec']['ppt'] = 'Unused'
-                    self.output_met['fields']['ppt'] = 'Precip'
-                    self.output_met['units']['ppt'] = 'In*100'
-                else:    # ppt is being posted - get units
-                    self.output_met['fnspec']['ppt'] = 'Precip'
-                    try: 
-                        self.output_met['units']['ppt'] = config.get(output_met_sec, 'ppt_units')
-                        if self.output_met['units']['ppt'] is None: self.output_met['units']['ppt'] = 'In*100'
-                    except: self.output_met['units']['ppt'] = 'In*100'
-                    try:
-                        self.output_met['fnspec']['ppt'] = config.get(output_met_sec, 'ppt_name')
-                        if self.output_met['fnspec']['ppt'] is None or self.output_met['fnspec']['ppt'] == 'None':
-                            self.output_met['fnspec']['ppt'] = self.output_met['fields']['ppt']
-                    except: self.output_met['fnspec']['ppt'] = self.output_met['fields']['ppt']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['ppt'] = config.get(output_met_sec, 'ppt_ws')
-                            if self.output_met['wsspec']['ppt'] is None or self.output_met['wsspec']['ppt'] == 'None':
-                                logging.info('  INFO:  OUTMET: precip worksheet name set to Prcp')
-                                self.output_met['wsspec']['ppt'] = 'Prcp'
-                        except:
-                            logging.info('  INFO:  OUTMET: precip worksheet name set to Prcp')
-                            self.output_met['wsspec']['ppt'] = 'Prcp'
-            except:
-                self.output_met['fnspec']['ppt'] = 'Unused'
-                self.output_met['fields']['ppt'] = 'Precip'
-                self.output_met['units']['ppt'] = 'In*100'
+            self.refetalt_out['wsspec']['ppt'] = self.refet_out['fnspec']['ppt']
+            self.refetalt_out['fnspec']['ppt'] = self.refet_out['fnspec']['ppt']
+            self.refetalt_out['fields']['ppt'] = self.refet_out['fields']['ppt']
+            self.refetalt_out['units']['ppt'] = self.refet_out['units']['ppt']
 
-            self.output_met['wsspec']['snow'] = None
-            try:
-                self.output_met['fields']['snow'] = config.get(output_met_sec, 'snow_field')
-                if self.output_met['fields']['snow'] is None or self.output_met['fields']['snow'] == 'None':
-                    self.output_met['fnspec']['snow'] = 'Unused'
-                    self.output_met['fields']['snow'] = 'Snow'
-                    self.output_met['units']['snow'] = 'mm/day'
-                else:    # snow is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['snow'] = config.get(output_met_sec, 'snow_units')
-                        if self.output_met['units']['snow'] is None or self.output_met['units']['snow'] == 'None':
-                            self.output_met['units']['snow'] = 'mm/day'
-                    except: self.output_met['units']['snow'] = 'mm/day'
-                    try:
-                        self.output_met['fnspec']['snow'] = config.get(output_met_sec, 'snow_name')
-                        if self.output_met['fnspec']['snow'] is None or self.output_met['fnspec']['snow'] == 'None':
-                            self.output_met['fnspec']['snow'] = self.output_met['fields']['snow']
-                    except: self.output_met['fnspec']['snow'] = self.output_met['fields']['snow']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['snow'] = config.get(output_met_sec, 'snow_ws')
-                            if self.output_met['wsspec']['snow'] is None or self.output_met['wsspec']['snow'] == 'None':
-                                logging.info('  INFO:  OUTMET: snow worksheet name set to Snow')
-                                self.output_met['wsspec']['snow'] = 'Snow'
-                        except:
-                            logging.info('  INFO:  OUTMET: snow worksheet name set to Snow')
-                            self.output_met['wsspec']['snow'] = 'Snow'
-            except:
-                self.output_met['fnspec']['snow'] = 'Unused'
-                self.output_met['fields']['snow'] = 'Snow'
-                self.output_met['units']['snow'] = 'mm/day'
+            self.refetalt_out['wsspec']['snow'] = self.refet_out['fnspec']['snow']
+            self.refetalt_out['fnspec']['snow'] = self.refet_out['fnspec']['snow']
+            self.refetalt_out['fields']['snow'] = self.refet_out['fields']['snow']
+            self.refetalt_out['units']['snow'] = self.refet_out['units']['snow']
 
-            self.output_met['wsspec']['snow_depth'] = None
-            try:
-                self.output_met['fields']['snow_depth'] = config.get(output_met_sec, 'depth_field')
-                if self.output_met['fields']['snow_depth'] is None or self.output_met['fields']['snow_depth'] == 'None':
-                    self.output_met['fnspec']['snow_depth'] = 'Unused'
-                    self.output_met['fields']['snow_depth'] = 'SDep'
-                    self.output_met['units']['snow_depth'] = 'In'
-                else:    # snow depth is being posted - get units
-                    try: 
-                        self.output_met['units']['snow_depth'] = config.get(output_met_sec, 'depth_units')
-                        if self.output_met['units']['snow_depth'] is None or self.output_met['units']['snow_depth'] == 'None':
-                            self.output_met['units']['snow_depth'] = 'In'
-                    except: self.output_met['units']['snow_depth'] = 'In'
-                    try:
-                        self.output_met['fnspec']['snow_depth'] = config.get(output_met_sec, 'depth_name')
-                        if self.output_met['fnspec']['snow_depth'] is None or self.output_met['fnspec']['snow_depth'] == 'None':
-                            self.output_met['fnspec']['snow_depth'] = self.output_met['fields']['snow_depth']
-                    except: self.output_met['fnspec']['snow_depth'] = self.output_met['fields']['snow_depth']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['snow_depth'] = config.get(output_met_sec, 'depth_ws')
-                            if self.output_met['wsspec']['snow_depth'] is None or self.output_met['wsspec']['snow_depth'] == 'None':
-                                logging.info('  INFO:  OUTMET: snow depth worksheet name set to SDepth')
-                                self.output_met['wsspec']['snow_depth'] = 'SDepth'
-                        except:
-                            logging.info('  INFO:  OUTMET: snow depth worksheet name set to SDepth')
-                            self.output_met['wsspec']['snow_depth'] = 'SDepth'
-            except:
-                self.output_met['fnspec']['snow_depth'] = 'Unused'
-                self.output_met['fields']['snow_depth'] = 'SDep'
-                self.output_met['units']['snow_depth'] = 'In'
+            self.refetalt_out['wsspec']['snow_depth'] = self.refet_out['fnspec']['snow_depth']
+            self.refetalt_out['fnspec']['snow_depth'] = self.refet_out['fnspec']['snow_depth']
+            self.refetalt_out['fields']['snow_depth'] = self.refet_out['fields']['snow_depth']
+            self.refetalt_out['units']['snow_depth'] = self.refet_out['units']['snow_depth']
 
-            self.output_met['wsspec']['rs'] = None
-            try:
-                self.output_met['fields']['rs'] = config.get(output_met_sec, 'rs_field')
-                if self.output_met['fields']['rs'] is None or self.output_met['fields']['rs'] == 'None':
-                    self.output_met['fnspec']['rs'] = 'Unused'
-                    self.output_met['fields']['rs'] = 'Rs'
-                    self.output_met['units']['rs'] = 'MJ/m2'
-                else:    # rs is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['rs'] = config.get(output_met_sec, 'rs_units')
-                        if self.output_met['units']['rs'] is None or self.output_met['units']['rs'] == 'None':
-                            self.output_met['units']['rs'] = 'MJ/m2'
-                    except: self.output_met['units']['rs'] = 'MJ/m2'
-                    try:
-                        self.output_met['fnspec']['rs'] = config.get(output_met_sec, 'rs_name')
-                        if self.output_met['fnspec']['rs'] is None or self.output_met['fnspec']['rs'] == 'None':
-                            self.output_met['fnspec']['rs'] = self.output_met['fields']['rs']
-                    except: self.output_met['fnspec']['rs'] = self.output_met['fields']['rs']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['rs'] = config.get(output_met_sec, 'rs_ws')
-                            if self.output_met['wsspec']['rs'] is None or self.output_met['wsspec']['rs'] == 'None':
-                                logging.info('  INFO:  OUTMET: Rs worksheet name set to Rs')
-                                self.output_met['wsspec']['rs'] = 'Rs'
-                        except:
-                            logging.info('  INFO:  OUTMET: Rs worksheet name set to Rs')
-                            self.output_met['wsspec']['rs'] = 'Rs'
-            except:
-                self.output_met['fnspec']['rs'] = 'Unused'
-                self.output_met['fields']['rs'] = 'Rs'
-                self.output_met['units']['rs'] = 'MJ/m2'
+            self.refetalt_out['wsspec']['rs'] = self.refet_out['fnspec']['rs']
+            self.refetalt_out['fnspec']['rs'] = self.refet_out['fnspec']['rs']
+            self.refetalt_out['fields']['rs'] = self.refet_out['fields']['rs']
+            self.refetalt_out['units']['rs'] = self.refet_out['units']['rs']
 
-            self.output_met['wsspec']['wind'] = None
-            try:
-                self.output_met['fields']['wind'] = config.get(output_met_sec, 'wind_field')
-                if self.output_met['fields']['wind'] is None or self.output_met['fields']['wind'] == 'None':
-                    self.output_met['fnspec']['wind'] = 'Unused'
-                    self.output_met['fields']['wind'] = 'Wind'
-                    self.output_met['units']['wind'] = 'm/s'
-                else:    # wind is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['wind'] = config.get(output_met_sec, 'wind_units')
-                        if self.output_met['units']['wind'] is None or self.output_met['units']['wind'] == 'None':
-                            self.output_met['units']['wind'] = 'm/s'
-                    except: self.output_met['units']['wind'] = 'm/s'
-                    try:
-                        self.output_met['fnspec']['wind'] = config.get(output_met_sec, 'wind_name')
-                        if self.output_met['fnspec']['wind'] is None or self.output_met['fnspec']['wind'] == 'None':
-                            self.output_met['fnspec']['wind'] = self.output_met['fields']['wind']
-                    except: self.output_met['fnspec']['wind'] = self.output_met['fields']['wind']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['wind'] = config.get(output_met_sec, 'wind_ws')
-                            if self.output_met['wsspec']['wind'] is None or self.output_met['wsspec']['wind'] == 'None':
-                                logging.info('  INFO:  OUTMET: wind worksheet name set to wind')
-                                self.output_met['wsspec']['wind'] = 'wind'
-                        except:
-                            logging.info('  INFO:  OUTMET: wind worksheet name set to wind')
-                            self.output_met['wsspec']['wind'] = 'wind'
-            except:
-                self.output_met['fnspec']['wind'] = 'Unused'
-                self.output_met['fields']['wind'] = 'Wind'
-                self.output_met['units']['wind'] = 'm/s'
+            self.refetalt_out['wsspec']['wind'] = self.refet_out['fnspec']['wind']
+            self.refetalt_out['fnspec']['wind'] = self.refet_out['fnspec']['wind']
+            self.refetalt_out['fields']['wind'] = self.refet_out['fields']['wind']
+            self.refetalt_out['units']['wind'] = self.refet_out['units']['wind']
 
-            self.output_met['wsspec']['tdew'] = None
-            try:
-                self.output_met['fields']['tdew'] = config.get(output_met_sec, 'tdew_field')
-                if self.output_met['fields']['tdew'] is None or self.output_met['fields']['tdew'] == 'None':
-                    self.output_met['fnspec']['tdew'] = 'Unused'
-                    self.output_met['fields']['tdew'] = 'TDew'
-                    self.output_met['units']['tdew'] = 'C'
-                else:    # tdew is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['tdew'] = config.get(output_met_sec, 'tdew_units')
-                        if self.output_met['units']['tdew'] is None or self.output_met['units']['tdew'] == 'None':
-                            self.output_met['units']['tdew'] = 'C'
-                    except: self.output_met['units']['tdew'] = 'C'
-                    try:
-                        self.output_met['fnspec']['tdew'] = config.get(output_met_sec, 'tdew_name')
-                        if self.output_met['fnspec']['tdew'] is None or self.output_met['fnspec']['tdew'] == 'None':
-                            self.output_met['fnspec']['tdew'] = self.output_met['fields']['tdew']
-                    except: self.output_met['fnspec']['tdew'] = self.output_met['fields']['tdew']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['tdew'] = config.get(output_met_sec, 'tdew_ws')
-                            if self.output_met['wsspec']['tdew'] is None or self.output_met['wsspec']['tdew'] == 'None':
-                                logging.info('  INFO:  OUTMET: tdew worksheet name set to TDew')
-                                self.output_met['wsspec']['tdew'] = 'TDew'
-                        except:
-                            logging.info('  INFO:  OUTMET: tdew worksheet name set to TDew')
-                            self.output_met['wsspec']['tdew'] = 'TDew'
-            except:
-                self.output_met['fnspec']['tdew'] = 'Unused'
-                self.output_met['fields']['tdew'] = 'TDew'
-                self.output_met['units']['tdew'] = 'C'
+            self.refetalt_out['wsspec']['tdew'] = self.refet_out['fnspec']['tdew']
+            self.refetalt_out['fnspec']['tdew'] = self.refet_out['fnspec']['tdew']
+            self.refetalt_out['fields']['tdew'] = self.refet_out['fields']['tdew']
+            self.refetalt_out['units']['tdew'] = self.refet_out['units']['tdew']
 
-            self.output_met['wsspec']['q'] = None
-            if self.input_met['fnspec']['q'].lower() == 'unused':
-                self.output_met['fnspec']['q'] = 'Unused'
-                self.output_met['fields']['q'] = 'Q'
-                self.output_met['units']['q'] = 'kg/kg'
-            else:
-                try:
-                    self.output_met['fields']['q'] = config.get(output_met_sec, 'q_field')
-                    if self.output_met['fields']['q'] is None or self.output_met['fields']['q'] == 'None':
-                        self.output_met['fnspec']['q'] = 'Unused'
-                        self.output_met['fields']['q'] = 'Q'
-                        self.output_met['units']['q'] = 'kg/kg'
-                    else:    # q is being posted - get units and/or file name spec
-                        try: 
-                            self.output_met['units']['q'] = config.get(output_met_sec, 'q_units')
-                            if self.output_met['units']['q'] is None or self.output_met['units']['q'] == 'None':
-                                self.output_met['units']['q'] = 'kg/kg'
-                        except: self.output_met['units']['q'] = 'kg/kg'
-                        try:
-                            self.output_met['fnspec']['q'] = config.get(output_met_sec, 'q_name')
-                            if self.output_met['fnspec']['q'] is None or self.output_met['fnspec']['q'] == 'None':
-                                self.output_met['fnspec']['q'] = self.output_met['fields']['q']
-                        except: self.output_met['fnspec']['q'] = self.output_met['fields']['q']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['q'] = config.get(output_met_sec, 'q_ws')
-                            if self.output_met['wsspec']['q'] is None or self.output_met['wsspec']['q'] == 'None':
-                                logging.info('  INFO:  OUTMET: q worksheet name set to Q')
-                                self.output_met['wsspec']['q'] = 'Q'
-                        except:
-                            logging.info('  INFO:  OUTMET: q worksheet name set to Q')
-                            self.output_met['wsspec']['q'] = 'Q'
-                except:
-                    self.output_met['fnspec']['q'] = 'Unused'
-                    self.output_met['fields']['q'] = 'Q'
-                    self.output_met['units']['q'] = 'kg/kg'
+            # THIS SHOULD WORK - DEBUG THESE ASSIGNMENTS
+            # self.refetalt_out['wsspec']['q'] = self.refet_out['fnspec']['q']
+            # self.refetalt_out['fnspec']['q'] = self.refet_out['fnspec']['q']
+            # self.refetalt_out['fields']['q'] = self.refet_out['fields']['q']
+            # self.refetalt_out['units']['q'] = self.refet_out['units']['q']
 
-            self.output_met['wsspec']['refet'] = None
-            try:
-                self.output_met['fields']['refet'] = config.get(output_met_sec, 'refet_field')
-                if self.output_met['fields']['refet'] is None or self.output_met['fields']['refet'] == 'None':
-                    self.output_met['fnspec']['refet'] = 'Unused'
-                    self.output_met['fields']['refet'] = 'refet'
-                    self.output_met['units']['refet'] = 'mm/day'
-                else:    # ref_et is being posted - get units and/or file name spec
-                    try: 
-                        self.output_met['units']['refet'] = config.get(output_met_sec, 'refet_units')
-                        if self.output_met['units']['refet'] is None or self.output_met['units']['refet'] == 'None':
-                            self.output_met['units']['refet'] = 'mm/day'
-                    except: self.output_met['units']['refet'] = 'mm/day'
-                    try:
-                        self.output_met['fnspec']['refet'] = config.get(output_met_sec, 'refet_name')
-                        if self.output_met['fnspec']['refet'] is None or self.output_met['fnspec']['refet'] == 'None':
-                            self.output_met['fnspec']['refet'] = self.output_met['fields']['refet']
-                    except: self.output_met['fnspec']['refet'] = self.output_met['fields']['refet']
-                    if self.output_met['file_type'].lower() == 'xls' or self.output_met['file_type'].lower() == 'wb':
-                        try: 
-                            self.output_met['wsspec']['refet'] = config.get(output_met_sec, 'refet_ws')
-                            if self.output_met['wsspec']['refet'] is None or self.output_met['wsspec']['refet'] == 'None':
-                                logging.info('  INFO:  OUTMET: ref_et worksheet name set to ref_et')
-                                self.output_met['wsspec']['refet'] = 'refet'
-                        except:
-                            logging.info('  INFO:  OUTMET: ref_et worksheet name set to ref_et')
-                            self.output_met['wsspec']['refet'] = 'refet'
-            except:
-                self.output_met['fnspec']['refet'] = 'Unused'
-                self.output_met['fields']['refet'] = 'refet'
-                self.output_met['units']['refet'] = 'mm/day'
+            self.refetalt_out['wsspec']['ascer'] = 'ASCEr'
+            self.refetalt_out['fnspec']['ascer'] = 'ASCEr'
+            self.refetalt_out['fields']['ascer'] = 'ASCEr'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['ascer'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['ascer'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['asceg'] = 'ASCEg'
+            self.refetalt_out['fnspec']['asceg'] = 'ASCEg'
+            self.refetalt_out['fields']['asceg'] = 'ASCEg'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['asceg'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['asceg'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['penm'] = 'Penman'
+            self.refetalt_out['fnspec']['penm'] = 'Penman'
+            self.refetalt_out['fields']['penm'] = 'Penman'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['penm'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['penm'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['kimo'] = 'KimbPeng'
+            self.refetalt_out['fnspec']['kimo'] = 'KimbPeng'
+            self.refetalt_out['fields']['kimo'] = 'KimbPeng'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['kimo'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['kimo'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['kimr'] = 'KimbPen'
+            self.refetalt_out['fnspec']['kimr'] = 'KimbPen'
+            self.refetalt_out['fields']['kimr'] = 'KimbPen'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['kimr'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['kimr'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['fa056'] = 'FAO56PM'
+            self.refetalt_out['fnspec']['fao56'] = 'FAO56PM'
+            self.refetalt_out['fields']['fao56'] = 'FAO56PM'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['fao56'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['fao56'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['pretay'] = 'PreTay'
+            self.refetalt_out['fnspec']['pretay'] = 'PreTay'
+            self.refetalt_out['fields']['pretay'] = 'PreTay'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['pretay'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['pretay'] = 'mm/day'
+
+            self.refetalt_out['wsspec']['harg'] = '85Harg'
+            self.refetalt_out['fnspec']['harg'] = '85Harg'
+            self.refetalt_out['fields']['harg'] = '85Harg'
+            if self.refet_out['output_units'] == 'english':
+                self.refetalt_out['units']['harg'] = 'in/day'
+            elif self.refet_out['output_units'] == 'metric':
+                self.refetalt_out['units']['harg'] = 'mm/day'
 
             # drop unused fields
-        
-            all_output_met_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'tavg', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'refet']
-            for k, v in self.output_met['fnspec'].items():
+
+            all_refetalt_out_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'ascer', 'asceg', 'penm', 'kimo', 'kimr', 'fao56', 'pretay', 'harg']
+            for k, v in sorted(self.refetalt_out['fnspec'].items()):
                 if not v is None:
                     try:
                         if v.lower() == 'unused':
-                            del self.output_met['units'][k] 
-                            del self.output_met['fnspec'][k] 
-                            del self.output_met['fields'][k] 
+                            del self.refetalt_out['units'][k]
+                            del self.refetalt_out['fnspec'][k]
+                            del self.refetalt_out['fields'][k]
                     except: pass
-            for k, v in self.output_met['fields'].items():
+            for k, v in sorted(self.refetalt_out['fields'].items()):
                 if v is None:
-                    try: del self.output_met['fields'][k] 
+                    try: del self.refetalt_out['fields'][k]
                     except: pass
-                    
+
             # Check units
-        
-            for k, v in self.output_met['units'].iteritems():
+
+            for k, v in sorted(self.refetalt_out['units'].items()):
                 if v is not None and v.lower() not in units_list:
                     logging.error('  ERROR: {0} units {1} are not currently supported'.format(k,v))
                     sys.exit()
 
             # set up header lines
 
-            self.used_output_met_fields = [fn for fn in all_output_met_fields if fn in self.output_met['fields'].keys()]
-            self.output_met['data_out_fields'] = [fn for fn in self.used_output_met_fields if fn not in ['date', 'year', 'month', 'day', 'doy']]
-            self.output_met['out_data_fields'] = []
-            if self.output_met['header_lines'] == 2:
-                for fc, fn in enumerate(self.used_output_met_fields):
-                    if fc == 0:
-                        self.output_met['daily_header1'] = self.output_met['fields'][fn]
-                        self.output_met['daily_header2'] = "Units"
-                    else: 
-                        self.output_met['daily_header1'] = self.output_met['daily_header1'] + self.output_met['delimiter'] + self.output_met['fields'][fn]
-                        if fn in self.output_met['data_out_fields']:
-                            self.output_met['daily_header2'] = self.output_met['daily_header2'] + self.output_met['delimiter'] + self.output_met['units'][fn]
-                            self.output_met['out_data_fields'].append(self.output_met['fields'][fn])
-                        else:
-                            self.output_met['daily_header2'] = self.output_met['daily_header2'] + self.output_met['delimiter']
-            else:
-                for fc, fn in enumerate(self.used_output_met_fields):
-                    if fc == 0:
-                        self.output_met['daily_header1'] = self.output_met['fields'][fn]
-                    else: 
-                        if fn in self.output_met['data_out_fields']:
-                            self.output_met['daily_header1'] = self.output_met['daily_header1'] + self.output_met['delimiter'] + self.output_met['fields'][fn]
-                            if self.output_met['units_in_header']:
-                                self.output_met['daily_header1'] = self.output_met['daily_header1'] + " (" + self.output_met['units'][fn] + ")"
-                            self.output_met['out_data_fields'].append(self.output_met['fields'][fn])
-                        else:
-                            self.output_met['daily_header1'] = self.output_met['daily_header1'] + self.output_met['delimiter'] + self.output_met['fields'][fn]
-                self.output_met['daily_header2'] = ""
-            if 'day' in self.output_met['fields'] and self.output_met['fields']['day'] is not None: 
-                drop_string = self.output_met['delimiter'] + self.output_met['fields']['day']
-                self.output_met['monthly_header1'] = self.output_met['daily_header1'].replace(drop_string, '')
-                self.output_met['monthly_header2'] = self.output_met['daily_header2'].replace(drop_string, '')
-            else:
-                self.output_met['monthly_header1'] = self.output_met['daily_header1']
-                self.output_met['monthly_header2'] = self.output_met['daily_header2']
-            if 'doy' in self.output_met['fields'] and self.output_met['fields']['doy'] is not None: 
-                drop_string = self.output_met['delimiter'] + self.output_met['fields']['doy']
-                self.output_met['monthly_header1'] = self.output_met['monthly_header1'].replace(drop_string, '')
-                self.output_met['monthly_header2'] = self.output_met['monthly_header2'].replace(drop_string, '')
-            if 'month' in self.output_met['fields'] and self.output_met['fields']['month'] is not None: 
-                drop_string = self.output_met['delimiter'] + self.output_met['fields']['month']
-                self.output_met['annual_header1'] = self.output_met['monthly_header1'].replace(drop_string, '')
-                self.output_met['annual_header2'] = self.output_met['monthly_header2'].replace(drop_string, '')
-            else:
-                self.output_met['annual_header1'] = self.output_met['monthly_header1']
-                self.output_met['annual_header2'] = self.output_met['monthly_header2']
+            self.used_refetalt_out_fields = [fn for fn in all_refetalt_out_fields if fn in self.refetalt_out['fields'].keys()]
+            self.refetalt_out['data_out_fields'] = [fn for fn in self.used_refetalt_out_fields if fn not in ['date', 'year', 'month', 'day', 'doy']]
+            self.refetalt_out['refet_out_fields'] = [fn for fn in self.used_refetalt_out_fields if fn in ['ascer', 'asceg', 'penm', 'kimo', 'kimr', 'fao56', 'pretay', 'harg']]
 
-        # drop unused input met fields
-        
-        for k, v in self.input_met['fnspec'].items():
+            self.refetalt_out['out_data_fields'] = []
+            if self.refetalt_out['header_lines'] == 2:
+                for fc, fn in enumerate(self.used_refetalt_out_fields):
+                    if fc == 0:
+                        self.refetalt_out['daily_header1'] = self.refetalt_out['fields'][fn]
+                        self.refetalt_out['daily_header2'] = "Units"
+                    else:
+                        self.refetalt_out['daily_header1'] = self.refetalt_out['daily_header1'] + self.refetalt_out['delimiter'] + self.refetalt_out['fields'][fn]
+                        if fn in self.refetalt_out['data_out_fields']:
+                            self.refetalt_out['daily_header2'] = self.refetalt_out['daily_header2'] + self.refetalt_out['delimiter'] + self.refetalt_out['units'][fn]
+                            self.refetalt_out['out_data_fields'].append(self.refetalt_out['fields'][fn])
+                        else:
+                            self.refetalt_out['daily_header2'] = self.refetalt_out['daily_header2'] + self.refetalt_out['delimiter']
+            else:
+                for fc, fn in enumerate(self.used_refetalt_out_fields):
+                    if fc == 0:
+                        self.refetalt_out['daily_header1'] = self.refetalt_out['fields'][fn]
+                    else:
+                        if fn in self.refetalt_out['data_out_fields']:
+                            self.refetalt_out['daily_header1'] = self.refetalt_out['daily_header1'] + self.refetalt_out['delimiter'] + self.refetalt_out['fields'][fn]
+                            if self.refetalt_out['units_in_header']:
+                                self.refetalt_out['daily_header1'] = self.refetalt_out['daily_header1'] + " (" + self.refetalt_out['units'][fn] + ")"
+                            self.refetalt_out['out_data_fields'].append(self.refetalt_out['fields'][fn])
+                        else:
+                            self.refetalt_out['daily_header1'] = self.refetalt_out['daily_header1'] + self.refetalt_out['delimiter'] + self.refetalt_out['fields'][fn]
+                self.refetalt_out['daily_header2'] = ""
+            if 'day' in self.refetalt_out['fields'] and self.refetalt_out['fields']['day'] is not None:
+                drop_string = self.refetalt_out['delimiter'] + self.refetalt_out['fields']['day']
+                self.refetalt_out['monthly_header1'] = self.refetalt_out['daily_header1'].replace(drop_string, '')
+                self.refetalt_out['monthly_header2'] = self.refetalt_out['daily_header2'].replace(drop_string, '')
+            else:
+                self.refetalt_out['monthly_header1'] = self.refetalt_out['daily_header1']
+                self.refetalt_out['monthly_header2'] = self.refetalt_out['daily_header2']
+            if 'doy' in self.refetalt_out['fields'] and self.refetalt_out['fields']['doy'] is not None:
+                drop_string = self.refetalt_out['delimiter'] + self.refetalt_out['fields']['doy']
+                self.refetalt_out['monthly_header1'] = self.refetalt_out['monthly_header1'].replace(drop_string, '')
+                self.refetalt_out['monthly_header2'] = self.refetalt_out['monthly_header2'].replace(drop_string, '')
+            if 'month' in self.refetalt_out['fields'] and self.refetalt_out['fields']['month'] is not None:
+                drop_string = self.refetalt_out['delimiter'] + self.refetalt_out['fields']['month']
+                self.refetalt_out['annual_header1'] = self.refetalt_out['monthly_header1'].replace(drop_string, '')
+                self.refetalt_out['annual_header2'] = self.refetalt_out['monthly_header2'].replace(drop_string, '')
+            else:
+                self.refetalt_out['annual_header1'] = self.refetalt_out['monthly_header1']
+                self.refetalt_out['annual_header2'] = self.refetalt_out['monthly_header2']
+
+        # drop unused input met fields - SEEMS OUT OF PLACE. MOVE UP?
+
+        for k, v in sorted(self.input_met['fnspec'].items()):
             if not v is None:
                 try:
                     if v.lower() == 'unused':
-                        del self.input_met['units'][k] 
-                        del self.input_met['fnspec'][k] 
-                        del self.input_met['fields'][k] 
+                        del self.input_met['units'][k]
+                        del self.input_met['fnspec'][k]
+                        del self.input_met['fields'][k]
                 except: pass
 
 def console_logger(logger = logging.getLogger(''), log_level = logging.INFO):
@@ -1919,7 +1539,7 @@ def do_tests():
     ini_path = os.getcwd() + os.sep + "ret_template.ini"
     cfg = RefETConfig()
     cfg.read_refet_ini(ini_path, True)
-    
+
 if __name__ == '__main__':
     # testing during development
-    do_tests()        
+    do_tests()

@@ -13,6 +13,7 @@ import refET
 import ret_utils
 import mod_dmis
 
+# move this to a unit conversion section / function
 mpdToMps = 3.2808399 * 5280 / 86400
 
 class MetNodesData():
@@ -21,15 +22,15 @@ class MetNodesData():
         """ """
         self.met_nodes_data = dict()
         self.met_nodes_input_met_data = {}
-        self.mn_daily_output_met_data = {}
-        self.mn_monthly_output_met_data = {}
-        self.mn_annual_output_met_data = {}
+        self.mn_daily_refetalt_out_data = {}
+        self.mn_monthly_refetalt_out_data = {}
+        self.mn_annual_refetalt_out_data = {}
 
     def set_met_nodes_meta_data(self, cfg):
         """Extract Met Node Meta Data from specified file
-    
+
         This function builds MetNode objects and must be run first.
-    
+
         Args:
             cfg: configuration data from INI file
 
@@ -40,15 +41,15 @@ class MetNodesData():
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(cfg.mnmd_header_lines) if i + 1 <> cfg.mnmd_names_line]
-            if '.xls' in cfg.met_nodes_meta_data_path.lower(): 
-                df = pd.read_excel(cfg.met_nodes_meta_data_path, 
-                        sheetname = cfg.met_nodes_meta_data_ws, 
-                        header = cfg.mnmd_names_line - len(data_skip) - 1, 
+            data_skip = [i for i in range(cfg.mnmd_header_lines) if i + 1 != cfg.mnmd_names_line]
+            if '.xls' in cfg.met_nodes_meta_data_path.lower():
+                df = pd.read_excel(cfg.met_nodes_meta_data_path,
+                        sheet_name = cfg.met_nodes_meta_data_ws,
+                        header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, na_values = ['NaN'])
             else:
-                df = pd.read_table(cfg.met_nodes_meta_data_path, engine = 'python', 
-                        header = cfg.mnmd_names_line - len(data_skip) - 1, 
+                df = pd.read_table(cfg.met_nodes_meta_data_path, engine = 'python',
+                        header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, sep = cfg.mnmd_delimiter, na_values = ['NaN'])
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
@@ -62,17 +63,17 @@ class MetNodesData():
                 pass
 
             # remove excess baggage from column names
-            
+
             columns = [x.replace(' (feet)', '').replace('decimal ','') for x in columns]
-            
+
             # parse met node met data for each node id
 
             for rc, row in df.iterrows():
                 met_node = MetNode()
-                if not(met_node.read_mnmd_from_row(row.tolist(), columns, 
+                if not(met_node.read_mnmd_from_row(row.tolist(), columns,
                         cfg.elev_units)): sys.exit()
                 self.met_nodes_data[met_node.met_node_id] = met_node
-        except: 
+        except:
             logging.error('Unable to read met nodes meta data from ' + cfg.met_nodes_meta_data_path)
             logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred\n')
             sys.exit()
@@ -141,7 +142,7 @@ class MetNode():
     """Class for managing times series data of one Met Node"""
     def __init__(self):
         """ """
-    
+
     def __str__(self):
         """ """
         return '<MetNode {0}, {1}>'.format(self.met_node_id, self.met_node_name)
@@ -151,7 +152,7 @@ class MetNode():
 
         Order of columns:
             Older headers (columns) include Met Node Index
-            Met Node ID, Met Node Name, Decimal Latitude, Decimal Longitude, Elevation, 
+            Met Node ID, Met Node Name, Decimal Latitude, Decimal Longitude, Elevation,
             Wind Station No, Wind Station Name, Dewpoint Depression Station No, Dewpoint Depression Station Name
             MET Data Path, Ref ET Data Path, TR_b0, TR_b1, TR_b2, Source Met Id    # these are optional
 
@@ -164,7 +165,7 @@ class MetNode():
         # met node id is node id for ref et computations
         # source met id is met id in input met data file
         # source met id is automatically set to met node id if not provided
-        
+
         if 'met node id' in columns:
             self.met_node_id = data[columns.index('met node id')]
         else:
@@ -189,7 +190,7 @@ class MetNode():
         else:
             logging.error('Unable to read met node elevation')
             return False
-	if elev_units == 'feet' or elev_units == 'ft': self.elevation *= 0.3048
+        if elev_units == 'feet' or elev_units == 'ft': self.elevation *= 0.3048
         if 'wind station no' in columns:
             self.wind_id = data[columns.index('wind station no')]
         else:
@@ -203,7 +204,7 @@ class MetNode():
             else:
                 logging.error('Unable to read ko id')
                 return False
-        
+
         # additional optional meta data
 
         self.met_data_path = None
@@ -257,14 +258,14 @@ class MetNode():
         if not success:
             logging.error('Unable to read and fill daily input meteorological data.')
             return False
-        
+
         # Check/modify units
-        
+
         for field_key, field_units in cfg.input_met['units'].items():
             if field_units is None:
                 continue
-            elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day', 
-                    'm/s', 'mj/m2', 'mj/m^2', 'mj/m2/day', 'mj/m^2/day', 
+            elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day',
+                    'm/s', 'mj/m2', 'mj/m^2', 'mj/m2/day', 'mj/m^2/day',
                     'mj/m2/d', 'mj/m^2/d', 'kg/kg', 'mps']:
                 continue
             elif field_units.lower() == 'm':
@@ -298,7 +299,7 @@ class MetNode():
                 return False
 
         # set date attributes
-        
+
         self.input_met_df['doy'] = self.input_met_df.index.dayofyear
         self.input_met_df['year'] = self.input_met_df.index.year
         self.input_met_df['month'] = self.input_met_df.index.month
@@ -309,18 +310,18 @@ class MetNode():
 
         # contrain max temperatures to 120 F and min temperature to 90 F
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, reduce = True)
-        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, reduce = True)
-            
+        self.input_met_df['tmax'] = self.input_met_df[['tmax']].apply(lambda s: ret_utils.max_max_temp(*s), axis = 1, raw = True, result_type='reduce')
+        self.input_met_df['tmin'] = self.input_met_df[['tmin']].apply(lambda s: ret_utils.max_min_temp(*s), axis = 1, raw = True, result_type='reduce')
+
         # fill missing tmax data
 
         # interpolation fails if at least one value is not filled - used try and except to overcome
-        
+
         try:    # fill by interpolation
             self.input_met_df['tmax'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
         except: pass
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tmax']):
                    self.input_met_df.at[dt, 'tmax'] = mnd.avg_monthly_tmax[self.met_node_id][month - 1]
         except: pass
@@ -331,37 +332,37 @@ class MetNode():
             self.input_met_df['tmin'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
         except: pass
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tmin']):
                    self.input_met_df.at[dt, 'tmin'] = mnd.avg_monthly_tmin[self.met_node_id][month - 1]
         except: pass
-            
+
         # don't allow tmin to be more than tmax
 
-        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, reduce = True)
+        self.input_met_df['tmax'] = self.input_met_df[['tmax', 'tmin']].apply(lambda s: max(*s), axis = 1, raw = True, result_type='reduce')
 
         # Scale wind height to 2m if necessary
 
         if 'wind' in input_met_columns:
-            if cfg.input_met['wind_height'] <> 2:
-                self.input_met_df['wind'] = ret_utils.wind_adjust_func(self.input_met_df['wind'], cfg.input_met['wind_height'])
-                
+            if cfg.input_met['wind_height'] != 2:
+                self.input_met_df['wind'] = refet.calcs._wind_height_adjust(self.input_met_df['wind'], cfg.input_met['wind_height'])
+
             # fill missing wind by interpolation
-            
+
             try:
                 self.input_met_df['wind'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
             except: pass
         else:
             self.input_met_df['wind'] = np.nan
-            
+
         # fill missing wind with average monthly values
 
         try:    # fill with average monthly values
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'wind']):
                    self.input_met_df.at[dt, 'wind'] = mnd.avg_monthly_wind[self.wind_id][month - 1]
         except: pass
-                
+
         # Add precip, snow and snow_depth if necessary; otherwise, fill missing values with zeros
 
         if 'ppt' not in self.input_met_df.columns:
@@ -378,7 +379,7 @@ class MetNode():
             self.input_met_df['snow_depth'].fillna(0)
 
         # Calculate TDew from specific humidity or TMin and Ko
-        
+
         if 'tdew' in input_met_columns:
             try:    # fill by interpolation
                 self.input_met_df['tdew'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
@@ -389,7 +390,7 @@ class MetNode():
                 self.input_met_df['tdew'] = ret_utils.tdew_from_ea(ret_utils.ea_from_q(
                     self.air_pressure, self.input_met_df['q'].values))
         try:    # fill missing values with tmin minus average monthly Ko
-            for dt, month in self.input_met_df['month'].iteritems():
+            for dt, month in sorted(self.input_met_df['month'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'tdew']):
                    self.input_met_df.at[dt, 'tdew'] = self.input_met_df.at[dt, 'tmin'] - mnd.avg_monthly_Ko[self.Ko_id][month - 1]
         except:
@@ -400,13 +401,13 @@ class MetNode():
 
         if 'rs' not in self.input_met_df.columns: self.input_met_df['rs'] = np.nan
         try:
-            for dt, doy in self.input_met_df['doy'].iteritems():
+            for dt, doy in sorted(self.input_met_df['doy'].items()):
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
-                   self.input_met_df.at[dt, 'rs'] = ret_utils.compute_rs(doy, self.input_met_df.at[dt, 'tmax'],
+                   self.input_met_df.at[dt, 'rs'] = ret_utils.rs_daily(doy, self.input_met_df.at[dt, 'tmax'],
                        self.input_met_df.at[dt,'tmin'], self.input_met_df.at[dt, 'tdew'], self.elevation, self.latitude,
-                       mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1], 
+                       mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
                        mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
-                       self.TR_b0, self.TR_b1, self.TR_b2) 
+                       self.TR_b0, self.TR_b1, self.TR_b2)
         except:
             logging.error('Unable to develop solar radiation.')
             return False
@@ -433,10 +434,10 @@ class MetNode():
 
         # Get list of 0 based line numbers to skip
         # Ignore header but assume header was set as 1's based index
-        data_skip = [i for i in range(cfg.input_met['header_lines']) if i + 1 <> cfg.input_met['names_line']]
+        data_skip = [i for i in range(cfg.input_met['header_lines']) if i + 1 != cfg.input_met['names_line']]
         self.input_met_df = pd.read_table(input_met_path, engine = 'python',
-                header = cfg.input_met['names_line'] - len(data_skip) - 1, 
-                skiprows = data_skip, sep = cfg.input_met['delimiter'], 
+                header = cfg.input_met['names_line'] - len(data_skip) - 1,
+                skiprows = data_skip, sep = cfg.input_met['delimiter'],
                 na_values = 'NaN')
         logging.debug('  Columns: {0}'.format(', '.join(list(self.input_met_df.columns))))
 
@@ -455,7 +456,7 @@ class MetNode():
             self.input_met_df = self.input_met_df.rename(columns = {field_name:field_key})
 
         # Convert date strings to datetimes and index on date
-        
+
         if cfg.input_met['fields']['date'] is not None:
             self.input_met_df['date'] = pd.to_datetime(self.input_met_df['date'])
         else:
@@ -468,16 +469,16 @@ class MetNode():
         self.input_met_df.set_index('date', inplace = True)
 
         # verify period
-        
-        if cfg.start_dt is None: 
+
+        if cfg.start_dt is None:
             pydt = self.input_met_df.index[0]
             cfg.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-        if cfg.end_dt is None: 
+        if cfg.end_dt is None:
             pydt = self.input_met_df.index[len(self.input_met_df.index) - 1]
             cfg.end_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-            
+
         # truncate period
-        
+
         try:
             self.input_met_df = self.input_met_df.truncate(before = cfg.start_dt, after = cfg.end_dt)
         except:
@@ -516,7 +517,7 @@ class MetNode():
 
             if met_node_count == 1:
                 if '%p' in cfg.input_met['name_format']:    # one file per parameter
-                    input_met_path = os.path.join(cfg.input_met['ws'], 
+                    input_met_path = os.path.join(cfg.input_met['ws'],
                         cfg.input_met['name_format'].replace('%p', cfg.input_met['fnspec'][field_key]))
                 else:    # shared file
                     input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'])
@@ -526,19 +527,19 @@ class MetNode():
                 logging.debug('  Input met path for {0} is {1}'.format(field_key, input_met_path))
                 if cfg.input_met['data_structure_type'].upper() == 'PF S.P':
                     if cfg.input_met['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(input_met_path, cfg.input_met['header_lines'], 
-                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity, 
+                        param_df = mod_dmis.ColumnSlotToDataframe(input_met_path, cfg.input_met['header_lines'],
+                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity,
                                 cfg.input_met['delimiter'], cfg.start_dt, cfg.end_dt)
                     elif cfg.input_met['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(input_met_path, cfg.input_met['header_lines'], 
-                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity, 
+                        param_df = mod_dmis.TextRDBToDataframe(input_met_path, cfg.input_met['header_lines'],
+                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity,
                                 cfg.input_met['delimiter'], cfg.start_dt, cfg.end_dt)
                     elif cfg.input_met['file_type'].lower() == 'xls' or cfg.input_met['file_type'].lower() == 'wb':
                         if '%p' in cfg.input_met['name_format'] or field_count == 1:
                             input_buffer = pd.ExcelFile(input_met_path)
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(input_buffer, 
-                                cfg.input_met['wsspec'][field_key], 
-                                cfg.input_met['header_lines'], cfg.input_met['names_line'], 
+                        param_df = mod_dmis.ExcelWorksheetToDataframe(input_buffer,
+                                cfg.input_met['wsspec'][field_key],
+                                cfg.input_met['header_lines'], cfg.input_met['names_line'],
                                 cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                     else:
                         logging.error('ERROR:  File type {} is not supported'.format(cfg.input_met['file_type']))
@@ -550,19 +551,19 @@ class MetNode():
                         if cfg.start_dt is None:
                             pydt = param_df.index[0]
                             cfg.start_dt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
-                        if cfg.end_dt is None: 
+                        if cfg.end_dt is None:
                             pydt = param_df.index[len(param_df) - 1]
                             cfg.end_dt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
                         param_df = mod_dmis.ReduceDataframeToParameter(param_df, field_name)
                         mnd.met_nodes_input_met_data[field_key] = param_df
                     del param_df
         del input_buffer
-        
+
         # pull met node's data from parameter data frames
-        
-        self.input_met_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+
+        self.input_met_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
         for field_key, param_df in mnd.met_nodes_input_met_data.items():
-            self.input_met_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.source_met_id, 
+            self.input_met_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.source_met_id,
                     cfg.input_met['fields'][field_key], cfg.input_met['units'][field_key], 1,
                     cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt).values
         return True
@@ -580,103 +581,59 @@ class MetNode():
 
         try:
             # construct ref et object and set up output
-            
-	    retObj = refET.refET(cfg.input_met['TR_b0'], cfg.input_met['TR_b1'], cfg.input_met['TR_b2'])
-            ret_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
-            for fn in cfg.refet_out['refet_out_fields']: ret_df[fn] = np.nan
-            if cfg.output_met_flag:
-                self.ref_et_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
-                self.ref_et_df['ref_et'] = np.nan
-            for dt, row in self.input_met_df.iterrows():
-                HargreavesSamani = retObj.ComputeHargreavesSamaniRefET(dt.dayofyear, row['tmax'],
-                                   row['tmin'], self.latitude)
-	        penmans = retObj.ComputePenmanRefETs(dt.year, dt.month, dt.day, dt.dayofyear,
-	                  cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
-	                  row['rs'], row['wind'], self.elevation, self.latitude)
-	        Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen = penmans
-                if 'harg' in cfg.refet_out['refet_out_fields']: ret_df['harg'][dt] = HargreavesSamani
-	        if 'penm' in cfg.refet_out['refet_out_fields']: ret_df['penm'][dt] = Penman
-	        if 'pretay' in cfg.refet_out['refet_out_fields']: ret_df['pretay'][dt] = PreTay
-	        if 'kimo' in cfg.refet_out['refet_out_fields']: ret_df['kimo'][dt] = KimbPeng
-	        if 'ascer' in cfg.refet_out['refet_out_fields']: ret_df['ascer'][dt] = ASCEr
-	        if 'asceg' in cfg.refet_out['refet_out_fields']: ret_df['asceg'][dt] = ASCEo
-	        if 'fao56' in cfg.refet_out['refet_out_fields']: ret_df['fao56'][dt] = FAO56PM
-	        if 'kimp' in cfg.refet_out['refet_out_fields']: ret_df['kimp'][dt] = KimbPeng
-	        
-	        # create ref et dataframe for posting via optional met output
 
-                if cfg.output_met_flag:
-                    if cfg.refet_out['ret_method'].lower() == 'asceg':
-                        self.ref_et_df['ref_et'][dt] = ASCEo
-                    elif cfg.refet_out['ret_method'].lower() == 'ascer':
-      	                self.ref_et_df['ref_et'][dt] = ASCEr
-                    elif cfg.refet_out['ret_method'].lower() == 'fao56':
-  	                self.ref_et_df['ref_et'][dt] = FAO56PM
-                    elif cfg.refet_out['ret_method'].lower() == 'harg':
-  	                self.ref_et_df['ref_et'][dt] = HargreavesSamani
-                    elif cfg.refet_out['ret_method'].lower() == 'penm':
-  	                self.ref_et_df['ref_et'][dt] = Penman
-                    elif cfg.refet_out['ret_method'].lower() == 'kimo':
-  	                self.ref_et_df['ref_et'][dt] = KimbPeng
-                    elif cfg.refet_out['ret_method'].lower() == 'kimp':
-  	                self.ref_et_df['ref_et'][dt] = KimbPen
-                    elif cfg.refet_out['ret_method'].lower() == 'pretay':
-                        self.ref_et_df['ref_et'][dt] = PreTay
-	        if 'ret' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['ret_method'].lower() == 'asceg':
-                        ret_df['ret'][dt] = ASCEo
-                    elif cfg.refet_out['ret_method'].lower() == 'ascer':
-  	                ret_df['ret'][dt] = ASCEr
-                    elif cfg.refet_out['ret_method'].lower() == 'fao56':
-  	                ret_df['ret'][dt] = FAO56PM
-                    elif cfg.refet_out['ret_method'].lower() == 'harg':
-  	                ret_df['ret'][dt] = HargreavesSamani
-                    elif cfg.refet_out['ret_method'].lower() == 'penm':
-  	                ret_df['ret'][dt] = Penman
-                    elif cfg.refet_out['ret_method'].lower() == 'kimo':
-  	                ret_df['ret'][dt] = KimbPeng
-                    elif cfg.refet_out['ret_method'].lower() == 'kimp':
-  	                ret_df['ret'][dt] = KimbPen
-                    elif cfg.refet_out['ret_method'].lower() == 'pretay':
-                        ret_df['ret'][dt] = PreTay
-	        if 'eto' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['eto_method'].lower() == 'asceg':
-                        ret_df['eto'][dt] = ASCEo
-                    elif cfg.refet_out['eto_method'].lower() == 'fao56':
-  	                ret_df['eto'][dt] = FAO56PM
-                    elif cfg.refet_out['eto_method'].lower() == 'harg':
-  	                ret_df['eto'][dt] = HargreavesSamani
-                    elif cfg.refet_out['eto_method'].lower() == 'penm':
-  	                ret_df['eto'][dt] = Penman
-                    elif cfg.refet_out['eto_method'].lower() == 'kimo':
-  	                ret_df['eto'][dt] = KimbPeng
-                    elif cfg.refet_out['eto_method'].lower() == 'pretay':
-                        ret_df['eto'][dt] = PreTay
-	        if 'etr' in cfg.refet_out['refet_out_fields']:
-                    if cfg.refet_out['etr_method'].lower() == 'ascer':
-  	                ret_df['etr'][dt] = ASCEr
-                    elif cfg.refet_out['etr_method'].lower() == 'fao56':
-  	                ret_df['etr'][dt] = FAO56PM
-                    elif cfg.refet_out['etr_method'].lower() == 'harg':
-  	                ret_df['etr'][dt] = HargreavesSamani
-                    elif cfg.refet_out['etr_method'].lower() == 'penm':
-  	                ret_df['etr'][dt] = Penman
-                    elif cfg.refet_out['etr_method'].lower() == 'kimp':
-  	                ret_df['etr'][dt] = KimbPen
-                    elif cfg.refet_out['etr_method'].lower() == 'pretay':
-                        ret_df['etr'][dt] = PreTay
+            retObj = refET.refET(cfg.input_met['TR_b0'], cfg.input_met['TR_b1'], cfg.input_met['TR_b2'])
+            ret_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+            for fn in cfg.refet_out['refet_out_fields']: ret_df[fn] = np.nan
+            if cfg.output_retalt_flag:
+                retalt_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
+                for fn in cfg.refetalt_out['refet_out_fields']: retalt_df[fn] = np.nan
+            for dt, row in self.input_met_df.iterrows():
+                HargreavesSamani = retObj.et_hargreaves_samani(dt.dayofyear, row['tmax'],
+                    row['tmin'], self.latitude)
+
+                penmans = retObj.compute_penmans(dt.year, dt.month, dt.day, dt.dayofyear,
+                    cfg.time_step, row['tmax'], row['tmin'], row['tdew'],
+                    row['rs'], row['wind'], self.elevation, self.latitude)
+                Penman, PreTay, KimbPeng, ASCEr, ASCEo, FAO56PM, KimbPen = penmans
+
+                # store ref et calcs
+                ret_df['ascer'][dt] = ASCEr
+                ret_df['asceg'][dt] = ASCEo
+
+                # store alt ref et calcs
+                    # ASCE for comparison
+                retalt_df['ascer'][dt] = ASCEr
+                retalt_df['asceg'][dt] = ASCEo
+                    # Alt
+                retalt_df['penm'][dt] = Penman
+                retalt_df['kimo'][dt] = KimbPeng
+                retalt_df['kimr'][dt] = KimbPen
+                retalt_df['fao56'][dt] = FAO56PM
+                retalt_df['pretay'][dt] = PreTay
+                retalt_df['harg'][dt] = HargreavesSamani
+
+            # merge ref et calcs with met data for output
             try:
                 daily_refet_df = pd.merge(self.input_met_df, ret_df, left_index = True, right_index = True)
             except:
                 logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred merging input met with ref et dataframe.\n')
                 return False
-        
+
+            # merge alt ref et calcs with met data for output
+            if cfg.output_retalt_flag:
+                try:
+                    daily_refetalt_df = pd.merge(self.input_met_df, retalt_df, left_index = True, right_index = True)
+                except:
+                    logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred merging input met with alt ref et dataframe.\n')
+                    return False
+
             # Check/modify units
-        
+
             for field_key, field_units in cfg.refet_out['units'].items():
                 if field_units is None: continue
-                elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day', 
-                        'm/s', 'mj/m2', 'mj/m^2', 'mj/m2/day', 'mj/m^2/day', 
+                elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day',
+                        'm/s', 'mj/m2', 'mj/m^2', 'mj/m2/day', 'mj/m^2/day',
                         'mj/m2/d', 'mj/m^2/d', 'kg/kg', 'mps']:
                     continue
                 elif field_units.lower() == 'k':
@@ -714,14 +671,14 @@ class MetNode():
                     daily_refet_df = daily_refet_df.rename(columns={fn:cfg.refet_out['fields'][fn]})
                 else:
                     daily_refet_df.drop(fn, axis = 1, inplace = True)
-            if 'date' in cfg.refet_out['fields'] and cfg.refet_out['fields']['date'] is not None: 
+            if 'date' in cfg.refet_out['fields'] and cfg.refet_out['fields']['date'] is not None:
                 try:
                     daily_refet_df.index.set_names(cfg.refet_out['fields']['date'], inplace = True)
                 except: pass    # Index is probably already named 'Date'
             data_fields = list(daily_refet_df.columns)
 
             # set up aggregations
-            
+
             aggregation_func = {}
             for fn in data_fields:
                 fc = cfg.refet_out['out_data_fields'].index(fn)
@@ -739,42 +696,42 @@ class MetNode():
                 monthly_refet_df = daily_refet_df.resample('MS').apply( aggregation_func)
             if cfg.annual_refet_flag:
                 annual_refet_df = daily_refet_df.resample('AS').apply( aggregation_func)
-             
+
             # set up output fields
 
             if cfg.daily_refet_flag:
                 adj_daily_fields = []
-                if 'year' in cfg.used_refet_out_fields: 
+                if 'year' in cfg.used_refet_out_fields:
                     adj_daily_fields.append(cfg.refet_out['fields']['year'])
                     daily_refet_df[cfg.refet_out['fields']['year']] = daily_refet_df.index.year
-                if 'month' in cfg.used_refet_out_fields: 
+                if 'month' in cfg.used_refet_out_fields:
                     adj_daily_fields.append(cfg.refet_out['fields']['month'])
                     daily_refet_df[cfg.refet_out['fields']['month']] = daily_refet_df.index.month
-                if 'day' in cfg.used_refet_out_fields: 
+                if 'day' in cfg.used_refet_out_fields:
                     adj_daily_fields.append(cfg.refet_out['fields']['day'])
                     daily_refet_df[cfg.refet_out['fields']['day']] = daily_refet_df.index.day
-                if 'doy' in cfg.used_refet_out_fields: 
+                if 'doy' in cfg.used_refet_out_fields:
                     adj_daily_fields.append(cfg.refet_out['fields']['doy'])
                     daily_refet_df[cfg.refet_out['fields']['doy']] = daily_refet_df.index.doy
                 adj_daily_fields.extend(cfg.refet_out['out_data_fields'])
             if cfg.monthly_refet_flag:
                 adj_monthly_fields = []
-                if 'year' in cfg.used_refet_out_fields: 
+                if 'year' in cfg.used_refet_out_fields:
                     adj_monthly_fields.append(cfg.refet_out['fields']['year'])
                     monthly_refet_df[cfg.refet_out['fields']['year']] = monthly_refet_df.index.year
-                if 'month' in cfg.used_refet_out_fields: 
+                if 'month' in cfg.used_refet_out_fields:
                     adj_monthly_fields.append(cfg.refet_out['fields']['month'])
                     monthly_refet_df[cfg.refet_out['fields']['month']] = monthly_refet_df.index.month
                 adj_monthly_fields.extend(cfg.refet_out['out_data_fields'])
             if cfg.annual_refet_flag:
                 adj_annual_fields = []
-                if 'year' in cfg.used_refet_out_fields: 
+                if 'year' in cfg.used_refet_out_fields:
                     adj_annual_fields.append(cfg.refet_out['fields']['year'])
                     annual_refet_df[cfg.refet_out['fields']['year']] = annual_refet_df.index.year
                 adj_annual_fields.extend(cfg.refet_out['out_data_fields'])
             if cfg.daily_refet_flag:
                 # format date attributes if values are formatted
-                    
+
                 if cfg.refet_out['daily_float_format'] is not None:
                     if 'year' in cfg.used_refet_out_fields:
                         daily_refet_df[cfg.refet_out['fields']['year']] = \
@@ -785,12 +742,12 @@ class MetNode():
                     if 'day' in cfg.used_refet_out_fields:
                         daily_refet_df[cfg.refet_out['fields']['day']] = \
                             daily_refet_df[cfg.refet_out['fields']['day']].map(lambda x: ' %2d' % x)
-	            if 'doy' in cfg.used_refet_out_fields:
+                if 'doy' in cfg.used_refet_out_fields:
                         daily_refet_df[cfg.refet_out['fields']['doy']] = \
                             daily_refet_df[cfg.refet_out['fields']['doy']].map(lambda x: ' %3d' % x)
 
                 # post daily output
-            
+
                 daily_refet_path = os.path.join(cfg.daily_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(daily_refet_path))
                 with open(daily_refet_path, 'w') as daily_refet_f:
@@ -799,21 +756,21 @@ class MetNode():
                         daily_refet_f.write(cfg.refet_out['daily_header2'] + '\n')
                     if cfg.refet_out['daily_float_format'] is None:
                         if 'date' in cfg.used_refet_out_fields:
-                            daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'], 
+                            daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['daily_date_format'],
                                 columns = adj_daily_fields)
-    	                else:
+                        else:
                             daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, index = False, columns = adj_daily_fields)
                     else:    # formatted output causes loss of precision in crop et computations
-       	                if 'date' in cfg.used_refet_out_fields:
-                            daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'], 
+                        if 'date' in cfg.used_refet_out_fields:
+                            daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['daily_date_format'],
                                 float_format = cfg.refet_out['daily_float_format'],
                                 columns = adj_daily_fields)
-    	                else:
+                        else:
                             daily_refet_df.to_csv(daily_refet_f, sep = cfg.refet_out['delimiter'],
-                                header = False, index = False, columns = adj_daily_fields, 
+                                header = False, index = False, columns = adj_daily_fields,
                                 float_format = cfg.refet_out['daily_float_format'])
                 del daily_refet_df, daily_refet_path, adj_daily_fields
             if cfg.monthly_refet_flag:
@@ -826,7 +783,7 @@ class MetNode():
                             monthly_refet_df[cfg.refet_out['fields']['month']].map(lambda x: ' %2d' % x)
 
                 # post monthly output
-            
+
                 monthly_refet_path = os.path.join(cfg.monthly_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(monthly_refet_path))
                 with open(monthly_refet_path, 'w') as monthly_refet_f:
@@ -835,33 +792,33 @@ class MetNode():
                         monthly_refet_f.write(cfg.refet_out['monthly_header2'] + '\n')
                     if cfg.refet_out['monthly_float_format'] is None:
                         if 'date' in cfg.used_refet_out_fields:
-                            monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'], 
+                            monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['monthly_date_format'],
                                 columns = adj_monthly_fields)
-    	                else:
+                        else:
                             monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, index = False, columns = adj_monthly_fields)
                     else:    # formatted output causes loss of precision in crop et computations
                         if 'date' in cfg.used_refet_out_fields:
-                            monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'], 
+                            monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['monthly_date_format'],
                                 float_format = cfg.refet_out['monthly_float_format'],
                                 columns = adj_monthly_fields)
-    	                else:
+                        else:
                             monthly_refet_df.to_csv(monthly_refet_f, sep = cfg.refet_out['delimiter'],
-                                header = False, index = False, columns = adj_monthly_fields, 
+                                header = False, index = False, columns = adj_monthly_fields,
                                 float_format = cfg.refet_out['monthly_float_format'])
                 del monthly_refet_df, monthly_refet_path, adj_monthly_fields
             if cfg.annual_refet_flag:
                 # format date attributes if values are formatted
-                    
+
                 if cfg.refet_out['annual_float_format'] is not None:
                     if 'year' in cfg.used_refet_out_fields:
                         annual_refet_df[cfg.refet_out['fields']['year']] = \
                             annual_refet_df[cfg.refet_out['fields']['year']].map(lambda x: ' %4d' % x)
 
                 # post annual output
-            
+
                 annual_refet_path = os.path.join(cfg.annual_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(annual_refet_path))
                 with open(annual_refet_path, 'w') as annual_refet_f:
@@ -870,112 +827,80 @@ class MetNode():
                         annual_refet_f.write(cfg.refet_out['annual_header2'] + '\n')
                     if cfg.refet_out['annual_float_format'] is None:
                         if 'date' in cfg.used_refet_out_fields:
-                            annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'], 
+                            annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['annual_date_format'],
                                 columns = adj_annual_fields)
-    	                else:
+                        else:
                             annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, index = False, columns = adj_annual_fields)
                     else:    # formatted output causes loss of precision in crop et computations
                         if 'date' in cfg.used_refet_out_fields:
-                            annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'], 
+                            annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'],
                                 header = False, date_format = cfg.refet_out['annual_date_format'],
                                 float_format = cfg.refet_out['annual_float_format'],
                                 columns = adj_annual_fields)
-    	                else:
+                        else:
                             annual_refet_df.to_csv(annual_refet_f, sep = cfg.refet_out['delimiter'],
-                                header = False, index = False, columns = adj_annual_fields, 
+                                header = False, index = False, columns = adj_annual_fields,
                                 float_format = cfg.refet_out['annual_float_format'])
                 del annual_refet_df, annual_refet_path, adj_annual_fields
-            return True;
-        except:
-            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred computing reference ET for {0}', format(self.met_node_id))
-            return False
-         
-    def setup_output_met_data(self, met_node_count, cfg, mnd):
-        """Set up optional met data output
 
-        Args:
-            met_node_count: count of met node being processed
-            cfg: configuration data from INI file
-            mnd: Met node data (dict)
-
-        Returns:
-            success: True or False
-        """
-        logging.debug('Processing specified optional meteorological data')
-        
-        try:
-            # copy input met object to output met object and remove unused columns
-
-            try:
-                daily_output_met_df = self.input_met_df.copy()
-            except:
-                logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred copying input met to output met dataframe.\n')
-                return False
-	    if 'tavg' in cfg.used_output_met_fields:
-                daily_output_met_df['tavg'] = 0.5 * (daily_output_met_df['tmax'] + daily_output_met_df['tmin'])
-                # daily_output_met_df['tavg'] = daily_output_met_df[['tmax', 'tmin']].apply(lambda s: ret_utils.avg_two_arrays(*s), axis = 1, raw = True, reduce = True)
-	    if 'refet' in cfg.used_output_met_fields:
-                daily_output_met_df['refet'] = self.ref_et_df['ref_et'].values
-
+            ## Post Alternative Ref ET Calcs
             # Check/modify units
 
-            for field_key, field_units in cfg.output_met['units'].items():
-                if field_units is None:
-                    continue
-                elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day', 'm/s', 'mj/m2', 'mj/m^2', 'kg/kg', 'mps']:
+            for field_key, field_units in cfg.refetalt_out['units'].items():
+                if field_units is None: continue
+                elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day',
+                        'm/s', 'mj/m2', 'mj/m^2', 'mj/m2/day', 'mj/m^2/day',
+                        'mj/m2/d', 'mj/m^2/d', 'kg/kg', 'mps']:
                     continue
                 elif field_units.lower() == 'k':
-                   daily_output_met_df[field_key] += 273.15
+                   daily_refetalt_df[field_key] += 273.15
                 elif field_units.lower() == 'f':
-                    daily_output_met_df[field_key] *= 1.8
-                    daily_output_met_df[field_key] += 32
+                    daily_refetalt_df[field_key] *= 1.8
+                    daily_refetalt_df[field_key] += 32
                 elif field_units.lower() == 'm':
-                    daily_output_met_df[field_key] *= 0.001
+                    daily_refetalt_df[field_key] *= 0.001
                 elif field_units.lower() in ['m/d', 'm/day']:
                     if field_key == 'wind':
-                        daily_output_met_df[field_key] *= 86400
+                        daily_refetalt_df[field_key] *= 86400
                     else:
-                        daily_output_met_df[field_key] *= 0.001
+                        daily_refetalt_df[field_key] *= 1000.0
                 elif field_units.lower() == 'meter':
-                    daily_output_met_df[field_key] *= 0.001
+                    daily_refetalt_df[field_key] *= 0.001
                 elif field_units.lower() == 'in*100':
-                    daily_output_met_df[field_key] /= 0.254
+                    daily_refetalt_df[field_key] /= 0.254
                 elif field_units.lower() == 'in*10':
-                    daily_output_met_df[field_key] /= 2.54
+                    daily_refetalt_df[field_key] /= 2.54
                 elif field_units.lower() in ['in', 'in/d', 'in/day', 'inches/day', 'inches']:
-                    daily_output_met_df[field_key] /= 25.4
+                    daily_refetalt_df[field_key] /= 25.4
                 elif field_units.lower() in ['w/m2', 'w/m^2']:
-                    daily_output_met_df[field_key] /= 0.0864
+                    daily_refetalt_df[field_key] /= 0.0864
+                elif field_units.lower() in ['cal/cm2', 'cal/cm2/d', 'cal/cm2/day', 'cal/cm^2/d', 'cal/cm^2/day', 'langley']:
+                    daily_refetalt_df[field_key] /= 0.041868
                 elif field_units.lower() in ['mpd', 'miles/d', 'miles/day']:
-                    daily_output_met_df[field_key] /= mpdToMps
+                    daily_refetalt_df[field_key] /= mpdToMps
                 else:
-                    logging.error('\n ERROR: Unknown {0} units {1}'.format(field_key, field_units) + 'converting met output')
-            data_fields = list(daily_output_met_df.columns)
+                    logging.error('\n ERROR: Unknown {0} units {1}'.format(field_key, field_units) + 'converting ref et output')
+            data_fields = list(daily_refetalt_df.columns)
             for fn in data_fields:
                 if fn == "date": continue
-                if fn == 'year' or fn == 'month' or fn == 'day' or fn == 'doy':
-                    try:
-                        daily_output_met_df.drop(fn, axis = 1, inplace = True)
-                    except: pass
+                if fn in cfg.used_refetalt_out_fields:
+                    daily_refetalt_df = daily_refetalt_df.rename(columns={fn:cfg.refetalt_out['fields'][fn]})
                 else:
-                    if fn in cfg.used_output_met_fields:
-                        daily_output_met_df = daily_output_met_df.rename(columns={fn:cfg.output_met['fields'][fn]})
-                    else:
-                        daily_output_met_df.drop(fn, axis = 1, inplace = True)
-            if 'date' in cfg.output_met['fields'] and cfg.output_met['fields']['date'] is not None: 
+                    daily_refetalt_df.drop(fn, axis = 1, inplace = True)
+            if 'date' in cfg.refetalt_out['fields'] and cfg.refetalt_out['fields']['date'] is not None:
                 try:
-                    daily_output_met_df.index.set_names(cfg.output_met['fields']['date'], inplace = True)
+                    daily_refetalt_df.index.set_names(cfg.refetalt_out['fields']['date'], inplace = True)
                 except: pass    # Index is probably already named 'Date'
-            data_fields = list(daily_output_met_df.columns)
+            data_fields = list(daily_refetalt_df.columns)
 
             # set up aggregations
-            
+
             aggregation_func = {}
             for fn in data_fields:
-                fc = cfg.output_met['out_data_fields'].index(fn)
-                field_name = cfg.output_met['data_out_fields'][fc]
+                fc = cfg.refetalt_out['out_data_fields'].index(fn)
+                field_name = cfg.refetalt_out['data_out_fields'][fc]
                 if "tmax" in field_name: aggregation_func.update({fn: np.mean})
                 elif "tmin" in field_name: aggregation_func.update({fn: np.mean})
                 elif "tavg" in field_name: aggregation_func.update({fn: np.mean})
@@ -985,208 +910,159 @@ class MetNode():
                 elif "rs" in field_name: aggregation_func.update({fn: np.mean})
                 elif "solar" in field_name: aggregation_func.update({fn: np.mean})
                 else: aggregation_func.update({fn: np.sum})
-            if cfg.monthly_output_met_flag:
-                # monthly_output_met_df = daily_output_met_df.resample('MS').apply( aggregation_func)
-                monthly_output_met_df = daily_output_met_df.resample('M').apply( aggregation_func)
-            if cfg.annual_output_met_flag:
-                # annual_output_met_df = daily_output_met_df.resample('AS').apply( aggregation_func)
-                annual_output_met_df = daily_output_met_df.resample('A').apply( aggregation_func)
-             
+            if cfg.monthly_refetalt_flag:
+                monthly_refetalt_df = daily_refetalt_df.resample('MS').apply( aggregation_func)
+            if cfg.annual_refetalt_flag:
+                annual_refetalt_df = daily_refetalt_df.resample('AS').apply( aggregation_func)
+
             # set up output fields
 
-            if cfg.daily_output_met_flag:
+            if cfg.daily_refetalt_flag:
                 adj_daily_fields = []
-                if 'year' in cfg.used_output_met_fields: 
-                    adj_daily_fields.append(cfg.output_met['fields']['year'])
-                    daily_output_met_df[cfg.output_met['fields']['year']] = daily_output_met_df.index.year
-                if 'month' in cfg.used_output_met_fields: 
-                    adj_daily_fields.append(cfg.output_met['fields']['month'])
-                    daily_output_met_df[cfg.output_met['fields']['month']] = daily_output_met_df.index.month
-                if 'day' in cfg.used_output_met_fields: 
-                    adj_daily_fields.append(cfg.output_met['fields']['day'])
-                    daily_output_met_df[cfg.output_met['fields']['day']] = daily_output_met_df.index.day
-                if 'doy' in cfg.used_output_met_fields: 
-                    adj_daily_fields.append(cfg.output_met['fields']['doy'])
-                    daily_output_met_df[cfg.output_met['fields']['doy']] = daily_output_met_df.index.doy
-                adj_daily_fields.extend(cfg.output_met['out_data_fields'])
-                daily_output_met_df.index = daily_output_met_df.index + pd.Timedelta( \
-                        hours = cfg.output_met['daily_hour_offset'], \
-                        minutes = cfg.output_met['daily_minute_offset'])
-            if cfg.monthly_output_met_flag:
+                if 'year' in cfg.used_refetalt_out_fields:
+                    adj_daily_fields.append(cfg.refetalt_out['fields']['year'])
+                    daily_refetalt_df[cfg.refetalt_out['fields']['year']] = daily_refetalt_df.index.year
+                if 'month' in cfg.used_refetalt_out_fields:
+                    adj_daily_fields.append(cfg.refetalt_out['fields']['month'])
+                    daily_refetalt_df[cfg.refetalt_out['fields']['month']] = daily_refetalt_df.index.month
+                if 'day' in cfg.used_refetalt_out_fields:
+                    adj_daily_fields.append(cfg.refetalt_out['fields']['day'])
+                    daily_refetalt_df[cfg.refetalt_out['fields']['day']] = daily_refetalt_df.index.day
+                if 'doy' in cfg.used_refetalt_out_fields:
+                    adj_daily_fields.append(cfg.refetalt_out['fields']['doy'])
+                    daily_refetalt_df[cfg.refetalt_out['fields']['doy']] = daily_refetalt_df.index.doy
+                adj_daily_fields.extend(cfg.refetalt_out['out_data_fields'])
+            if cfg.monthly_refetalt_flag:
                 adj_monthly_fields = []
-                if 'year' in cfg.used_output_met_fields: 
-                    adj_monthly_fields.append(cfg.output_met['fields']['year'])
-                    monthly_output_met_df[cfg.output_met['fields']['year']] = monthly_output_met_df.index.year
-                if 'month' in cfg.used_output_met_fields: 
-                    adj_monthly_fields.append(cfg.output_met['fields']['month'])
-                    monthly_output_met_df[cfg.output_met['fields']['month']] = monthly_output_met_df.index.month
-                adj_monthly_fields.extend(cfg.output_met['out_data_fields'])
-                monthly_output_met_df.index = monthly_output_met_df.index + pd.Timedelta( \
-                        hours = cfg.output_met['monthly_hour_offset'], \
-                        minutes = cfg.output_met['monthly_minute_offset'])
-            if cfg.annual_output_met_flag:
+                if 'year' in cfg.used_refetalt_out_fields:
+                    adj_monthly_fields.append(cfg.refetalt_out['fields']['year'])
+                    monthly_refetalt_df[cfg.refetalt_out['fields']['year']] = monthly_refetalt_df.index.year
+                if 'month' in cfg.used_refetalt_out_fields:
+                    adj_monthly_fields.append(cfg.refetalt_out['fields']['month'])
+                    monthly_refetalt_df[cfg.refetalt_out['fields']['month']] = monthly_refetalt_df.index.month
+                adj_monthly_fields.extend(cfg.refetalt_out['out_data_fields'])
+            if cfg.annual_refetalt_flag:
                 adj_annual_fields = []
-                if 'year' in cfg.used_output_met_fields: 
-                    adj_annual_fields.append(cfg.output_met['fields']['year'])
-                    annual_output_met_df[cfg.output_met['fields']['year']] = annual_output_met_df.index.year
-                adj_annual_fields.extend(cfg.output_met['out_data_fields'])
-                annual_output_met_df.index = annual_output_met_df.index + pd.Timedelta( \
-                        hours = cfg.output_met['annual_hour_offset'], \
-                        minutes = cfg.output_met['annual_minute_offset'])
-            if cfg.output_met['data_structure_type'].upper() == 'SF P':
-                logging.debug('Posting specified optional meteorological data')
-                
-                # post SF P format output
-            
-                if cfg.daily_output_met_flag:
-                    # format date attributes if values are formatted
-                    
-                    if cfg.output_met['daily_float_format'] is not None:
-                        if 'year' in cfg.used_output_met_fields:
-                            daily_output_met_df[cfg.output_met['fields']['year']] = \
-                                daily_output_met_df[cfg.output_met['fields']['year']].map(lambda x: ' %4d' % x)
-	                if 'month' in cfg.used_output_met_fields:
-                            daily_output_met_df[cfg.output_met['fields']['month']] = \
-                                daily_output_met_df[cfg.output_met['fields']['month']].map(lambda x: ' %2d' % x)
-	                if 'day' in cfg.used_output_met_fields:
-                            daily_output_met_df[cfg.output_met['fields']['day']] = \
-                                daily_output_met_df[cfg.output_met['fields']['day']].map(lambda x: ' %2d' % x)
-	                if 'doy' in cfg.used_output_met_fields:
-                            daily_output_met_df[cfg.output_met['fields']['doy']] = \
-                                daily_output_met_df[cfg.output_met['fields']['doy']].map(lambda x: ' %3d' % x)
+                if 'year' in cfg.used_refetalt_out_fields:
+                    adj_annual_fields.append(cfg.refetalt_out['fields']['year'])
+                    annual_refetalt_df[cfg.refetalt_out['fields']['year']] = annual_refetalt_df.index.year
+                adj_annual_fields.extend(cfg.refetalt_out['out_data_fields'])
+            if cfg.daily_refetalt_flag:
+                # format date attributes if values are formatted
 
-                    # post daily output
-            
-                    daily_output_met_path = os.path.join(cfg.daily_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
-                    logging.debug('  {0}'.format(daily_output_met_path))
-                    with open(daily_output_met_path, 'w') as daily_output_met_f:
-                        daily_output_met_f.write(cfg.output_met['daily_header1'] + '\n')
-                        if cfg.output_met['header_lines'] == 2:
-                            daily_output_met_f.write(cfg.output_met['daily_header2'] + '\n')
-           	        if 'date' in cfg.used_output_met_fields:
-                            daily_output_met_df.to_csv(daily_output_met_f, sep = cfg.output_met['delimiter'], 
-                                header = False, date_format = cfg.output_met['daily_date_format'],
-                                float_format = cfg.output_met['daily_float_format'],
+                if cfg.refetalt_out['daily_float_format'] is not None:
+                    if 'year' in cfg.used_refetalt_out_fields:
+                        daily_refetalt_df[cfg.refetalt_out['fields']['year']] = \
+                            daily_refetalt_df[cfg.refetalt_out['fields']['year']].map(lambda x: ' %4d' % x)
+                    if 'month' in cfg.used_refetalt_out_fields:
+                        daily_refetalt_df[cfg.refetalt_out['fields']['month']] = \
+                            daily_refetalt_df[cfg.refetalt_out['fields']['month']].map(lambda x: ' %2d' % x)
+                    if 'day' in cfg.used_refetalt_out_fields:
+                        daily_refetalt_df[cfg.refetalt_out['fields']['day']] = \
+                            daily_refetalt_df[cfg.refetalt_out['fields']['day']].map(lambda x: ' %2d' % x)
+                if 'doy' in cfg.used_refetalt_out_fields:
+                        daily_refetalt_df[cfg.refetalt_out['fields']['doy']] = \
+                            daily_refetalt_df[cfg.refetalt_out['fields']['doy']].map(lambda x: ' %3d' % x)
+
+                # post daily output
+
+                daily_refetalt_path = os.path.join(cfg.daily_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
+                logging.debug('  {0}'.format(daily_refetalt_path))
+                with open(daily_refetalt_path, 'w') as daily_refetalt_f:
+                    daily_refetalt_f.write(cfg.refetalt_out['daily_header1'] + '\n')
+                    if cfg.refetalt_out['header_lines'] == 2:
+                        daily_refetalt_f.write(cfg.refetalt_out['daily_header2'] + '\n')
+                    if cfg.refetalt_out['daily_float_format'] is None:
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            daily_refetalt_df.to_csv(daily_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['daily_date_format'],
                                 columns = adj_daily_fields)
-    	                else:
-                            daily_output_met_df.to_csv(daily_output_met_f, sep = cfg.output_met['delimiter'],
-                                header = False, index = False, columns = adj_daily_fields, 
-                                float_format = cfg.output_met['daily_float_format'])
-                    del daily_output_met_df, daily_output_met_path, adj_daily_fields
-                if cfg.monthly_output_met_flag:
-                    # format date attributes if values are formatted
-                    
-                    if cfg.output_met['monthly_float_format'] is not None:
-                        if 'year' in cfg.used_output_met_fields:
-                            monthly_output_met_df[cfg.output_met['fields']['year']] = \
-                                monthly_output_met_df[cfg.output_met['fields']['year']].map(lambda x: ' %4d' % x)
-	                if 'month' in cfg.used_output_met_fields:
-                            monthly_output_met_df[cfg.output_met['fields']['month']] = \
-                                monthly_output_met_df[cfg.output_met['fields']['month']].map(lambda x: ' %2d' % x)
+                        else:
+                            daily_refetalt_df.to_csv(daily_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_daily_fields)
+                    else:    # formatted output causes loss of precision in crop et computations
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            daily_refetalt_df.to_csv(daily_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['daily_date_format'],
+                                float_format = cfg.refetalt_out['daily_float_format'],
+                                columns = adj_daily_fields)
+                        else:
+                            daily_refetalt_df.to_csv(daily_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_daily_fields,
+                                float_format = cfg.refetalt_out['daily_float_format'])
+                del daily_refetalt_df, daily_refetalt_path, adj_daily_fields
+            if cfg.monthly_refetalt_flag:
+                if cfg.refetalt_out['monthly_float_format'] is not None:
+                    if 'year' in cfg.used_refetalt_out_fields:
+                        monthly_refetalt_df[cfg.refetalt_out['fields']['year']] = \
+                            monthly_refetalt_df[cfg.refetalt_out['fields']['year']].map(lambda x: ' %4d' % x)
+                    if 'month' in cfg.used_refetalt_out_fields:
+                        monthly_refetalt_df[cfg.refetalt_out['fields']['month']] = \
+                            monthly_refetalt_df[cfg.refetalt_out['fields']['month']].map(lambda x: ' %2d' % x)
 
-                    # post monthly output
-            
-                    monthly_output_met_path = os.path.join(cfg.monthly_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
-                    logging.debug('  {0}'.format(monthly_output_met_path))
-                    with open(monthly_output_met_path, 'w') as monthly_output_met_f:
-                        monthly_output_met_f.write(cfg.output_met['monthly_header1'] + '\n')
-                        if cfg.output_met['header_lines'] == 2:
-                            monthly_output_met_f.write(cfg.output_met['monthly_header2'] + '\n')
-                        if 'date' in cfg.used_output_met_fields:
-                            monthly_output_met_df.to_csv(monthly_output_met_f, sep = cfg.output_met['delimiter'], 
-                                header = False, date_format = cfg.output_met['monthly_date_format'],
-                                float_format = cfg.output_met['monthly_float_format'],
+                # post monthly output
+
+                monthly_refetalt_path = os.path.join(cfg.monthly_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
+                logging.debug('  {0}'.format(monthly_refetalt_path))
+                with open(monthly_refetalt_path, 'w') as monthly_refetalt_f:
+                    monthly_refetalt_f.write(cfg.refetalt_out['monthly_header1'] + '\n')
+                    if cfg.refetalt_out['header_lines'] == 2:
+                        monthly_refetalt_f.write(cfg.refetalt_out['monthly_header2'] + '\n')
+                    if cfg.refetalt_out['monthly_float_format'] is None:
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            monthly_refetalt_df.to_csv(monthly_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['monthly_date_format'],
                                 columns = adj_monthly_fields)
-    	                else:
-                            monthly_output_met_df.to_csv(monthly_output_met_f, sep = cfg.output_met['delimiter'],
-                                header = False, index = False, columns = adj_monthly_fields, 
-                                float_format = cfg.output_met['monthly_float_format'])
-                    del monthly_output_met_df, monthly_output_met_path, adj_monthly_fields
-                if cfg.annual_output_met_flag:
-                    # format date attributes if values are formatted
-                    
-                    if cfg.output_met['annual_float_format'] is not None:
-                        if 'year' in cfg.used_output_met_fields:
-                            annual_output_met_df[cfg.output_met['fields']['year']] = \
-                                annual_output_met_df[cfg.output_met['fields']['year']].map(lambda x: ' %4d' % x)
+                        else:
+                            monthly_refetalt_df.to_csv(monthly_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_monthly_fields)
+                    else:    # formatted output causes loss of precision in crop et computations
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            monthly_refetalt_df.to_csv(monthly_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['monthly_date_format'],
+                                float_format = cfg.refetalt_out['monthly_float_format'],
+                                columns = adj_monthly_fields)
+                        else:
+                            monthly_refetalt_df.to_csv(monthly_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_monthly_fields,
+                                float_format = cfg.refetalt_out['monthly_float_format'])
+                del monthly_refetalt_df, monthly_refetalt_path, adj_monthly_fields
+            if cfg.annual_refetalt_flag:
+                # format date attributes if values are formatted
 
-                    # post annual output
+                if cfg.refetalt_out['annual_float_format'] is not None:
+                    if 'year' in cfg.used_refetalt_out_fields:
+                        annual_refetalt_df[cfg.refetalt_out['fields']['year']] = \
+                            annual_refetalt_df[cfg.refetalt_out['fields']['year']].map(lambda x: ' %4d' % x)
 
-                    annual_output_met_path = os.path.join(cfg.annual_output_met_ws, cfg.output_met['name_format'] % self.met_node_id)
-                    logging.debug('  {0}'.format(annual_output_met_path))
-                    with open(annual_output_met_path, 'w') as annual_output_met_f:
-                        annual_output_met_f.write(cfg.output_met['annual_header1'] + '\n')
-                        if cfg.output_met['header_lines'] == 2:
-                            annual_output_met_f.write(cfg.output_met['annual_header2'] + '\n')
-                        if cfg.output_met['annual_float_format'] is None:
-                            if 'date' in cfg.used_output_met_fields:
-                                annual_output_met_df.to_csv(annual_output_met_f, sep = cfg.output_met['delimiter'], 
-                                    header = False, date_format = cfg.output_met['annual_date_format'],
-                                    columns = adj_annual_fields)
-        	            else:
-                                annual_output_met_df.to_csv(annual_output_met_f, sep = cfg.output_met['delimiter'],
-                                    header = False, index = False, columns = adj_annual_fields)
-                        else:    # formatted output causes loss of precision in crop et computations
-                            if 'date' in cfg.used_output_met_fields:
-                                annual_output_met_df.to_csv(annual_output_met_f, sep = cfg.output_met['delimiter'], 
-                                    header = False, date_format = cfg.output_met['annual_date_format'],
-                                    float_format = cfg.output_met['annual_float_format'],
-                                    columns = adj_annual_fields)
-    	                    else:
-                                annual_output_met_df.to_csv(annual_output_met_f, sep = cfg.output_met['delimiter'],
-                                    header = False, index = False, columns = adj_annual_fields, 
-                                    float_format = cfg.output_met['annual_float_format'])
-                    del annual_output_met_df, annual_output_met_path, adj_annual_fields
-            else:    # formats other than SF P
-                if met_node_count == 1:
-                    # construct empty data frame for each output parameter
-                    
-                    if cfg.daily_output_met_flag:
-                        daily_index = pd.date_range(cfg.start_dt, cfg.end_dt, freq = "D", name = "Date")
-                        daily_index = daily_index + pd.Timedelta( \
-                            hours = cfg.output_met['daily_hour_offset'], \
-                            minutes = cfg.output_met['daily_minute_offset'])
-                        for field_name in adj_daily_fields:
-                            mnd.mn_daily_output_met_data[field_name] = pd.DataFrame(index = daily_index)
-                    if cfg.monthly_output_met_flag:
-                        monthly_index = pd.date_range(cfg.start_dt, cfg.end_dt, freq = "M", name = "Date")
-                        monthly_index = monthly_index + pd.Timedelta( \
-                            hours = cfg.output_met['monthly_hour_offset'], \
-                            minutes = cfg.output_met['monthly_minute_offset'])
-                        for field_name in adj_monthly_fields:
-                            mnd.mn_monthly_output_met_data[field_name] = pd.DataFrame(index = monthly_index)
-                    if cfg.annual_output_met_flag:
-                        annual_index = pd.date_range(cfg.start_dt, cfg.end_dt, freq = "A", name = "Date")
-                        annual_index = annual_index + pd.Timedelta( \
-                            hours = cfg.output_met['annual_hour_offset'], \
-                            minutes = cfg.output_met['annual_minute_offset'])
-                        for field_name in adj_annual_fields:
-                            mnd.mn_annual_output_met_data[field_name] = pd.DataFrame(index = annual_index)
-                if cfg.daily_output_met_flag:
-                    for field_name in adj_daily_fields:
-                        param_df = mnd.mn_daily_output_met_data.get(field_name)
-                        sp_name = self.met_node_id + "." + field_name
-                        param_df[sp_name] = daily_output_met_df[field_name].values
-                        mnd.mn_daily_output_met_data[field_name] = param_df
-                        del param_df
-                    del daily_output_met_df, adj_daily_fields
-                if cfg.monthly_output_met_flag:
-                    for field_name in adj_monthly_fields:
-                        param_df = mnd.mn_monthly_output_met_data.get(field_name)
-                        sp_name = self.met_node_id + "." + field_name
-                        param_df[sp_name] = monthly_output_met_df[field_name].values
-                        mnd.mn_monthly_output_met_data[field_name] = param_df
-                        del param_df
-                    del monthly_output_met_df, adj_monthly_fields
-                if cfg.annual_output_met_flag:
-                    for field_name in adj_annual_fields:
-                        param_df = mnd.mn_annual_output_met_data.get(field_name)
-                        sp_name = self.met_node_id + "." + field_name
-                        param_df[sp_name] = annual_output_met_df[field_name].values
-                        mnd.mn_annual_output_met_data[field_name] = param_df
-                        del param_df
-                    del annual_output_met_df, adj_annual_fields
+                # post annual output
+
+                annual_refetalt_path = os.path.join(cfg.annual_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
+                logging.debug('  {0}'.format(annual_refetalt_path))
+                with open(annual_refetalt_path, 'w') as annual_refetalt_f:
+                    annual_refetalt_f.write(cfg.refetalt_out['annual_header1'] + '\n')
+                    if cfg.refetalt_out['header_lines'] == 2:
+                        annual_refetalt_f.write(cfg.refetalt_out['annual_header2'] + '\n')
+                    if cfg.refetalt_out['annual_float_format'] is None:
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            annual_refetalt_df.to_csv(annual_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['annual_date_format'],
+                                columns = adj_annual_fields)
+                        else:
+                            annual_refetalt_df.to_csv(annual_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_annual_fields)
+                    else:    # formatted output causes loss of precision in crop et computations
+                        if 'date' in cfg.used_refetalt_out_fields:
+                            annual_refetalt_df.to_csv(annual_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, date_format = cfg.refetalt_out['annual_date_format'],
+                                float_format = cfg.refetalt_out['annual_float_format'],
+                                columns = adj_annual_fields)
+                        else:
+                            annual_refetalt_df.to_csv(annual_refetalt_f, sep = cfg.refetalt_out['delimiter'],
+                                header = False, index = False, columns = adj_annual_fields,
+                                float_format = cfg.refetalt_out['annual_float_format'])
+                del annual_refetalt_df, annual_refetalt_path, adj_annual_fields
             return True;
         except:
-            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred setting up output met data for {0}', format(self.met_node_id))
+            logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred computing reference ET for {0}', format(self.met_node_id))
             return False
