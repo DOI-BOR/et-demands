@@ -7,7 +7,7 @@ import multiprocessing as mp
 import os
 import sys
 import shutil
-from time import clock
+import time
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     Returns:
         None
     """
-    clock_start = clock()
+    clock_start = time.process_time
 
     # Start console logging immediately
 

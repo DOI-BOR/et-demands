@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../lib')))
-import refET
+import ref_et_data
 import ret_utils
 import mod_dmis
 
@@ -48,7 +48,8 @@ class MetNodesData():
                         header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, na_values = ['NaN'])
             else:
-                df = pd.read_table(cfg.met_nodes_meta_data_path, engine = 'python',
+#                df = pd.read_table(cfg.met_nodes_meta_data_path, engine = 'python',
+                df = pd.read_csv(cfg.met_nodes_meta_data_path, engine = 'python',
                         header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, sep = cfg.mnmd_delimiter, na_values = ['NaN'])
             uc_columns = list(df.columns)
@@ -402,14 +403,21 @@ class MetNode():
         if 'rs' not in self.input_met_df.columns: self.input_met_df['rs'] = np.nan
         try:
             for dt, doy in sorted(self.input_met_df['doy'].items()):
+
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
-                   self.input_met_df.at[dt, 'rs'] = ret_utils.rs_daily(doy, self.input_met_df.at[dt, 'tmax'],
-                       self.input_met_df.at[dt,'tmin'], self.input_met_df.at[dt, 'tdew'], self.elevation, self.latitude,
-                       mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
-                       mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
-                       self.TR_b0, self.TR_b1, self.TR_b2)
+                    self.input_met_df.at[dt, 'rs'] = ret_utils.rs_daily(doy,
+                        self.input_met_df.at[dt, 'tmax'],
+                        self.input_met_df.at[dt,'tmin'],
+                        self.input_met_df.at[dt, 'tdew'],
+                        self.elevation,
+                        self.latitude,
+                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
+                        mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
+                        self.TR_b0,
+                        self.TR_b1,
+                        self.TR_b2)
         except:
-            logging.error('Unable to develop solar radiation.')
+            logging.error('Unable to develop solar radiation.' + str(dt) + str(doy))
             return False
         return True
 
@@ -435,7 +443,8 @@ class MetNode():
         # Get list of 0 based line numbers to skip
         # Ignore header but assume header was set as 1's based index
         data_skip = [i for i in range(cfg.input_met['header_lines']) if i + 1 != cfg.input_met['names_line']]
-        self.input_met_df = pd.read_table(input_met_path, engine = 'python',
+#        self.input_met_df = pd.read_table(input_met_path, engine = 'python',
+        self.input_met_df = pd.read_csv(input_met_path, engine = 'python',
                 header = cfg.input_met['names_line'] - len(data_skip) - 1,
                 skiprows = data_skip, sep = cfg.input_met['delimiter'],
                 na_values = 'NaN')
@@ -582,7 +591,7 @@ class MetNode():
         try:
             # construct ref et object and set up output
 
-            retObj = refET.refET(cfg.input_met['TR_b0'], cfg.input_met['TR_b1'], cfg.input_met['TR_b2'])
+            retObj = ref_et_data.refET(cfg.input_met['TR_b0'], cfg.input_met['TR_b1'], cfg.input_met['TR_b2'])
             ret_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
             for fn in cfg.refet_out['refet_out_fields']: ret_df[fn] = np.nan
             if cfg.output_retalt_flag:

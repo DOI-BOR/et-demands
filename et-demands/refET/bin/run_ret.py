@@ -27,7 +27,7 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
     # Reference et python function
 
     script_path = os.path.join(bin_ws, 'mod_ref_et.py')
-    print script_path
+    print (script_path)
 
     # Check input folder/path
 
@@ -53,7 +53,7 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
     if mp_procs > 1:
         args_list.extend(['-mp', str(mp_procs)])
     # print "command line is "
-    print args_list
+    print (args_list)
     subprocess.call(args_list)
 
 def parse_args():
