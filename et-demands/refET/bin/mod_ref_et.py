@@ -72,7 +72,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
             avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".xlsx", "avgTMaxMon.txt.").replace(".xls", "avgTMaxMon.txt.")
         else:
             avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".", "_rev.")
-        avgTMaxRev_hand = file(avgTMaxRev_path, 'w')
+        avgTMaxRev_hand = open(avgTMaxRev_path, 'w')
         avgTMaxRev_hand.write(avg_monthly_header + "\n")
         if "xls" in cfg.input_met['avgm_tmin_path'].lower():
             avgTMinRev_path = cfg.input_met['avgm_tmin_path'].replace(
@@ -80,7 +80,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
         else:
             avgTMinRev_path = cfg.input_met['avgm_tmin_path'].replace(
                 ".", "_rev.")
-        avgTMinRev_hand = file(avgTMinRev_path, 'w')
+        avgTMinRev_hand = open(avgTMinRev_path, 'w')
         avgTMinRev_hand.write(avg_monthly_header + "\n")
 
     # Multiprocessing set up
