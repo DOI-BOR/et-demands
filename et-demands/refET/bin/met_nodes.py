@@ -403,7 +403,6 @@ class MetNode():
         if 'rs' not in self.input_met_df.columns: self.input_met_df['rs'] = np.nan
         try:
             for dt, doy in sorted(self.input_met_df['doy'].items()):
-
                 if pd.isnull(self.input_met_df.at[dt, 'rs']):
                     self.input_met_df.at[dt, 'rs'] = ret_utils.rs_daily(doy,
                         self.input_met_df.at[dt, 'tmax'],

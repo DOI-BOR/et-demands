@@ -71,15 +71,14 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
         if "xls" in cfg.input_met['avgm_tmax_path'].lower():
             avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".xlsx", "avgTMaxMon.txt.").replace(".xls", "avgTMaxMon.txt.")
         else:
-            avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".", "_rev.")
+            avgTMaxRev_path = cfg.input_met['avgm_tmax_path']
         avgTMaxRev_hand = open(avgTMaxRev_path, 'w')
         avgTMaxRev_hand.write(avg_monthly_header + "\n")
         if "xls" in cfg.input_met['avgm_tmin_path'].lower():
             avgTMinRev_path = cfg.input_met['avgm_tmin_path'].replace(
                 ".xlsx", "avgTMinMon.txt.").replace(".xls", "avgTMinMon.txt.")
         else:
-            avgTMinRev_path = cfg.input_met['avgm_tmin_path'].replace(
-                ".", "_rev.")
+            avgTMinRev_path = cfg.input_met['avgm_tmin_path']
         avgTMinRev_hand = open(avgTMinRev_path, 'w')
         avgTMinRev_hand.write(avg_monthly_header + "\n")
 
