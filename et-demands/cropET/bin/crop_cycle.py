@@ -496,7 +496,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 lambda x: ' %1d' % x)
             daily_output_columns.append(cutting_field)
             
-        with open(daily_output_path, open_mode) as daily_output_f:
+        with open(daily_output_path, open_mode, newline='') as daily_output_f:
             daily_output_f.write('# {0:2d} - {1}\n'.format(
                 crop.class_number, crop.name))
             daily_output_df.to_csv(
@@ -535,7 +535,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             monthly_output_df[cutting_field] = \
                 monthly_output_df[cutting_field].map(lambda x: ' %1d' % x)
             monthly_output_columns.append(cutting_field)
-        with open(monthly_output_path, open_mode) as monthly_output_f:
+        with open(monthly_output_path, open_mode, newline='') as monthly_output_f:
             monthly_output_f.write('# {0:2d} - {1}\n'.format(
                 crop.class_number, crop.name))
             monthly_output_df.to_csv(
@@ -570,7 +570,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             annual_output_df[cutting_field] = annual_output_df[
                 cutting_field].map(lambda x: ' %2d' % x)
             annual_output_columns.append(cutting_field)
-        with open(annual_output_path, open_mode) as annual_output_f:
+        with open(annual_output_path, open_mode, newline='') as annual_output_f:
             annual_output_f.write('# {0:2d} - {1}\n'.format(
                 crop.class_number, crop.name))
             annual_output_df.to_csv(
