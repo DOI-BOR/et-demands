@@ -278,7 +278,9 @@ def main(ini_path, overwrite_flag=False):
     cross_df = pd.read_csv(crosswalk_path)
     cross_dict = dict()
     for index, row in cross_df.iterrows():
-        cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
+        # cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
+        # Does the input crop have to be an int or can it be a str????
+        cross_dict[row.cdl_no] = list(map(int, str(row.etd_no).split(',')))
     # logging.debug(crop_num_dict)
 
     # Build the crop list
