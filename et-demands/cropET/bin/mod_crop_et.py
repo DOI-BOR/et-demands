@@ -173,7 +173,7 @@ def main(ini_path, log_level=logging.WARNING,
                 gs_output_path = os.path.join(
                     data.gs_output_ws, '{0}_gs_crop_{1:02d}.csv'.format(
                         cell_id, int(crop.class_number)))
-                gs_df = pd.read_table(gs_output_path, header=0, comment='#',
+                gs_df = pd.read_csv(gs_output_path, header=0, comment='#',
                                       sep=',')
                 gs_start_doy = int(round(gs_df['Start_DOY'].mean()))
                 gs_end_doy = int(round(gs_df['End_DOY'].mean()))

@@ -55,7 +55,7 @@ class ETCellData():
                                    len(skiprows) - 1,
                                    skiprows=skiprows, na_values=['NaN'])
             else:
-                df = pd.read_table(data.cell_properties_path, engine='python',
+                df = pd.read_csv(data.cell_properties_path, engine='python',
                                    header=data.cell_properties_names_line -
                                    len(skiprows) - 1,
                                    skiprows=skiprows,
@@ -202,7 +202,7 @@ class ETCellData():
                         skiprows=skiprows, na_values=['NaN'],
                                    parse_cols=[0, 1, 2, 3, 4])
             else:
-                df = pd.read_table(data.cell_cuttings_path, engine='python',
+                df = pd.read_csv(data.cell_cuttings_path, engine='python',
                                    na_values=['NaN'],
                         header=data.cell_cuttings_names_line -
                                len(skiprows) - 1,
@@ -701,7 +701,7 @@ class ETCell():
         skiprows = [i for i in range(data.refet['header_lines'])
                     if i + 1 != data.refet['names_line']]
         try:
-            self.refet_df = pd.read_table(
+            self.refet_df = pd.read_csv(
                 refet_path, engine='python',
                 header=data.refet['names_line'] - len(skiprows) - 1,
                 skiprows=skiprows, delimiter=data.refet['delimiter'])
@@ -768,7 +768,7 @@ class ETCell():
                                                 data.et_ratios_header_lines - 1,
                                                 na_values=['NaN'])
             else:
-                refet_ratios_df = pd.read_table(data.refet_ratios_path,
+                refet_ratios_df = pd.read_csv(data.refet_ratios_path,
                                                 delimiter=
                                                 data.et_ratios_delimiter,
                                                 header='infer',
@@ -827,7 +827,7 @@ class ETCell():
         # Scale ETo/ETr values
         # Is 'Month' vs 'month' change needed?
         # Input climate files have Year, Month, Day.
-        self.refet_df = self.refet_df.join(refet_ratios_df, 'Month')
+        self.refet_df = self.refet_df.join(refet_ratios_df, 'month')
         self.refet_df['etref'] *= self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_month_field]
@@ -978,7 +978,7 @@ class ETCell():
         skiprows = [i for i in range(data.weather['header_lines'])
                     if i+1 != data.weather['names_line']]
         try:
-            self.weather_df = pd.read_table(weather_path, engine='python',
+            self.weather_df = pd.read_csv(weather_path, engine='python',
                     header=data.weather['names_line'] - len(skiprows) - 1,
                     skiprows=skiprows, delimiter=data.weather['delimiter'])
         except IOError:
@@ -1095,7 +1095,7 @@ class ETCell():
         skiprows = [i for i in range(data.hist_temps['header_lines'])
                     if i+1 != data.hist_temps['names_line']]
         try:
-            self.hist_temps_df = pd.read_table(historic_path, engine='python',
+            self.hist_temps_df = pd.read_csv(historic_path, engine='python',
                     header=data.hist_temps['names_line'] - len(skiprows) - 1,
                     skiprows=skiprows, delimiter=data.hist_temps['delimiter'])
         except IOError:

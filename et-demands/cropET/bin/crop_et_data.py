@@ -120,6 +120,8 @@ class CropETData:
                     self.phenology_option = 0
             except:
                 self.phenology_option = 0
+        else:
+            self.phenology_option = 0
 
         # static (aka) meta data specifications
         try:
@@ -302,7 +304,7 @@ class CropETData:
         self.et_ratios_names_line = 1
         self.et_ratios_id_field = 'Met Node ID'
         self.et_ratios_name_field = 'Met Node Name'
-        self.et_ratios_month_field = 'Month'
+        self.et_ratios_month_field = 'month'
         self.et_ratios_ratio_field = 'ratio'
 
         # crop et specifications
@@ -1166,7 +1168,7 @@ class CropETData:
     def set_crop_params(self):
         """ List of <CropParameter> instances """
         logging.info('  Reading crop parameters from\n' + self.crop_params_path)
-        params_df = pd.read_table(self.crop_params_path,
+        params_df = pd.read_csv(self.crop_params_path,
                                   delimiter=self.crop_params_delimiter,
                                   header=None,
                                   skiprows=self.crop_params_header_lines - 1,
