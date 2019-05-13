@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 
-def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL', 
+def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
         debug_flag = False, mp_procs = 1):
     """Wrapper for running reference ET model
 
@@ -27,10 +27,10 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
     # Reference et python function
 
     script_path = os.path.join(bin_ws, 'mod_ref_et.py')
-    print script_path
+    print (script_path)
 
     # Check input folder/path
-    
+
     if not os.path.isfile(ini_path):
         print('Reference ET configuration file does not exist\n  %s' % (ini_path))
         sys.exit()
@@ -42,7 +42,7 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
         sys.exit()
 
     # Run Area ET Demands Model
-    
+
     args_list = ['python', script_path, '-i', ini_path]
     args_list.append('-m')
     args_list.append(mnid_to_run)
@@ -53,10 +53,10 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
     if mp_procs > 1:
         args_list.extend(['-mp', str(mp_procs)])
     # print "command line is "
-    print args_list
+    print (args_list)
     subprocess.call(args_list)
 
-def parse_args():  
+def parse_args():
     parser = argparse.ArgumentParser(
         description='Reference ET',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -73,13 +73,13 @@ def parse_args():
         '-v', '--verbose', action = "store_true", default = False,
         help = "Print info level comments")
     parser.add_argument(
-        '-mp', '--multiprocessing', default=1, type=int, 
+        '-mp', '--multiprocessing', default=1, type=int,
         metavar = 'N', nargs = '?', const = mp.cpu_count(),
         help = 'Number of processers to use')
     args = parser.parse_args()
 
     # Convert INI path to an absolute path if necessary
-    
+
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
     # print "\nargs are\n", args, "\n"
@@ -111,5 +111,5 @@ if __name__ == '__main__':
         ini_path = args.ini
     else:
         ini_path = get_ini_path(os.getcwd())
-    main(ini_path, verbose_flag = args.verbose, mnid_to_run = args.metid, 
+    main(ini_path, verbose_flag = args.verbose, mnid_to_run = args.metid,
         debug_flag = args.debug, mp_procs = args.multiprocessing)

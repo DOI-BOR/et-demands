@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ReferenceEvapotranspiration'
-copyright = u'2016, BOR_DRI'
+copyright = u'2019, BOR_DRI'
 author = u'BOR_DRI'
 
 # The version info for the project you're documenting, acts as replacement for
