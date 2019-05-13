@@ -121,7 +121,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # variables to include in output (if not in .csv skip)
     var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
                 'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season']
-    pmet_field =  'PM{}'.format(etref_field)
+    pmet_field = 'PM{}'.format(etref_field)
     var_list.insert(0, pmet_field)
     
     # Arc fieldnames can only be 10 characters. Shorten names to include _stat
@@ -255,7 +255,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         # keep_list = ['geometry','CELL_ID', 'LAT', 'LON', 'ELEV_M', 'ELEV_FT',
         #              'COUNTYNAME', 'STATENAME', 'STPO', 'HUC8',
         #              'AG_ACRES', 'CROP_{:02d}'.format(crop)]
-        keep_list = ['geometry','CELL_ID', 'LAT', 'LON',
+        keep_list = ['geometry', 'CELL_ID', 'LAT', 'LON',
                      'AG_ACRES', 'CROP_{:02d}'.format(crop)]
 
         # Filter ETCells using keep list

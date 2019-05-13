@@ -360,7 +360,8 @@ def main(ini_path, area_threshold=10,
         # Skip if all zone crop areas are below threshold
         elif all([v < area_threshold for v in
                   crop_acreage_dict[crop_num].values()]):
-            logging.info('  All crop acreaeges below threshold, skipping crop')
+            logging.info('** Skipping Crop {}, All crop acreages below'
+                         ' threshold'.format(crop_num))
             continue
 
         # Remove existing shapefiles if necessary

@@ -204,6 +204,8 @@ def main(ini_path, area_threshold=10,
     logging.debug('  Fields: {}'.format(fields))
     station_data_dict = defaultdict(dict)
     for fid, row in _arcpy.search_cursor(stations_path, fields).items():
+        # print(fid)
+        # print(row)
         # Switch to station_id_field as index (instead of FID)
         for f in fields[1:]:
             station_data_dict[str(row[station_id_field])][f] = row[f]
