@@ -184,6 +184,11 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                     (daily_df['DOY'] >= start_doy) &
                     (daily_df['DOY'] <= end_doy)]
 
+            if daily_df.empty:
+                logging.info(' Growing Season never started. Skipping cell {}'
+                             ' for crop {}.'.format(station, crop))
+                continue
+
             # Dictionary to control agg of each variable
             a = {
             'ETact': 'sum',
