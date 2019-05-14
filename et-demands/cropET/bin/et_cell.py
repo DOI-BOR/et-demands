@@ -1045,13 +1045,15 @@ class ETCell():
             success: True or False
         """
         logging.debug('Read historic temperature data')
-        if data.hist_temps['data_structure_type'].upper() == 'SF P':
-            success = self.SF_P_historic_temps(data)
-        else:
-            success = self.DMI_historic_temps(cell_count, data, cells)
+        # if data.hist_temps['data_structure_type'].upper() == 'SF P':
+        # 'SF P' is now the only accepted data structure type
+        success = self.SF_P_historic_temps(data)
         if not success:
-            logging.error('Unable to read historic temperture data.')
+            logging.error('Unable to read historic temperature data.')
             return False
+        else:
+            logging.info('\nPhenology option enabled.'
+                         ' Reading Historical Temperature Data.\n')
 
         # Check/modify units
 
