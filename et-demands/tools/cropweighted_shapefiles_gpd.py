@@ -172,6 +172,11 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                     (daily_df['DOY'] >= start_doy) &
                     (daily_df['DOY'] <= end_doy)]
 
+            if daily_df.empty:
+                logging.info(' Growing Season never started. Skipping cell {}'
+                             ' for crop {}.'.format(station, crop))
+                continue
+
             # Dictionary to control agg of each variable
             a = {
                 'ETact': 'sum',
@@ -197,6 +202,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             # Write data to each station row
             df.loc[station] = list(mean_df[var_list]) + list(median_df[
                                                                  var_list])
+
+            # Cast summary objects to floats
+            df = df.astype(float)
 
             # Grab min/max year for output folder naming
             # assumes all daily files cover same time period
