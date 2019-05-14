@@ -97,33 +97,33 @@ def main(ini_path, log_level=logging.WARNING,
     cell_mp_list, cell_mp_flag, crop_mp_flag = [], False, False
     if mp_procs > 1:
         logging.warning("\nSetting multiprocessing logic")
-        if data.cet_out['data_structure_type'].upper() == 'RDB':
-            logging.warning("  Multiprocessing is not available for RDB output")
-            mp_procs = 1
-        else:
-            if etcid_to_run == 'ALL':
-                cells_count = len(cells.et_cells_dict.keys())
-                crops_count = len(cells.crop_num_list)
-                logging.warning('  Cell count: {}'.format(cells_count))
-                logging.warning('  Crop count: {}'.format(crops_count))
-        
-                # 0.5 multiplier is to prefer multiprocessing by cell
-                # because of 1 CPU time spent loading/processing weather data
-                # when multiprocessing by crop
+        # if data.cet_out['data_structure_type'].upper() == 'RDB':
+        #     logging.warning("  Multiprocessing is not available for RDB output")
+        #     mp_procs = 1
+        # else:
+        if etcid_to_run == 'ALL':
+            cells_count = len(cells.et_cells_dict.keys())
+            crops_count = len(cells.crop_num_list)
+            logging.warning('  Cell count: {}'.format(cells_count))
+            logging.warning('  Crop count: {}'.format(crops_count))
 
-                # # Force cell_mp__flag to True for testing
-                # logging.warning("  Multiprocessing by cell")
-                # cell_mp_flag = True
+            # 0.5 multiplier is to prefer multiprocessing by cell
+            # because of 1 CPU time spent loading/processing weather data
+            # when multiprocessing by crop
 
-                if (0.5 * cells_count) > crops_count:
-                    logging.warning("  Multiprocessing by cell")
-                    cell_mp_flag = True
-                else:
-                    logging.warning("  Multiprocessing by crop")
-                    crop_mp_flag = True
+            # # Force cell_mp__flag to True for testing
+            # logging.warning("  Multiprocessing by cell")
+            # cell_mp_flag = True
+
+            if (0.5 * cells_count) > crops_count:
+                logging.warning("  Multiprocessing by cell")
+                cell_mp_flag = True
             else:
                 logging.warning("  Multiprocessing by crop")
                 crop_mp_flag = True
+        else:
+            logging.warning("  Multiprocessing by crop")
+            crop_mp_flag = True
 
     # loop through et cells
     logging.warning("")
