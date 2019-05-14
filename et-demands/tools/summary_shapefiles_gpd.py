@@ -220,6 +220,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             output_df.loc[station] = list(mean_df[var_list]) + \
                               list(median_df[var_list])
 
+            # Cast summary objects to floats
+            output_df = output_df.astype(float)
+
             # Grab min/max year for output folder naming
             min_year = min(daily_df['Year'])
             max_year = max(daily_df['Year'])
@@ -248,7 +251,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         if not os.path.exists(output_folder_path):
             os.makedirs(output_folder_path)
 
-        # Copy ETCELLS.shp and join cropweighted data to it
+        # Copy ETCELLS.shp and join summary data to it
         data = gpd.read_file(et_cells_path)
 
         # Data keep list (geometry is needed to write out as geodataframe)
