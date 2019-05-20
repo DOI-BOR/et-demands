@@ -1,17 +1,27 @@
-#!/usr/bin/env python
-import logging
+"""crop_parameters.py
+Defines CropParameters class
+Defines read_crop_parameters to read crop parameters file
+Called by crop_et_data.py
 
+"""
+
+import logging
 import numpy as np
 
-
 class CropParameters:
+    """Crop parameters container
+
+    Attributes
+    ----------
+    crop_params_data : list
+        crop params data from static text file
+
+    Notes
+    -----
+
+    """
+
     def __init__(self, crop_params_data):
-        """
-        Args:
-            crop_params_data (list): crop params data from static text file
-        Returns:
-            None
-        """
 
         # If there is a comma in the string, it will also have quotes
         self.name = str(crop_params_data[0]).replace('"', '').strip()
@@ -120,7 +130,22 @@ class CropParameters:
     #     return '<%s>' % (self.name)
 
     def set_winter_soil(self, crops=[]):
-        """ """
+        """
+
+        Attributes
+        ----------
+        crops : list
+
+
+        Returns
+        -------
+
+        Notes
+        -----
+        Not currently used
+
+        """
+
         pass
         # # setup curve number for antecedent II condition for winter covers
         # wscc = self.winter_surface_cover_class
@@ -130,7 +155,23 @@ class CropParameters:
 
 
 def read_crop_parameters(fn):
-    """Read in the crop parameter text file"""
+    """Read in the crop parameter text file
+
+    Attributes
+    ----------
+    fn : str
+        absolute file path for crop parameters file
+
+    Returns
+    -------
+    crops_dict : dict
+        dictionary of crop parameters
+
+    Notes
+    -----
+    hardcode reading the first 32 lines after the 3 header rows
+
+    """
 
     # For now, hardcode reading the first 32 lines after the 3 header rows
     crop_param_data = np.loadtxt(fn, delimiter="\t", dtype='str', skiprows=3)

@@ -1,3 +1,9 @@
+"""open_water_evap.py
+defines open_water_evap function for calculating evaporation over open water
+called by kcb_daily.py
+
+"""
+
 import util
 
 def open_water_evap(cell, foo_day):
@@ -44,7 +50,7 @@ def open_water_evap(cell, foo_day):
         density = 3.486 * cell.air_pressure / tv
 
         # LE in megawatts/m2
-        
+
         ce = 0.0015
         # DEADBEEF - wind variable is not defined
         le = 2.45 * density * ce * wind * (q_water - q_air)

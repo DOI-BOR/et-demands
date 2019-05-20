@@ -1,7 +1,12 @@
+"""kcb_daily.py
+Defines kcb_daily function
+Called by crop_cycle.py
+
+"""
+
 import datetime
 import logging
 import sys
-
 import numpy as np
 
 import open_water_evap
@@ -10,20 +15,30 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
               debug_flag = False):
     """Compute basal ET
 
-    Args:
-        data ():
-        et_cell ():
-        crop ():
-        foo ():
-        foo_day ():
-        debug_flag (bool): If True, write debug level comments to debug.txt
+    Arguments
+    ---------
+        data :
 
-    Returns:
-        None
+        et_cell :
+        crop :
+        foo :
+        foo_day :
+        debug_flag : boolean
+            True : write debug level comments to debug.txt
+            False
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+
     """
+
     # Determine if inside or outside growing period
     # Procedure for deciding start and return false of season.
-    
+
     curve_number = crop.curve_number
 
     # Determination of start of season was rearranged April 12 2009 by R.Allen
@@ -34,7 +49,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
 
     # Flag for estimating start of season
     # 1 = cgdd, 2 = t30, 3 = date, 4 or 0 is on alltime
-    
+
     if debug_flag:
         logging.debug('kcb_daily(): Flag_for_means_to_estimate_pl_or_gu %d' % (
             crop.flag_for_means_to_estimate_pl_or_gu))
@@ -42,7 +57,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             foo.kc_bas, foo.kc_bas_prev))
 
     # Flag_for_means_to_estimate_pl_or_gu Case 1
-    
+
     if crop.flag_for_means_to_estimate_pl_or_gu == 1:
         # Only allow start flag to begin if < July 15
         # to prevent GU in fall after freezedown
@@ -89,16 +104,16 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             # If season start has been found then turn parameters on
             # Look for day when DoY equals doy_start_cycle
             # Note that this requires that all days be present (no missing days)
-            
+
             if foo_day.doy == foo.doy_start_cycle:
                 foo.real_start = True
                 foo.in_season = True
                 foo.stress_event = False
                 foo.dormant_setup_flag = True
                 foo.setup_crop(crop)\
-                
+
                 # First cycle for alfalfa
-                
+
                 foo.cycle = 1
 
                 # Some range grasses require backing up 10 days
@@ -122,7 +137,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                     (crop.t30_for_pl_or_gu_or_cgdd))
 
     # Flag_for_means_to_estimate_pl_or_gu Case 2
-    
+
     elif crop.flag_for_means_to_estimate_pl_or_gu == 2:
         # Use T30 for startup
         # Caution - need some constraints for oscillating T30 and for late summer
@@ -215,7 +230,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 logging.debug('kcb_daily(): in_season %d' % (foo.in_season))
 
     # Flag_for_means_to_estimate_pl_or_gu Case 3
-    
+
     elif crop.flag_for_means_to_estimate_pl_or_gu == 3:
         # Planting or greenup day of year
         doy = datetime.datetime(
@@ -236,12 +251,12 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         logging.debug('kcb_daily(): in_season %d' % (foo.in_season))
 
     # Flag_for_means_to_estimate_pl_or_gu Case 4
-    
+
     elif crop.flag_for_means_to_estimate_pl_or_gu == 4:
         foo.in_season = True
-        
+
         # Reset severe stress event flag if first
-        
+
         if foo_day.doy == crop.gdd_trigger_doy:
             foo.stress_event = False
         foo.dormant_setup_flag = True
@@ -470,16 +485,16 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                     'kcb_daily(): curve_type 1  in_season %d' % (foo.in_season))
 
         # crop.curve_type Case 2
-        
+
         elif crop.curve_type == 2:
             # Percent of time from PL to EFC for all season
-            
+
             days_into_season = foo_day.doy - foo.doy_start_cycle + 1
             if days_into_season < 1:
                 days_into_season += 365
-        
+
             # Deal with values of zero or null - added Dec. 29, 2011, rga
-            
+
             crop.time_for_efc = max(crop.time_for_efc, 1.)
             foo.n_pl_ec = float(days_into_season) / crop.time_for_efc
             npl_ec100 = foo.n_pl_ec * 100
@@ -779,7 +794,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     #   Note: set kc_max for winter time (Nov-Mar) and fc outside of this sub.
     # CGM 9/2/2015 - 44-46 are not run first in Python version of ET-Demands
     #   kc_bas_wscc is set in initialize_crop_cycle(), no reason to set it here
-    
+
     if crop.class_number in [44, 45, 46]:
         if crop.class_number == 44:
             foo.kc_bas = 0.1  # was 0.2
@@ -848,7 +863,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
 
     # RHmin and U2 are computed in ETCell.set_weather_data()
     # Allen 3/26/08
-    
+
     if data.refet['type'] == 'eto':
         # ******'12/26/07
         foo.kc_bas = (
@@ -857,8 +872,8 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         logging.debug(
             'kcb_daily(): kcb %.6f  u2 %.6f  rh_min %.6f  height %.6f' %
             (foo.kc_bas, foo_day.u2, foo_day.rh_min, foo.height))
-    
+
     # ETr basis, therefore, no adjustment to kcb
-    
+
     elif data.refet['type'] == 'etr':
         pass

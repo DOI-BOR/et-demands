@@ -1,14 +1,29 @@
+"""compute_crop_gdd.py
+Function for calculating crop growing degree days
+Called by crop_cycle.py
+
+"""
+
 def compute_crop_gdd(crop, foo, foo_day):
-    """Compute crop growing degree days
+    """Calculate crop growing degree days
 
-    Args:
-        crop ():
-        foo ():
-        foo_day ():
+        Arguments
+        ---------
+        crop :
 
-    Returns:
+        foo :
+
+        foo_day :
+
+        Returns
+        -------
         None
-    """
+
+        Notes
+        -----
+        See comments in code
+        
+        """
 
     # Calculate 30 day ETr each year
     # Shift entries in 30 day array to add today's ETref

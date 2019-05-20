@@ -1,40 +1,63 @@
-#!/usr/bin/env python
+"""crop_cycle.py
+Defines DayData class
+Defines crop_cycle_mp, crop_cycle, crop_day_loop_mp, crop_day_loop,
+    write_crop_output
+Called by mod_crop_et.py
+
+"""
 
 import datetime
 import logging
 import multiprocessing as mp
 import os
-
 import numpy as np
 import pandas as pd
+import sys
 
 import calculate_height
 import compute_crop_et
 import compute_crop_gdd
 from initialize_crop_cycle import InitializeCropCycle
 import kcb_daily
-import sys
 
 
 class DayData:
-    def __init__(self):
-        """ """
+    """Daily crop data container
 
-        # Used in compute_crop_gdd(), needs to be persistent during day loop
-        
+    Attributes
+    ----------
+
+    Notes
+    -----
+    Used in compute_crop_gdd(), needs to be persistent during day loop
+
+    """
+
+    def __init__(self):
         self.etref_array = np.zeros(30)
 
-
 def crop_cycle_mp(data, et_cell, mp_procs=1):
-    """Compute crop ET for all crops using multiprocessing
+    """Compute crop et for all crops using multiprocessing
 
-    crop_day_loop_mp() will unpack arguments and call crop_day_loop
+    Arguments
+    ---------
+    data :
 
-    Args:
-        data ():
-        et_cell ():
-        mp_procs (int): number of cores to use for multiprocessing
+    et_cell :
+
+    mp_procs :
+        number of cores to use for multiprocessing
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    crop_day_loop_mp() will unpack arguments and call crop_day_loop()
+
     """
+
     crop_count = 0
     crop_mp_list = []
     for crop_num, crop in sorted(et_cell.crop_params.items()):
@@ -51,7 +74,6 @@ def crop_cycle_mp(data, et_cell, mp_procs=1):
         pool.close()
         pool.join()
         del pool, results
-
 
 def crop_cycle(data, et_cell, debug_flag=False, mp_procs=1):
     """Compute crop ET for all crops
@@ -74,42 +96,73 @@ def crop_cycle(data, et_cell, debug_flag=False, mp_procs=1):
         crop_count += 1
         crop_day_loop(crop_count, data, et_cell, crop, debug_flag, mp_procs)
 
-
 def crop_day_loop_mp(tup):
-    """Pool multiprocessing friendly crop_day_loop function
+    """Compute crop et for each daily timestep using multiprocessing
+
 
     mp.Pool needs all inputs are packed into single tuple
     Tuple is unpacked and and single processing version of function is called
 
-    Args:
-        crop_count: count of crop being computed
-        data ():
-        et_cell ():
-        crop ():
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        mp_procs (int):
+    Arguments
+    ---------
+    crop_count : int
+        count of crop being computed
+    data :
 
-    Returns:
+    et_cell :
+
+    crop :
+
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False
+    mp_procs : int
+        number of cores to use for multiprocessing
+
+    Returns
+    -------
+
+    Notes
+    -----
+    Calls crop_day_loop
 
     """
-    return crop_day_loop(*tup)
 
+    return crop_day_loop(*tup)
 
 def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                   mp_procs=1):
-    """Compute crop ET for each daily timestep
+    """Compute crop et for each daily timestep
 
-    Args:
-        crop_count: count of crop being computed
-        data ():
-        et_cell ():
-        crop ():
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        mp_procs (int):
+    Arguments
+    ---------
+    crop_count : int
+        count of crop being computed
+    data :
+
+    et_cell : str
+
+    crop :
+
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False
+    mp_procs : int
+        number of cores to use for multiprocessing
 
     Returns
-        Bool
+    -------
+    : boolean
+        True :
+        False :
+
+    Notes
+    -----
+    mp_procs always set to 1 if calling directly
+    mp_procs can be greater than one if called through crop_day_loop_mp
+
     """
+
     func_str = 'crop_day_loop()'
     if mp_procs == 1:
         logging.warning('Crop {} - {}'.format(crop.class_number, crop.name))
@@ -228,16 +281,14 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
         # Compute crop growing degree days
         compute_crop_gdd.compute_crop_gdd(crop, foo, foo_day)
 
-        # Calculate height of vegetation.  
+        # Calculate height of vegetation.
         # Moved up to this point 12/26/07 for use in adj. Kcb and kc_max
         calculate_height.calculate_height(crop, foo, debug_flag)
 
         # Interpolate Kcb and make climate adjustment (for ETo basis)
-        
         kcb_daily.kcb_daily(data, et_cell, crop, foo, foo_day, debug_flag)
 
         # Calculate Kcb, Ke, ETc
-        
         compute_crop_et.compute_crop_et(data, et_cell, crop, foo, foo_day,
                                         debug_flag)
 
@@ -271,7 +322,6 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                     func_str, foo.irr_sim, foo.sro, foo.dperc, foo.niwr))
 
         # Check that season started
-
         if foo_day.month == 12 and foo_day.day == 31:
             season_count = foo.crop_df.loc[
                 str(foo_day.year):str(foo_day.year), 'season'].sum()
@@ -285,30 +335,38 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                         crop.class_number, foo_day.year))
 
     # Write output files
-    if (data.cet_out['daily_output_flag'] or 
+    if (data.cet_out['daily_output_flag'] or
             data.cet_out['monthly_output_flag'] or
-            data.cet_out['annual_output_flag'] or 
+            data.cet_out['annual_output_flag'] or
             data.gs_output_flag):
         write_crop_output(crop_count, data, et_cell, crop, foo)
     return True
 
-
 def write_crop_output(crop_count, data, et_cell, crop, foo):
-    """Write ET-Demands output files for each cell and crop
+    """Write output files for each cell and crop
 
-    Args:
-        crop_count: count of crop being computed
-        data ():
-        et_cell ():
-        crop ():
-        foo ():
+    Arguments
+    ---------
+    crop_count : int
+        count of crop being computed
+    data :
+
+    et_cell :
+
+    crop :
+
+    foo :
+
+    Returns
+    -------
+    None
+
     """
+
     year_field = 'Year'
     month_field = 'Month'
     day_field = 'Day'
     doy_field = 'DOY'
-    # print(dir(data))
-    # print(dir(data.refet))
 
     # Build PMET type fieldname from input data (Eto or ETr)
     et_type = data.refet['fields']['etref']
@@ -334,9 +392,9 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
     p_eft_field = 'P_eft'
 
     # Merge crop and weather data frames to form daily output
-    if (data.cet_out['daily_output_flag'] or 
+    if (data.cet_out['daily_output_flag'] or
             data.cet_out['monthly_output_flag'] or
-            data.cet_out['annual_output_flag'] or 
+            data.cet_out['annual_output_flag'] or
             data.gs_output_flag):
         daily_output_df = pd.merge(
             foo.crop_df, et_cell.climate_df[['ppt']],
@@ -354,7 +412,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             'runoff': runoff_field, 'dperc': dperc_field,
             'p_rz': p_rz_field, 'p_eft': p_eft_field,
             'season': season_field, 'cutting': cutting_field})
-            
+
     # Compute monthly and annual stats before modifying daily format below
     if data.cet_out['monthly_output_flag']:
         monthly_resample_func = {
@@ -364,7 +422,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             runoff_field: np.sum, dperc_field: np.sum,
             p_rz_field: np.sum, p_eft_field: np.sum,
             season_field: np.sum, cutting_field: np.sum}
-        # dri dm approach produces 'TypeError: ("'dict' object is not callable", 
+        # dri dm approach produces 'TypeError: ("'dict' object is not callable",
         # a u'occurred at index DOY')
         monthly_output_df = daily_output_df.resample('MS').apply(
             monthly_resample_func)
@@ -376,16 +434,15 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
             runoff_field: np.sum, dperc_field: np.sum,
             p_rz_field: np.sum, p_eft_field: np.sum,
             season_field: np.sum, cutting_field: np.sum}
-        # dri dm approach produces 'TypeError: ("'dict' object is not callable", 
+        # dri dm approach produces 'TypeError: ("'dict' object is not callable",
         # a u'occurred at index DOY')
         annual_output_df = daily_output_df.resample('AS').apply(
             annual_resample_func)
-            
+
     # Get growing season start and end DOY for each year
     # Compute growing season length for each year
-    
     if data.gs_output_flag:
-        # dri dm approach produces 'TypeError: ("'dict' object is not callable", 
+        # dri dm approach produces 'TypeError: ("'dict' object is not callable",
         # a u'occurred at index DOY')
         gs_output_df = daily_output_df.resample('AS').apply(
             {year_field: np.mean})
@@ -449,7 +506,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         daily_output_df[year_field] = daily_output_df.index.year
         daily_output_df[month_field] = daily_output_df.index.month
         daily_output_df[day_field] = daily_output_df.index.day
-        
+
         # format date attributes if values are formatted
         if data.cet_out['daily_float_format'] is not None:
             daily_output_df[year_field] = daily_output_df[year_field].map(
@@ -462,7 +519,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 lambda x: ' %3d' % x)
 
         # This will convert negative "zeros" to positive
-        
+
         daily_output_df[niwr_field] = np.round(daily_output_df[niwr_field], 6)
         # daily_output_df[niwr_field] = np.round(
         # daily_output_df[niwr_field].values, 6)
@@ -482,20 +539,20 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                runoff_field, dperc_field,
                                                p_rz_field, p_eft_field,
                                                niwr_field, season_field]
-            
+
         # Remove these (instead of appending) to preserve column order
         if not data.kc_flag:
             daily_output_columns.remove(kc_field)
             daily_output_columns.remove(kcb_field)
         if not data.niwr_flag:
             daily_output_columns.remove(niwr_field)
-            
+
         # Most crops do not have cuttings, so append if needed
         if data.cutting_flag and crop.cutting_crop:
             daily_output_df[cutting_field] = daily_output_df[cutting_field].map(
                 lambda x: ' %1d' % x)
             daily_output_columns.append(cutting_field)
-            
+
         with open(daily_output_path, open_mode, newline='') as daily_output_f:
             daily_output_f.write('# {0:2d} - {1}\n'.format(
                 crop.class_number, crop.name))
@@ -510,7 +567,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
     if data.cet_out['monthly_output_flag']:
         monthly_output_df[year_field] = monthly_output_df.index.year
         monthly_output_df[month_field] = monthly_output_df.index.month
-        
+
         # format date attributes if values are formatted
         if data.cet_out['monthly_float_format'] is not None:
             monthly_output_df[year_field] = \
@@ -639,7 +696,6 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 gs_output_f, sep=',', columns=gs_output_columns,
                 date_format='%Y', index=False)
         del gs_output_df, gs_output_path, gs_output_columns
-
 
 if __name__ == '__main__':
     pass

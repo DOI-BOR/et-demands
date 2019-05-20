@@ -1,8 +1,33 @@
+"""grow_root.py
+Defines grow_root function
+Called by compute_crop_et.py
+
+"""
+
 import logging
 import math
 
 def grow_root(crop, foo, debug_flag=False):
-    """Determine depth of root zone"""
+    """Determine depth of root zone
+    Arguments
+    ----------
+    crop :
+
+    foo :
+
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    Uses Borg and Grimes (1986) sigmoidal function [doi: 10.13031/2013.30125]
+
+    """
 
     # dlk - 10/31/2011 - added zero value tests
     fractime = 0

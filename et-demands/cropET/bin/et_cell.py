@@ -1,4 +1,10 @@
-#!/usr/bin/env python
+"""et_cell.py
+Defines ETCellData class
+Defines crop_cycle_mp, crop_cycle, crop_day_loop_mp, crop_day_loop,
+    write_crop_output
+Called by mod_crop_et.py
+
+"""
 
 from collections import defaultdict
 import datetime
@@ -8,10 +14,10 @@ import os
 import re
 import sys
 import copy
-
 import numpy as np
 import pandas as pd
 import xlrd
+import shapefile
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              '../../lib')))
@@ -22,7 +28,16 @@ import mod_dmis
 mpdToMps = 3.2808399 * 5280 / 86400
 
 class ETCellData():
-    """Functions for loading ET Cell data fromstatic text files"""
+    """Functions for loading ET Cell data from static text files
+
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
         self.et_cells_dict = dict()
@@ -33,14 +48,21 @@ class ETCellData():
     def set_cell_properties(self, data):
         """Extract ET cells properties data from specified file
 
-        This function builds ETCell objects and must be run first.
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Args:
-            data:configuration data from INI file
+        Returns
+        -------
+        None
 
-        Returns:
-            None
+        Notes
+        -----
+        This function builds ETCell objects and must be run first
+
         """
+
         logging.info('\nReading ET Cells properties data from\n' +
                      data.cell_properties_path)
         try:
@@ -91,26 +113,42 @@ class ETCellData():
     def set_cell_crops(self, data):
         """Read crop crop flags using specified file type
 
-        Args:
-            data:configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
         """
+
         if ".xls" in data.cell_crops_path.lower():
             self.read_cell_crops_xls_xlrd(data)
         else:
             self.read_cell_crops_txt(data)
 
     def read_cell_crops_txt(self, data):
-        """ExtractET cell crop data from text file
+        """Extract et cell crop data from text file
 
-        Args:
-            data:configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
         """
+
         logging.info('\nReading cell crop flags from\n' + data.cell_crops_path)
         a = np.loadtxt(data.cell_crops_path,
                        delimiter=data.cell_crops_delimiter, dtype='str')
@@ -138,14 +176,22 @@ class ETCellData():
         self.crop_num_list = sorted(list(set(self.crop_num_list)))
 
     def read_cell_crops_xls_xlrd(self, data):
-        """ExtractET cell crop data from Excel using xlrd
+        """Extract et cell crop data from Excel using xlrd
 
-        Args:
-            data: configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
         """
+
         logging.info('\nReading cell crop flags from\n' +
                      data.cell_crops_path)
         wb = xlrd.open_workbook(data.cell_crops_path)
@@ -181,12 +227,20 @@ class ETCellData():
     def set_cell_cuttings(self, data):
         """Extract mean cutting data from specified file
 
-        Args:
-            data:configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
         """
+
         logging.info('\nReading cell crop cuttings from\n' +
                      data.cell_cuttings_path)
         try:
@@ -232,6 +286,22 @@ class ETCellData():
             sys.exit()
 
     def filter_crops(self, data):
+        """filters crop list using crop_skip_list or crop_test_list from INI
+
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
+        """
+
         logging.info('\nFiltering crop lists')
         crop_numbers = set(self.crop_num_list)
 
@@ -262,12 +332,10 @@ class ETCellData():
             crop_numbers &= set(data.crop_test_list)
 
         # Get max length of CELL_ID for formatting of log string
-
         cell_id_len = max([
             len(cell_id) for cell_id in self.et_cells_dict.keys()])
 
         # Filter each cell with updated master crop list
-
         for cell_id, cell in sorted(self.et_cells_dict.items()):
             cell.crop_num_list = sorted(
                 crop_numbers & set(cell.crop_num_list))
@@ -281,7 +349,22 @@ class ETCellData():
                 ', '.join(map(str, cell.crop_num_list))))
 
     def filter_cells(self, data):
-        """Remove cells with no active crops"""
+        """Remove cells with no active crops
+
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
+        """
+
         logging.info('\nFiltering ET Cells')
         cell_ids = set(self.et_cells_dict.keys())
         if data.cell_skip_list:
@@ -310,25 +393,66 @@ class ETCellData():
                 del self.et_cells_dict[cell_id]
 
     def set_static_crop_params(self, crop_params):
-        """"""
+        """set static crop parameters
+
+        Arguments
+        ---------
+        crop_params :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
+        """
         logging.info('\nSetting static crop parameters')
 
         # copy crop_params
-
         for cell_id in sorted(self.et_cells_dict.keys()):
             cell = self.et_cells_dict[cell_id]
             cell.crop_params = copy.deepcopy(crop_params)
 
     def set_static_crop_coeffs(self, crop_coeffs):
-        """"""
+        """set static crop coefficients
+
+        Arguments
+        ---------
+        crop_coeffs :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
+        """
+
         logging.info('Setting static crop coefficients')
         for cell_id in sorted(self.et_cells_dict.keys()):
             cell = self.et_cells_dict[cell_id]
             cell.crop_coeffs = copy.deepcopy(crop_coeffs)
 
     def set_spatial_crop_params(self, calibration_ws):
-        """"""
-        import shapefile
+        """set spatial crop parameters from spatial calibration
+
+        Arguments
+        ---------
+        crop_coeffs :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+
+        """
 
         logging.info('Setting spatially varying crop parameters')
         cell_id_field = 'CELL_ID'
@@ -475,6 +599,16 @@ class ETCellData():
         return True
 
 class ETCell():
+    """ET cells property container
+
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
         pass
@@ -487,12 +621,19 @@ class ETCell():
     def read_cell_properties_from_row(self, row, columns, elev_units = 'feet'):
         """ Parse row of data from ET Cells properties file
 
-        Args:
-            row (list): one row of ET Cells Properties
-            start_column (int): first zero based row column
+        Arguments
+        ---------
+        row : list
+            one row of ET Cells Properties
+        start_column : int
+            first zero based row column
 
-        Returns:
-            True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
         # ET Cell id is cell id for crop and area et computations
         # Ref ET MET ID is met node id, aka ref et node id of met and ref et row
@@ -531,7 +672,6 @@ class ETCell():
 
 
         # Compute air pressure of station/cell
-
         self.air_pressure = util.pair_from_elev(0.3048 * self.elevation)
         if 'area weighted average permeability' in columns:
             self.permeability = float(row[columns.index('area weighted average'
@@ -589,28 +729,51 @@ class ETCell():
     def init_crops_from_row(self, data, crop_numbers):
         """Parse row of data
 
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
+        crop_numbers :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
         Code exists in kcb_daily to adjust cgdd_term using crop flag as a
          multiplier.
         This code is currently commented out and crop_flags are being read in
          as booleans.
 
         """
+
         self.irrigation_flag = int(data[3])
         self.crop_flags = dict(zip(crop_numbers, data[4:].astype(bool)))
         # self.crop_flags = dict(zip(crop_numbers, data[4:]))
         self.ncrops = len(self.crop_flags)
 
     def set_input_timeseries(self, cell_count, data, cells):
-        """Wrapper for setting all refet/weather/climate data
+        """Wrapper for setting all refet and met data
 
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
-            cells: ET cells data (dict)
+        Arguments
+        ---------
+        cell_count : int
+            count of et cell being processed
+        data : dict
+            configuration data from INI file
+        cells : dict
+            eT cells data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         if not self.set_refet_data(data, cells):
             return False
         if data.refet_ratios_path:
@@ -629,14 +792,23 @@ class ETCell():
     def set_refet_data(self, data, cells):
         """Read ETo/ETr data file for single station
 
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
-            cells: ET cells data (dict)
+        Arguments
+        ---------
+        cell_count :
+            count of et cell being processed
+        data : dict
+            configuration data from INI file
+        cells : dict
+            et cells data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         logging.debug('\nRead ETo/ETr data')
 
         logging.debug('Read meteorological/climate data')
@@ -677,21 +849,26 @@ class ETCell():
                     field_key, field_units))
 
         # set date attributes
-
         self.refet_df['doy'] = [int(ts.strftime('%j')) for ts in
                                 self.refet_df.index]
         return True
 
     def SF_P_refet_data(self, data):
         """Read meteorological/climate data for single station with all
-         parameters
+            parameters
 
-        Args:
-            data: configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
         """
+
         refet_path = os.path.join(data.refet['ws'], data.refet['name_format']
                                   % self.refet_id)
         logging.debug('  {0}'.format(refet_path))
@@ -754,10 +931,22 @@ class ETCell():
     def set_refet_ratio_data(self, data):
         """Read ETo/ETr ratios static file
 
-        Args:
-            data: configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
+
+        Returns
+        -------
+        : boolean
+            True
+            False
+
+        Notes
+        -----
 
         """
+
         logging.info('  Reading ETo/ETr ratios')
         try:
             if ".xls" in data.refet_ratios_path.lower():
@@ -820,7 +1009,6 @@ class ETCell():
             return False
 
         # Set month as index
-
         refet_ratios_df.set_index(data.et_ratios_month_field, inplace=True)
         logging.info(refet_ratios_df)
 
@@ -835,17 +1023,29 @@ class ETCell():
         return True
 
     def set_weather_data(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station and fill missing
-         values
+        """Read meteorological data for single station and fill missing
+            values
 
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
-            cells: ET cells data (dict)
+        Arguments
+        ---------
+        cell_count :
+            count of et cell being processed
+        data : dict
+            configuration data from INI file
+        cells : dict
+            et cells data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
+        Notes
+        -----
+
         """
+
         logging.debug('Read meteorological/climate data')
         # if data.weather['data_structure_type'].upper() == 'SF P':
         success = self.SF_P_weather_data(data)
@@ -896,7 +1096,6 @@ class ETCell():
                               format(field_key, field_units))
 
         # set date attributes
-
         self.weather_df['doy'] = [int(ts.strftime('%j')) for ts in
                                   self.weather_df.index]
 
@@ -938,7 +1137,7 @@ class ETCell():
 
         # DEADBEEF
         # Don't default CO2 correction values to 1 if they aren't in the data
-        # CO2 corrections must be in the weather filek
+        # CO2 corrections must be in the weather file
         # Is this going for work for all BOR data sets?
 
         """
@@ -961,14 +1160,24 @@ class ETCell():
 
     def SF_P_weather_data(self, data):
         """Read meteorological/climate data for single station with all
-         parameters
+            parameters
 
-        Args:
-            data: configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
+        Notes
+        -----
+
         """
+
         weather_path = os.path.join(data.weather['ws'],
                                     data.weather['name_format'] % self.refet_id)
         logging.debug('  {0}'.format(weather_path))
@@ -1036,14 +1245,23 @@ class ETCell():
     def set_historic_temps(self, cell_count, data, cells):
         """Read historic max and min temperatures to support historic phenology
 
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
-            cells: ET cells data (dict)
+        Arguments
+        ---------
+        cell_count : int
+            count of et cell being processed
+        data : dict
+            configuration data from INI file
+        cells : dict
+            et cells data (dict)
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         logging.debug('Read historic temperature data')
         # if data.hist_temps['data_structure_type'].upper() == 'SF P':
         # 'SF P' is now the only accepted data structure type
@@ -1056,7 +1274,6 @@ class ETCell():
                          ' Reading Historical Temperature Data.\n')
 
         # Check/modify units
-
         for field_key, field_units in data.hist_temps['units'].items():
             if field_units is None:
                 continue
@@ -1079,14 +1296,21 @@ class ETCell():
 
     def SF_P_historic_temps(self, data):
         """Read meteorological/climate data for single station with all
-        parameters
+            parameters
 
-        Args:
-            data: configuration data from INI file
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         historic_path = os.path.join(data.hist_temps['ws'],
                                      data.hist_temps['name_format'] %
                                      self.refet_id)
@@ -1150,16 +1374,24 @@ class ETCell():
             return False
         return True
 
+    # NOT CURRENTLY USED, REMOVE? - DB 05/20/2019
     def DMI_historic_temps(self, cell_count, data, cells):
         """Read meteorological/climate data for single station using specified
-         DMI format
+            DMI format
 
-        Args:
-            cell_count: count of et cell being processed
-            data: configuration data from INI file
+        Arguments
+        ---------
+        cell_count : int
+            count of et cell being processed
+        data : dict
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
 
         # Read data from files by fields
@@ -1179,7 +1411,6 @@ class ETCell():
                 continue
 
             # pull data for field_name
-
             if cell_count == 1:
                 last_path = ''
                 if '%p' in data.hist_temps['name_format']:
@@ -1257,29 +1488,38 @@ class ETCell():
         return True
 
     def process_climate(self, data):
-        """
-        Compute long term averages (DAY LOOP)
-            adjust and check temperature data
-            process alternative TMax and TMin
-        Fill missing data with long term doy average (DAY LOOP)
-            Calculate an estimated depth of snow on ground using simple
-            melt rate function))
-            compute main cumGDD for period of record for various bases for
-            constraining earliest/latest planting or GU
-            only Tbase = 0 needs to be evaluated (used to est. GU for alfalfa,
-             mint, hops)
-        compute long term mean cumGDD0 from sums (JDOY LOOP)
+        """process meterological data into climate data
+            a) Compute long term averages (DAY LOOP)
+                adjust and check temperature data
+                process alternative TMax and TMin
+            b) Fill missing data with long term doy average (DAY LOOP)
+                Calculate an estimated depth of snow on ground using simple
+                melt rate function))
+                compute main cumGDD for period of record for various bases for
+                constraining earliest/latest planting or GU
+                only Tbase = 0 needs to be evaluated (used to est. GU for alfalfa,
+                 mint, hops)
+            c) compute long term mean cumGDD0 from sums (JDOY LOOP)
+
+        Arguments
+        ---------
+        data : dict
+            data from INI file
+
+        Returns
+        -------
+        : boolean
+            True
+            False
+
+        Notes
+        -----
         Time series data have reversed field names support historic (constant)
          phenology
         maxt, mint, meant, 30T are historic equivalents of tmax, tmin,
-         meant, t30
+        meant, t30
         Cumulative variables use 'hist' in lieu of 'main'
 
-        Args:
-            data (dict): data from INI file
-
-        Returns:
-            success: True or False
         """
 
         # Initialize climate dataframe
@@ -1378,7 +1618,6 @@ class ETCell():
 
         # Calculate an estimated depth of snow on ground using simple
         # melt rate function))
-
         if np.any(self.climate_df['snow']):
             for i, doy in self.climate_df['doy'].iteritems():
                 # Calculate an estimated depth of snow on ground using simple

@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""mod_crop_et.py
+Main crop et model code
+called by run_cet.py
+
+"""
 
 import argparse
 import datetime
@@ -7,35 +11,48 @@ import multiprocessing as mp
 import os
 import sys
 from time import clock
-
 import pandas as pd
+import util
 
 import crop_et_data
 import crop_cycle
 import et_cell
-import util
-
 
 def main(ini_path, log_level=logging.WARNING,
          etcid_to_run='ALL', debug_flag=False,
          cal_flag=False, mp_procs=1):
-    """ Main function for running crop ET model
+    """Main function for running crop ET model
 
-    Args:
-        ini_path (str): file path ofproject INI file
-        log_level (logging.lvl):
-        etcid_to_run: ET Cell id to run in lieu of 'ALL'
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        cal_flag (bool): If True, display mean annual start/end dates to screen
-        mp_procs (int): number of cores to use for multiprocessing
+    Arguments
+    ---------
+    ini_path : str
+        file path of INI file
+    log_level : logging.lvl
+    etcid_to_run :
+        et cell id to run
+        All [default]
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False [default]
+    cal_flag : boolean
+        True : display mean annual start/end dates to screen
+        False [default]
+    mp_procs : int
+        number of cores to use for multiprocessing
+        1 [default]
 
-    Returns:
-        None
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+
     """
+
     clock_start = clock()
 
     # Start console logging immediately
-
     logger = util.console_logger(log_level=log_level)
     logging.warning('\nPython Crop ET')
     if debug_flag and mp_procs > 1:
@@ -47,7 +64,10 @@ def main(ini_path, log_level=logging.WARNING,
         logging.warning('  Displaying additional calibration information')
 
     # All general data are handled in this class
+    """
+    Initialize CropETData class
 
+    """
     data = crop_et_data.CropETData()
 
     # Read INI file
@@ -125,7 +145,10 @@ def main(ini_path, log_level=logging.WARNING,
             logging.warning("  Multiprocessing by crop")
             crop_mp_flag = True
 
-    # loop through et cells
+    """
+    Loop through et cells
+
+    """
     logging.warning("")
     cell_count = 0
     for cell_id, cell in sorted(cells.et_cells_dict.items()):
@@ -162,7 +185,7 @@ def main(ini_path, log_level=logging.WARNING,
 
     # Print summary stats to screen
     # This should be moved to separate function, module, or tool
-    
+
     if cal_flag and data.gs_output_flag:
         logging.warning('\nMean Annual growing season start/end dates')
         for cell_id, cell in sorted(cells.et_cells_dict.items()):
@@ -196,15 +219,25 @@ def cell_mp(tup):
     """
     return cell_sp(*tup)
 
-
 def cell_sp(cell_count, data, cell, mp_procs=1):
     """Compute crop cycle for each cell
 
-    Args:
-        cell_count: count of cell being processed
-        data (): configuration data
-        cell (): ETCell instance
-        mp_procs: number of processors
+    Arguments
+    ---------
+    cell_count : int
+        count of cell being processed
+    data : dict
+        configuration data
+    cell : dict
+        ETCell instance
+    mp_procs : int
+        number of processors
+        1 [default]
+
+    Returns
+    -------
+    None
+
     """
     if not cell.set_input_timeseries(cell_count, data, cell):
         sys.exit()
@@ -212,15 +245,53 @@ def cell_sp(cell_count, data, cell, mp_procs=1):
     print('CellID: {}'.format(cell.cell_id))
     crop_cycle.crop_cycle(data, cell, debug_flag=False, mp_procs=mp_procs)
 
-
 def is_valid_file(parser, arg):
+    """checks if file is valid
+    Arguments
+    ---------
+    parser : argparse.ArgumentParser instance
+
+    arg : str
+        file absolute path
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+
+    """
+
     if not os.path.isfile(arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
 
-
 def is_valid_directory(parser, arg):
+    """checks if directory is valid
+
+    Arguments
+    ---------
+    parser : argparse.ArgumentParser instance
+
+    arg : str
+        directory absolute path
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+
+
+    """
+
     if not os.path.isdir(arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:
@@ -228,7 +299,23 @@ def is_valid_directory(parser, arg):
 
 
 def parse_args():
-    """"""
+    """initialize parser
+
+    Arguments
+    ---------
+    None
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+
+    """
+
     parser = argparse.ArgumentParser(
         description='Crop ET',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -253,9 +340,8 @@ def parse_args():
         '--cal', action='store_true', default=False,
         help="Display mean annual start/end dates to screen")
     args = parser.parse_args()
-    
+
     # Convert INI path to an absolute path if necessary
-    
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
     return args

@@ -1,16 +1,34 @@
+"""calculate_height.py
+Function for calculating height of crop based on Kc and height limit
+Called by crop_cycle.py
+
+"""
+
 import logging
 
 def calculate_height(crop, foo, debug_flag = False):
     """Determine height of crop based on Kc and height limits
 
-    Args:
-        crop ():
-        foo ():
-        debug_flag (bool): If True, write debug level comments to debug.txt
+        Arguments
+        ---------
+        crop :
 
-    Returns:
+        foo  :
+
+        debug_flag : boolean
+            True : write debug level comments to debug.txt
+            False
+
+        Returns
+        -------
         None
+
+        Notes
+        -----
+        See comments in code
+        
     """
+
     height_prev = foo.height
 
     # <----- previous (2000) and with error (Kcbmin vs Kcmin)

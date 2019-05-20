@@ -1,5 +1,10 @@
-import logging
+"""initialize_crop_cycle.py
+Defines InitializeCropCycle class
+Called by crop_cycle.py
 
+"""
+
+import logging
 import numpy as np
 
 # from modCropET.vb
@@ -140,13 +145,26 @@ class InitializeCropCycle:
 
     def crop_load(self, data, et_cell, crop):
         """Assign characteristics for crop from crop Arrays
+        Arguments
+        ---------
+        data : dict
+            configuration data from INI file
 
+        et_cell :
+
+        crop :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
         Called by crop_cycle.crop_cycle() just before time loop
 
-        Args:
-            et_cell ():
-            crop ():
         """
+
         self.height_min = crop.height_initial
         self.height_max = crop.height_max
         self.zr_min = crop.rooting_depth_initial
@@ -301,9 +319,22 @@ class InitializeCropCycle:
     def setup_crop(self, crop):
         """Initialize some variables for beginning of crop seasons
 
+        Attributes
+        ----------
+        crop :
+
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
         Called in crop_cycle if not in season and crop setup flag is true
         Called in kcb_daily for startup/greenup type 1, 2, and 3 when startup conditions are met
+
         """
+
         # zr_dormant was never assigned a value - what's its purpose - dlk 10/26/2011 ???????????????????
 
         zr_dormant = 0.0
@@ -370,7 +401,7 @@ class InitializeCropCycle:
             self.depl_root *= self.zr_min / zr_dormant
 
             # denom is layer 3 depth at start of season
-            
+
             self.aw3 = daw3 / (self.zr_max - self.zr_min)
             # if self.aw3 < 0.0: self.aw3 = 0.
             self.aw3 = max(0.0, self.aw3)
@@ -379,22 +410,32 @@ class InitializeCropCycle:
         if self.depl_root < 0.:self.depl_root = 0.
 
         # Initialize rooting depth at beginning of time  <----DO??? Need recalc on Reserve?
-
         self.zr = self.zr_min
         self.crop_setup_flag = False
 
-    def setup_dormant(self,  et_cell, crop):
+    def setup_dormant(self, et_cell, crop):
         """Start of dormant season
+            a) Set up for soil water reservoir during non-growing season
+                to collect soil moisture for next growing season
+            b) Set for type of surface during non-growing season
 
-        Set up for soil water reservoir during non-growing season
-          to collect soil moisture for next growing season
+        Arguments
+        ---------
+        et_cell :
 
-        Also set for type of surface during non-growing season
+        crop :
 
+        Returns
+        -------
+        None
+
+        Notes
+        -----
         Called at termination of crop from crop_cycle()
         If in_season is false and dormant_flag is true,
         dormant_flag set at GU each year.
         It is called each year as soon as season is 0.
+
         """
 
         # winter_surface_cover_class = 1 bare, 2 mulch, 3 sod
@@ -527,7 +568,21 @@ class InitializeCropCycle:
         self.cutting = 0
 
     def setup_dataframe(self, et_cell):
-        """Initialize output dataframe"""
+        """Initialize output dataframe
+
+        Attributes
+        ----------
+        et_cell :
+
+
+        Returns
+        -------
+
+        Notes
+        -----
+
+        """
+
         self.crop_df = et_cell.refet_df[['doy', 'etref']].copy()
         self.crop_df['et_act'] = np.nan
         self.crop_df['et_pot'] = np.nan
@@ -544,10 +599,21 @@ class InitializeCropCycle:
     def setup_co2(self, et_cell, crop):
         """Get the CO2 correction factor dataframe for the target cell/crop
 
-        Args:
-            et_cell ():
-            crop ():
+        Attributes
+        ----------
+        et_cell :
+
+        crop :
+
+
+        Returns
+        -------
+
+        Notes
+        -----
+
         """
+
         if crop.co2_type == 'GRASS':
             self.co2 = et_cell.weather_pd['co2_grass']
         elif crop.co2_type == 'TREE':
@@ -555,4 +621,3 @@ class InitializeCropCycle:
         elif crop.co2_type == 'C4':
             self.co2 = et_cell.weather_pd['co2_c4']
         return True
-

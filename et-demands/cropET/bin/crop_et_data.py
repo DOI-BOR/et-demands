@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+"""crop_et_data.py
+Defines CropETData class
+Functions in class to read INI file, refet data, met data, ...
+Called by mod_crop_et.py
+
+"""
 
 import configparser
 import logging
@@ -12,6 +17,13 @@ import util
 
 
 class CropETData:
+    """Crop et data container
+
+    Attributes
+    ----------
+
+    """
+
     def __init__(self):
         """ """
 
@@ -20,7 +32,22 @@ class CropETData:
         return '<Cropet_data>'
 
     def read_cet_ini(self, ini_path, debug_flag=False):
-        """Read and parseINI file"""
+        """Read and parse INI file
+        Arguments
+        ---------
+        ini_path : str
+            absolute file path to INI file
+        debug_flag : boolean
+            True : write debug level comments to debug.txt
+            False
+
+        Returns
+        -------
+
+        Notes
+        -----
+
+        """
         logging.info('  INI: {}'.format(os.path.basename(ini_path)))
 
         # Check that INI file can be read
@@ -110,7 +137,10 @@ class CropETData:
         else:
             self.end_dt = pd.to_datetime(edt)
 
-        # historic (constant) phenology option
+        """
+        INI [HIST] Section
+
+        """
         if hist_temps_sec:
             try:
                 self.phenology_option = config.getint(
@@ -307,8 +337,10 @@ class CropETData:
         self.et_ratios_month_field = 'month'
         self.et_ratios_ratio_field = 'ratio'
 
-        # crop et specifications
+        """
+        INI [CROP_ET] Section
 
+        """
         # cet output flags
         self.cet_out = {}
         try:
@@ -428,7 +460,7 @@ class CropETData:
                 self.gs_output_ws = 'growing_season_stats'
 
         # cet file type specifications
-        self.cet_out['file_type'] = "csv"
+        self.cet_out['file_type'] = 'csv'
         # self.cet_out['data_structure_type'] = "DRI"
         self.cet_out['name_format'] = '%s_crop_%c.csv'
         self.cet_out['header_lines'] = 1
@@ -440,11 +472,12 @@ class CropETData:
             self.gs_name_format = self.cet_out['name_format'].replace(
                 '%s', '%s_gs')
 
-        # computation switches
+        """
+        Computational switches
+            False : sets crop 1 to alfalfa peak with no cuttings
+            True : sets crop 1 to nonpristine alfalfa w/cuttings
 
-        # False sets crop 1 to alfalfa peak with no cuttings
-        # True sets crop 1 to nonpristine alfalfa w/cuttings
-
+        """
         try:
             self.crop_one_flag = config.getboolean(
                 crop_et_sec, 'crop_one_flag')
@@ -452,7 +485,6 @@ class CropETData:
             self.crop_one_flag = True
 
         # crop one (alfalfa) reduction factor
-
         try:
             self.crop_one_reducer = config.getfloat(crop_et_sec,
                                                     'crop_one_reducer')
@@ -460,7 +492,6 @@ class CropETData:
             self.crop_one_reducer = 0.9
 
         # Compute additional variables
-
         try:
             self.cutting_flag = config.getboolean(crop_et_sec,
                                                   'cutting_flag')
@@ -480,7 +511,6 @@ class CropETData:
             self.co2_flag = False
 
         # Spatially varying calibration
-
         try: self.spatial_cal_flag = config.getboolean(crop_et_sec,
                                                        'spatial_cal_flag')
         except: self.spatial_cal_flag = False
@@ -495,7 +525,6 @@ class CropETData:
             sys.exit()
 
         # output date formats and values formats
-
         try:
             self.cet_out['daily_date_format'] = config.get(
                 crop_et_sec, 'daily_date_format')
@@ -542,8 +571,10 @@ class CropETData:
         except:
             self.cet_out['annual_float_format'] = None
 
-        # RefET parameters
+        """
+        INI [REFET] Section
 
+        """
         self.refet = {}
         self.refet['fields'] = {}
         self.refet['units'] = {}
@@ -645,6 +676,10 @@ class CropETData:
                 'supported'.format(self.refet['units']['etref']))
             sys.exit()
 
+        """
+        INI [WEATHER] Section
+
+        """
         # Weather parameters
         self.weather = {}
         self.weather['fields'] = {}
@@ -657,7 +692,6 @@ class CropETData:
 
         # weather folder could befull or relative path
         # Assume relative paths or fromproject folder
-
         if os.path.isdir(self.weather['ws']):
             pass
         elif (not os.path.isdir(self.weather['ws']) and
@@ -749,7 +783,6 @@ class CropETData:
                          'in INI').format(f_name))
                     sys.exit()
 
-
         # fnspec
         for f_name in field_list:
             if f_name == 'date':
@@ -764,7 +797,6 @@ class CropETData:
                 self.weather['fnspec'][f_name] = 'Unused'
 
         # Snow and snow depth are optional
-
         try:
             self.weather['fields']['snow'] = config.get(weather_sec,
                                                         'snow_field')
@@ -872,7 +904,6 @@ class CropETData:
             # For now, CO2 values in table will not be error checked
 
             # Get CO2 fields
-
             try:
                 self.weather['fields']['co2_grass'] = \
                     config.get(weather_sec, 'co2_grass_field')
@@ -965,7 +996,6 @@ class CropETData:
             logging.info('    C4: {}'.format(self.co2_c4_crops))
 
             # Check if data fields are present for all CO2 classes with crops
-
             if (self.co2_grass_crops and
                     not self.weather['fields']['co2_grass']):
                 logging.error(
@@ -986,7 +1016,6 @@ class CropETData:
                 sys.exit()
 
         # Wind speeds measured at heights other than 2 meters will be scaled
-
         try:
             self.weather['wind_height'] = config.getfloat(weather_sec,
                                                           'wind_height')
@@ -994,13 +1023,13 @@ class CropETData:
             self.weather['wind_height'] = 2
 
         # Check weather parameters
-
         if not os.path.isdir(self.weather['ws']):
             logging.error(
                 ('  ERROR:weather data folder does not exist'
                  '\n  %s') % self.weather['ws'])
             sys.exit()
 
+        # REPLACE WITH CODE IN units.py TAKEN FROM WSWUP/REFET
         # Check units
         units_list = ['c', 'mm', 'mm/d', 'mm/day', 'm/d', 'm', 'meter',
                       'in*100', 'in', 'in/day', 'inches/day', 'kg/kg', 'kpa',
@@ -1014,6 +1043,11 @@ class CropETData:
 
         # Read historic max and min temperatures to support constant phenology
         print(self.phenology_option)
+        """
+        INI [HIST] Section
+
+        """
+
         if self.phenology_option > 0:
             # hist_temps parameters
 
@@ -1025,8 +1059,8 @@ class CropETData:
             self.hist_temps['fnspec'] = {}
             self.hist_temps['wsspec'] = {}
 
-            # hist_temps folder could befull or relative path
-            # Assume relative paths or fromproject folder
+            # hist_temps folder could be full or relative path
+            # Assume relative paths or from project folder
             if os.path.isdir(self.hist_temps['ws']):
                 pass
             elif (not os.path.isdir(self.hist_temps['ws']) and
@@ -1167,9 +1201,19 @@ class CropETData:
             logging.info('  crop_coefs_name = {}'.format(self.crop_coefs_path))
             input('Press ENTER to continue or Ctrl+C to exit')
 
-
     def set_crop_params(self):
-        """ List of <CropParameter> instances """
+        """ List of <CropParameter> instances
+
+        Arguments
+        ---------
+        None
+
+        Returns
+        -------
+        None
+
+        """
+
         logging.info('  Reading crop parameters from\n' + self.crop_params_path)
         params_df = pd.read_csv(self.crop_params_path,
                                   delimiter=self.crop_params_delimiter,
@@ -1201,13 +1245,35 @@ class CropETData:
                     (k in non_crop_list))}
 
     def set_crop_coeffs(self):
-        """ List of <CropCoeff> instances """
+        """ List of <CropCoeff> instances
+
+        Arguments
+        ---------
+        None
+
+        Returns
+        -------
+        None
+
+        """
+
         logging.info('  Reading crop coefficients')
         self.crop_coeffs = \
             crop_coefficients.read_crop_coefs_txt(self)
 
     def set_crop_co2(self):
-        """Set crop CO2 type using values in INI"""
+        """Set crop CO2 type using values in INI
+        
+        Arguments
+        ---------
+        None
+
+        Returns
+        -------
+        None
+
+        """
+
         for crop_num, crop_param in self.crop_params.items():
             if not self.co2_flag:
                 crop_param.co2_type = None
@@ -1223,7 +1289,6 @@ class CropETData:
                 crop_param.co2_type = None
             self.crop_params[crop_num] = crop_param
 
-
 def console_logger(logger=logging.getLogger(''), log_level=logging.INFO):
     # Create console logger
     logger.setLevel(log_level)
@@ -1233,7 +1298,7 @@ def console_logger(logger=logging.getLogger(''), log_level=logging.INFO):
     logger.addHandler(log_console)
     return logger
 
-
+# CHECK THAT INI USED IN TESTS EXISTS AND IS UP TO DATE
 def do_tests():
     # Simple testing of functions as developed
     # logger = console_logger(log_level = 'DEBUG')

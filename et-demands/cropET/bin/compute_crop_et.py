@@ -1,26 +1,47 @@
+"""compute_crop_et.py
+Function for calculating crop et
+Called by crop_cycle.py
+
+"""
+
 import datetime
 import logging
 import math
 import sys
+import util
 
 import grow_root
 import runoff
-import util
 
 def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
-    """crop et computations
+    """Crop et computations
 
-    Args:
-        data ():
-        et_cell ():
-        crop ():
-        foo (): 
-        foo_day (): 
-        debug_flag (bool): If True, write debug level comments to debug.txt
+        Arguments
+        ---------
+        data :
 
-    Returns:
+        et_cell :
+
+        crop :
+
+        foo :
+
+        foo_day :
+
+        debug_flag : boolean
+            True : write debug level comments to debug.txt
+            False
+
+        Returns
+        -------
         None
-    """
+
+        Notes
+        -----
+        See comments in code
+
+        """
+
     # Don't compute cropET for open water
     # open_water_evap() was called in kcb_daily()
 
@@ -426,7 +447,7 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # find weighting factor based on water in Ze layer in irrig. wetted and precip wetted
 
     # following conditional added July 2006 for when denominator is zero
-    
+
     if (few * watin_ze + fewp * watin_zep) > 0.0001:
         foo.wt_irr = few * watin_ze / (few * watin_ze + fewp * watin_zep)
     else:
@@ -442,19 +463,19 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     ke_ppt = krp * (kc_max - foo.kc_bas) * (1 - foo.wt_irr)
 
     # Limit to maximum rate per unit surface area
-    
+
     ke_irr = min(max(ke_irr, 0), few * kc_max)
     ke_ppt = min(max(ke_ppt, 0), fewp * kc_max)
 
     ke = ke_irr + ke_ppt
 
     # Transpiration coefficient for moisture stress
-    
+
     taw = foo.aw * foo.zr
     taw = max(taw, 0.001)
-    
+
     # MAD is set to mad_ini or mad_mid in kcb_daily sub.
-    
+
     raw = foo.mad * taw / 100
 
     # Remember to check reset of AD and RAW each new crop season.  #####
@@ -663,9 +684,9 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     if etref_divisor < 0.01: etref_divisor = 0.01
     ke_irr = e_irr / etref_divisor
     ke_ppt = e_ppt / etref_divisor
-    
+
     # limit for when ETref is super small
-    
+
     ke_irr = min(max(ke_irr, 0), 1.5)
     ke_ppt = min(max(ke_ppt, 0), 1.5)
     ke = ke_irr + ke_ppt
@@ -758,16 +779,16 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
         if (crop_doy >= crop.days_after_planting_irrigation and
             foo_day.doy >= doy_to_start_irr and foo.in_season and
             foo.depl_root > raw and foo.kc_bas > 0.22):
-            
+
             # No premature end for irrigations is used for Idaho CU comps.
             # Limit irrigation to periods when kc_bas > 0.22 to preclude
             #   frequent irrigation during initial periods
-            
+
             foo.irr_sim = foo.depl_root
             foo.irr_sim = max(foo.irr_sim, foo.irr_min)
 
     # Update depletion ofroot zone
-    
+
     foo.depl_root -= foo.irr_sim
 
     # Total irrigation for today
