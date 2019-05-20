@@ -2,6 +2,7 @@ import argparse
 import datetime as dt
 import geopandas as gpd
 import logging
+import numpy as np
 import os
 import pandas as pd
 import re
@@ -120,7 +121,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # Loop through each crop and station list to build summary dataframes for
     # variables to include in output (if not in .csv skip)
     var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
-                'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season']
+                'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                'Start', 'End']
     pmet_field = 'PM{}'.format(etref_field)
     var_list.insert(0, pmet_field)
     
@@ -128,13 +130,19 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # field name list will be based on etref_field ETr, ETo, or ET (not ETo/ETr)
     if 'ETr' in etref_field:
         var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                              'Start', 'End']
+
     elif 'ETo' in etref_field:
         var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                              'Start', 'End']
+
     else:
         var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
-                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season']
+                   'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                              'Start', 'End']
+
 
     # Testing (should this be an input option?)
     # unique_crop_nums = [86]
@@ -168,8 +176,13 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Read file into df
             daily_df = pd.read_csv(file_path, skiprows=1)
+            # Add more DOY columns to simplify start/end DOY agg below
+            daily_df['Start'] = daily_df.DOY.copy()
+            daily_df['End'] = daily_df.DOY.copy()
+            # Replace Non-growing season DOY values with nan
+            daily_df.loc[daily_df.Season == 0, ['Start', 'End']] = np.nan
 
-            # Apply Year Filter
+            # Apply Year Filter (inclusive)
             if year_list:
                 daily_df = daily_df[
                     (daily_df['Year'] >= min(year_list)) &
@@ -200,6 +213,8 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             'DPerc': 'sum',
             'NIWR': 'sum',
             'Season': 'sum',
+            'Start': 'min',
+            'End': 'max',
             'Kc': 'mean',
             'Kcb': 'mean'}
             # Add etref_field to dictionary
