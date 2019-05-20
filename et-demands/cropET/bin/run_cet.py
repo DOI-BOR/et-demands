@@ -7,8 +7,8 @@ import os
 import subprocess
 import sys
 
-def main(ini_path, verbose_flag = False, 
-        etcid_to_run = 'ALL', cal_flag = False, 
+def main(ini_path, verbose_flag = False,
+        etcid_to_run = 'ALL', cal_flag = False,
         debug_flag = False, mp_procs = 1):
     """Wrapper for running crop et model
 
@@ -24,15 +24,15 @@ def main(ini_path, verbose_flag = False,
     """
     # print ini_path
 
-    bin_ws = r'C:\pythonApps\bortsc\cropET\bin'
+    bin_ws = r'..\..\et-demands\cropET\bin'
 
     # Crop ET demands python function
 
     script_path = os.path.join(bin_ws, 'mod_crop_et.py')
-    print script_path
+    print(script_path)
 
     # Check input folder/path
-    
+
     if not os.path.isfile(ini_path):
         print('Crop ET demands input file does not exist\n  %s' % (ini_path))
         sys.exit()
@@ -44,7 +44,7 @@ def main(ini_path, verbose_flag = False,
         sys.exit()
 
     # Run Crop ET Demands Model
-    
+
     args_list = ['python', script_path, '-i', ini_path]
     args_list.append('-c')
     args_list.append(etcid_to_run)
@@ -56,7 +56,7 @@ def main(ini_path, verbose_flag = False,
         args_list.extend(['-mp', str(mp_procs)])
     subprocess.call(args_list)
 
-def parse_args():  
+def parse_args():
     parser = argparse.ArgumentParser(
         description='Crop ET-Demands',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -73,7 +73,7 @@ def parse_args():
         '-v', '--verbose', action="store_true", default=False,
         help = "Print info level comments")
     parser.add_argument(
-        '-mp', '--multiprocessing', default=1, type=int, 
+        '-mp', '--multiprocessing', default=1, type=int,
         metavar='N', nargs='?', const=mp.cpu_count(),
         help='Number of processers to use')
     parser.add_argument(
@@ -82,7 +82,7 @@ def parse_args():
     args = parser.parse_args()
 
     # Convert INI path to an absolute path if necessary
-    
+
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
     # print "\nargs are\n", args, "\n"
@@ -102,6 +102,7 @@ def is_valid_file(parser, arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
+        
 def is_valid_directory(parser, arg):
     if not os.path.isdir(arg):
         parser.error('The directory {} does not exist!'.format(arg))
@@ -114,6 +115,6 @@ if __name__ == '__main__':
         ini_path = args.ini
     else:
         ini_path = get_ini_path(os.getcwd())
-    main(ini_path, verbose_flag=args.verbose, 
-        etcid_to_run = args.etcid, cal_flag = args.cal, 
+    main(ini_path, verbose_flag=args.verbose,
+        etcid_to_run = args.etcid, cal_flag = args.cal,
         debug_flag = args.debug, mp_procs=args.multiprocessing)

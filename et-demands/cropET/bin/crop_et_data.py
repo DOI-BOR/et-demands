@@ -14,7 +14,7 @@ import util
 class CropETData:
     def __init__(self):
         """ """
-        
+
     def __str__(self):
         """ """
         return '<Cropet_data>'
@@ -109,7 +109,7 @@ class CropETData:
             self.end_dt = None
         else:
             self.end_dt = pd.to_datetime(edt)
-       
+
         # historic (constant) phenology option
         if hist_temps_sec:
             try:
@@ -143,9 +143,9 @@ class CropETData:
                 self.elev_units = 'feet'
         except:
             self.elev_units = 'feet'
-        
+
         # et cells properties
-        
+
         try:
             cell_properties_name = config.get(crop_et_sec,
                                               'cell_properties_name')
@@ -163,7 +163,7 @@ class CropETData:
                                                  cell_properties_name)
         if not os.path.isfile(self.cell_properties_path):
             self.cell_properties_path = cell_properties_name
-            
+
             # test if fully specified path
             if not os.path.isfile(self.cell_properties_path):
                 logging.error('ERROR:  ET Cells properties file {} does not'
@@ -253,7 +253,7 @@ class CropETData:
             self.crop_params_ws = ''
             self.crop_params_header_lines = 4
             self.crop_params_names_line = 3
-        
+
         # set crop coefficient specs
         try:
             crop_coefs_name = config.get(crop_et_sec, 'crop_coefs_name')
@@ -363,7 +363,7 @@ class CropETData:
         except:
             logging.debug('    crop_test_list = False')
             self.crop_test_list = []
-            
+
         # Bare soils must be in crop list for computing winter cover
         if self.crop_test_list:
             self.crop_test_list = sorted(list(set(
@@ -441,10 +441,10 @@ class CropETData:
                 '%s', '%s_gs')
 
         # computation switches
-        
+
         # False sets crop 1 to alfalfa peak with no cuttings
         # True sets crop 1 to nonpristine alfalfa w/cuttings
-        
+
         try:
             self.crop_one_flag = config.getboolean(
                 crop_et_sec, 'crop_one_flag')
@@ -460,7 +460,7 @@ class CropETData:
             self.crop_one_reducer = 0.9
 
         # Compute additional variables
-        
+
         try:
             self.cutting_flag = config.getboolean(crop_et_sec,
                                                   'cutting_flag')
@@ -480,7 +480,7 @@ class CropETData:
             self.co2_flag = False
 
         # Spatially varying calibration
-        
+
         try: self.spatial_cal_flag = config.getboolean(crop_et_sec,
                                                        'spatial_cal_flag')
         except: self.spatial_cal_flag = False
@@ -493,7 +493,7 @@ class CropETData:
             logging.error(('ERROR:spatial calibration folder {} ' +
                            'does not exist').format(self.spatial_cal_ws))
             sys.exit()
-            
+
         # output date formats and values formats
 
         try:
@@ -504,7 +504,7 @@ class CropETData:
                 self.cet_out['daily_date_format'] = '%Y-%m-%d'
         except:
             self.cet_out['daily_date_format'] = '%Y-%m-%d'
-        try: 
+        try:
             self.cet_out['daily_float_format'] = config.get(
                 crop_et_sec, 'daily_float_format')
             if self.cet_out['daily_float_format'] == 'None':
@@ -519,7 +519,7 @@ class CropETData:
                 self.cet_out['monthly_date_format'] = '%Y-%m'
         except:
             self.cet_out['monthly_date_format'] = '%Y-%m'
-        try: 
+        try:
             self.cet_out['monthly_float_format'] = config.get(
                 crop_et_sec, 'monthly_float_format')
             if self.cet_out['monthly_float_format'] == 'None':
@@ -534,7 +534,7 @@ class CropETData:
                 self.cet_out['annual_date_format'] = '%Y'
         except:
             self.cet_out['annual_date_format'] = '%Y'
-        try: 
+        try:
             self.cet_out['annual_float_format'] = \
                 config.get(crop_et_sec, 'annual_float_format')
             if self.cet_out['annual_float_format'] == 'None':
@@ -543,7 +543,7 @@ class CropETData:
             self.cet_out['annual_float_format'] = None
 
         # RefET parameters
-        
+
         self.refet = {}
         self.refet['fields'] = {}
         self.refet['units'] = {}
@@ -621,7 +621,7 @@ class CropETData:
             sys.exit()
         try:
             self.refet['fnspec'] = config.get(refet_sec, 'etref_name')
-            if self.refet['fnspec'] is None or self.refet['fnspec'] == 'None': 
+            if self.refet['fnspec'] is None or self.refet['fnspec'] == 'None':
                 self.refet['fnspec'] = self.refet['fields']['etref']
         except:
             self.refet['fnspec'] = self.refet['fields']['etref']
@@ -986,7 +986,7 @@ class CropETData:
                 sys.exit()
 
         # Wind speeds measured at heights other than 2 meters will be scaled
-        
+
         try:
             self.weather['wind_height'] = config.getfloat(weather_sec,
                                                           'wind_height')
@@ -994,13 +994,13 @@ class CropETData:
             self.weather['wind_height'] = 2
 
         # Check weather parameters
-        
+
         if not os.path.isdir(self.weather['ws']):
             logging.error(
                 ('  ERROR:weather data folder does not exist'
                  '\n  %s') % self.weather['ws'])
             sys.exit()
-            
+
         # Check units
         units_list = ['c', 'mm', 'mm/d', 'mm/day', 'm/d', 'm', 'meter',
                       'in*100', 'in', 'in/day', 'inches/day', 'kg/kg', 'kpa',
@@ -1013,7 +1013,7 @@ class CropETData:
                 sys.exit()
 
         # Read historic max and min temperatures to support constant phenology
-
+        print(self.phenology_option)
         if self.phenology_option > 0:
             # hist_temps parameters
 
@@ -1047,8 +1047,11 @@ class CropETData:
                     self.hist_temps['file_type'] = 'csv'
             except:
                 self.hist_temps['file_type'] = 'csv'
-
-            # self.hist_temps['data_structure_type'] = 'SF P'
+            try:
+                self.hist_temps['data_structure_type'] = config.get(hist_temps_sec, 'data_structure_type')
+                if self.hist_temps['data_structure_type'] is None or self.hist_temps['data_structure_type'] == 'None': self.hist_temps['data_structure_type'] = 'SF P'
+            except:
+                self.hist_temps['data_structure_type'] = 'SF P'
             self.hist_temps['name_format'] = config.get(hist_temps_sec,
                                                         'name_format')
             self.hist_temps['header_lines'] = config.getint(hist_temps_sec,
@@ -1145,9 +1148,9 @@ class CropETData:
                     ('  ERROR:hist_temps data folder does not ' +
                      'exist\n  %s') % self.hist_temps['ws'])
                 sys.exit()
-            
+
             # Check units
-        
+
             units_list = (['c', 'k', 'f'])
             for k, v in self.hist_temps['units'].items():
                 if v is not None and v.lower() not in units_list:
@@ -1157,7 +1160,7 @@ class CropETData:
                     sys.exit()
 
         # Check if refet_type matches crop_coefs_name
-        if self.refet['type'] not in self.crop_coefs_path:
+        if self.refet['type'] not in self.crop_coefs_path.lower():
             logging.warning('\nRefET Type does not match crop_coefs file name.'
                             ' Check the ini')
             logging.info('  refet_type = {}'.format(self.refet['type']))
