@@ -39,7 +39,7 @@ class DayData:
 def crop_cycle_mp(data, et_cell, mp_procs=1):
     """Compute crop et for all crops using multiprocessing
 
-    Arguments
+    Parameters
     ---------
     data :
 
@@ -103,7 +103,7 @@ def crop_day_loop_mp(tup):
     mp.Pool needs all inputs are packed into single tuple
     Tuple is unpacked and and single processing version of function is called
 
-    Arguments
+    Parameters
     ---------
     crop_count : int
         count of crop being computed
@@ -134,7 +134,7 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
                   mp_procs=1):
     """Compute crop et for each daily timestep
 
-    Arguments
+    Parameters
     ---------
     crop_count : int
         count of crop being computed
@@ -345,7 +345,7 @@ def crop_day_loop(crop_count, data, et_cell, crop, debug_flag=False,
 def write_crop_output(crop_count, data, et_cell, crop, foo):
     """Write output files for each cell and crop
 
-    Arguments
+    Parameters
     ---------
     crop_count : int
         count of crop being computed

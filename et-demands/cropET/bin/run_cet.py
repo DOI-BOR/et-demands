@@ -22,7 +22,7 @@ def main(ini_path, verbose_flag=False,
         debug_flag=False, mp_procs=1):
     """Wrapper for running crop et model
 
-    Arguments
+    Parameters
     ---------
     ini_path : str
         file path of the project INI file
@@ -82,7 +82,7 @@ def main(ini_path, verbose_flag=False,
 def parse_args():
     """initialize parser
 
-    Arguments
+    Parameters
     ---------
     None
 
@@ -131,7 +131,7 @@ def parse_args():
 def get_ini_path(workspace):
     """parses user-entered ini_path
 
-    Arguments
+    Parameters
     ---------
     workspace :
 
@@ -157,7 +157,7 @@ def get_ini_path(workspace):
 
 def is_valid_file(parser, arg):
     """checks if file is valid
-    Arguments
+    Parameters
     ---------
     parser : argparse.ArgumentParser instance
 
@@ -184,7 +184,7 @@ def is_valid_file(parser, arg):
 def is_valid_directory(parser, arg):
     """checks if directory is valid
 
-    Arguments
+    Parameters
     ---------
     parser : argparse.ArgumentParser instance
 

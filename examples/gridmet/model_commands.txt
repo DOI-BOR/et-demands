@@ -38,10 +38,10 @@ python run_cet.py -i gridmet_example.ini -v -d
 # Run Post-Processing
 
 #-5
-python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py -i huc_example.ini -y 2017 -t annual
+python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py -i gridmet_example_cet.ini -y 2017 -t annual
 
 #-6
-python ..\..\et-demands\tools\summary_shapefiles_gpd.py -i huc_example.ini -y 2017 -t annual
+python ..\..\et-demands\tools\summary_shapefiles_gpd.py -i gridmet_example_cet.ini -y 2017 -t annual
 
 # ------------------------------------------------------------------------------
 # Project ET zones .shp if needed (https://www.nceas.ucsb.edu/scicomp/recipes/gdal-reproject)

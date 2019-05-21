@@ -145,7 +145,7 @@ class InitializeCropCycle:
 
     def crop_load(self, data, et_cell, crop):
         """Assign characteristics for crop from crop Arrays
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -419,7 +419,7 @@ class InitializeCropCycle:
                 to collect soil moisture for next growing season
             b) Set for type of surface during non-growing season
 
-        Arguments
+        Parameters
         ---------
         et_cell :
 

@@ -1,25 +1,49 @@
-#!/usr/bin/env python
+"""run_cet.py
+wrapper for running crop et model
+called by user from command line
+
+TODO -
+    REMOVE HARDCODDED bin_ws AND READ FROM INI FILE
+    ADD COMMENTS TO DESCRIBE RUN FLAGS
+
+"""
 
 import argparse
 import multiprocessing as mp
 import os
 import subprocess
 import sys
+import tkinter as tk
+import tkinter.filedialog
 
 def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
         debug_flag = False, mp_procs = 1):
     """Wrapper for running reference ET model
 
-    Args:
-        ini_path (str): file path of the project INI file
-        verbose_flag (bool): If True, print info level comments
-        mnid_to_run: Met node id to run in lieu of 'ALL'
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        mp_procs (int): number of cores to use
+    Parameters
+    ---------
+    ini_path : str
+        absolute file path of the project INI file
+    verbose_flag : boolean
+        True : print info level comments
+        False
+    mnid_to_run :
+        Met node id to run in lieu of 'ALL'
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False
+    mp_procs : int
+        number of cores to use
 
-    Returns:
-        None
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+
     """
+
     # print ini_path
 
     bin_ws = r'..\et-demands\refET\bin'
@@ -57,6 +81,23 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
     subprocess.call(args_list)
 
 def parse_args():
+    """initialize parser
+
+    Parameters
+    ---------
+    None
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+
+    """
+
     parser = argparse.ArgumentParser(
         description='Reference ET',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -86,20 +127,80 @@ def parse_args():
     return args
 
 def get_ini_path(workspace):
-    import Tkinter, tkFileDialog
-    root = Tkinter.Tk()
-    ini_path = tkFileDialog.askopenfilename(
-        initialdir = workspace, parent=root, filetypes=[('INI files', '.ini')],
-        title='Select INI file')
+    """parses user-entered ini_path
+
+    Parameters
+    ---------
+    workspace :
+
+
+    Returns
+    -------
+    ini_path : str
+        absolute file path of INI file
+
+    Notes
+    -----
+    Uses tkinter and tkinter.filedialog modules
+    Updated syntax and packages for Python 3.x
+
+    """
+
+    root = tk.Tk()
+    ini_path = tkinter.filedialog.askopenfilename(
+        initialdir=workspace, parent=root, filetypes=[('INI files', '.ini')],
+        title='Select the target INI file')
     root.destroy()
     return ini_path
 
 def is_valid_file(parser, arg):
+    """checks if file is valid
+    Parameters
+    ---------
+    parser : argparse.ArgumentParser instance
+
+    arg : str
+        absolute file path
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+    Also defined in mod_ref_et.py
+
+    """
+
     if not os.path.isfile(arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
+
 def is_valid_directory(parser, arg):
+    """checks if directory is valid
+
+    Parameters
+    ---------
+    parser : argparse.ArgumentParser instance
+
+    arg : str
+        absolute directory path
+
+    Returns
+    -------
+    args : argparser.parse_args method
+
+
+    Notes
+    -----
+    Uses the argparse module
+    Also defined in mod_ref_et.py
+
+    """
+
     if not os.path.isdir(arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:

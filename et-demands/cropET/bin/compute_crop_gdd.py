@@ -7,7 +7,7 @@ Called by crop_cycle.py
 def compute_crop_gdd(crop, foo, foo_day):
     """Calculate crop growing degree days
 
-        Arguments
+        Parameters
         ---------
         crop :
 

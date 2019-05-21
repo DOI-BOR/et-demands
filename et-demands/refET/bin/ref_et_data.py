@@ -1,3 +1,9 @@
+"""ref_et_data.py
+Defines refET class
+Called by met_nodes.py
+
+"""
+
 import math
 import numpy as np
 import refet
@@ -40,6 +46,7 @@ class refET:
             A constant value of lmbda = 2.45 MJ kg-1 is used
 
         """
+
         lmbda = 2500000.0 - 2360 * tmean  # J/Kg   Latent Heat of Vaporization
         return lmbda
 
@@ -64,6 +71,7 @@ class refET:
             This is modified from Eq. 35 as lmbda is not fixed
 
         """
+
         psy = 1013 * pair / 0.622 / lmbda
         return psy
 
@@ -87,6 +95,7 @@ class refET:
             Hargreaves Samani grass reference ET [mm d-1]
 
         """
+
         tmean = 0.5 * (tmax + tmin)
 
         # compute latent heat of vaporization
@@ -133,6 +142,7 @@ class refET:
             Penman 1948 grass reference ET
 
         """
+
         # Saturation vapor pressure from tmean
         es = refet.calcs._sat_vapor_pressure(tmean) # different from other eqns. check this
         gamma56 = 0.000665 * pair # kPa/C   May 17 1999
@@ -175,6 +185,7 @@ class refET:
             FAO56 Penman Monteith grass reference ET
 
         """
+
         gamma56 = 0.000665 * pair # kPa/C   May 17 1999
         EToFAO56 = (0.408 * delta * (Rn56 - G56) + gamma56 * 900 / (tmean + 273) * u242 * (es - ea)) / (delta + gamma56 * (1 + 0.34 * u242)) #  may 17 1999 move before ea=fnes(TAvg)
         EToFAO56 = max(EToFAO56, 0.0)
@@ -219,6 +230,7 @@ class refET:
         -----
 
         """
+
         j = doy
         if lat < 0:
             j = doy - 182
@@ -265,6 +277,7 @@ class refET:
         FAO56 refs for G, Rn, gamma
 
         """
+
         # Gamma calculated from FAO56
         gamma56 = 0.000665 * pair # kPa/C   May 17 1999
         EToPriTay = 1.26 * (delta / (delta + gamma56) * (Rn56 - G56)) / lmbda * 1000000.0
@@ -317,6 +330,7 @@ class refET:
             Kimberly Penman alfalfa reference ET [mm d-1]
 
         """
+
         # Mean temperature
         tmean = 0.5 * (tmax + tmin)
 
@@ -428,6 +442,7 @@ class refET:
             Rn82 net radiation [MJ m-2 d-1].
 
         """
+
         j = doy
         if lat < 0:
             j = doy - 182
@@ -493,6 +508,7 @@ class refET:
             Kimberly 1982 soil heat flux [MJ m-2 d-1].
 
         """
+
         # ByRef G82 As Double, ByRef G82o As Double, ByRef G56 As Double, ByRef G56r As Double
         # Static Tp3, Tp1, Tp2 As Double
         # Static ndays, lastDay As Long

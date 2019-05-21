@@ -37,7 +37,7 @@ class CropCoeff:
             Crop name
         data : ndarray
             Crop coefficient curve values
-            
+
     Notes
     -----
     See comments in code
@@ -56,8 +56,8 @@ class CropCoeff:
     def init_from_column(self, curve_no, curve_type_no, curve_name, data_col):
         """Parse column of data
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         curve_no : float
 
         curve_type_no :
@@ -74,6 +74,7 @@ class CropCoeff:
         Notes
         -----
         See comments in code
+        
         """
 
         self.curve_no = curve_no.replace('.0', '')
@@ -89,7 +90,7 @@ class CropCoeff:
 
 def read_crop_coefs_txt(data):
     """Read crop coefficients from text file
-    Arguments
+    Parameters
     ---------
     data :
 
@@ -120,7 +121,7 @@ def read_crop_coefs_txt(data):
 # FUNCTION NO LONGER CALLED IN CODE, REMOVE? - DB 5/20/2019
 def read_crop_coefs_xls_xlrd(data):
     """ Read crop coefficients from workbook using xlrd
-    Arguments
+    Parameters
     ---------
     data :
 

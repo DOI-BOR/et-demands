@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""ret_config.py
+Defines RefETConfig class
+Called by mod_ref_et.py
+
+"""
 
 import configparser
 import datetime
@@ -139,10 +143,8 @@ class RefETConfig():
         except:
             self.output_retalt_flag = False
 
-        # Set default value for data_structure_type to keep multiprocessing test happy
 
-        self.refetalt_out = {}
-        self.refetalt_out['data_structure_type'] = 'SF P'
+        self.refetalt_out = {} # STILL NEEDED HERE?
 
         # Average monthly output flag
 
@@ -256,7 +258,6 @@ class RefETConfig():
             sys.exit()
 
         self.input_met['file_type'] = config.get(input_met_sec, 'file_type')
-        self.input_met['data_structure_type'] = config.get(input_met_sec, 'data_structure_type').upper()
         self.input_met['name_format'] = config.get(input_met_sec, 'name_format')
         self.input_met['header_lines'] = config.getint(input_met_sec, 'header_lines')
         self.input_met['names_line'] = config.getint(input_met_sec, 'names_line')
@@ -782,7 +783,6 @@ class RefETConfig():
             except:
                 logging.debug('    annual_refet_folder = annual_ret')
                 self.annual_refet_ws = 'annual_ret'
-        self.refet_out['data_structure_type'] = config.get(output_ret_sec, 'data_structure_type').upper()
         self.refet_out['name_format'] = config.get(output_ret_sec, 'name_format')
         self.refet_out['header_lines'] = config.getint(output_ret_sec, 'header_lines')
         if self.refet_out['header_lines'] > 2:
@@ -1185,7 +1185,6 @@ class RefETConfig():
                     logging.debug('    annual_refetalt_folder = annual_retalt')
                     self.annual_refetalt_out_ws = 'annual_retalt'
             self.refetalt_out['file_type'] = config.get(output_retalt_sec, 'file_type')
-            self.refetalt_out['data_structure_type'] = config.get(output_retalt_sec, 'data_structure_type').upper()
             self.refetalt_out['name_format'] = config.get(output_retalt_sec, 'name_format')
             self.refetalt_out['header_lines'] = config.getint(output_retalt_sec, 'header_lines')
             self.refetalt_out['names_line'] = config.getint(output_retalt_sec, 'names_line')

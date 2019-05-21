@@ -15,7 +15,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
               debug_flag = False):
     """Compute basal ET
 
-    Arguments
+    Parameters
     ---------
         data :
 

@@ -17,7 +17,7 @@ An example/template prep INI file can be found in the "et-demands\\prep" folder.
 
 The "--ini" parameter must be set when calling each of the prep scripts.  The INI file path can be absolute or relative to the script location.
 
-Command Line Arguments
+Command Line Parameters
 ----------------------
 To see what arguments are available for each script, pass the "-h" argument to the script.::
 

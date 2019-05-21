@@ -9,7 +9,6 @@ Called by et_cell.py
 
 """
 
-
 __version__ = "1.2.3"
 
 from struct import pack, unpack, calcsize, error

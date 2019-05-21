@@ -1,5 +1,8 @@
-#!/usr/bin/env python
+"""ret_utils.py
+Defines meteorology, date, and logger functions
+Called by met_nodes.py
 
+"""
 import sys
 import os
 import datetime
@@ -250,6 +253,7 @@ def avg_two_arrays(c1, c2):
 
 def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_b1, TR_b2):
     """Estimated incident solar radiation
+
     Parameters
     ----------
     doy : scalar or array_like of shape(M, )
@@ -260,7 +264,7 @@ def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_
         Daily minimum air temperature [C].
     elev : scalar or array_like of shape(M, )
         Elevation [m].
-    lat : scalar or array_like of shape(M, )
+    latitude : scalar or array_like of shape(M, )
         Latitude [radians]                           # currently in deg. also, name change to lat throws error - fix both
     montmax : scalar or array_like of shape(M, )
         Monthly mean maximum air temperature [C].
@@ -272,12 +276,14 @@ def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_
         Thronton and Running b1 coefficient.
     TR_b2 : scalar or array_like of shape(M, )
         Thronton and Running b2 coefficient.
+
     Returns
     -------
     rs : ndarray
         Estimated incident solar radiation [MJ m-2 d-1].
 
     """
+
     # Latutude in radians
     latRad = latitude * math.pi / 180.0  # Lat is station latitude in degrees
 
@@ -311,13 +317,22 @@ def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_
 
 def tdew_from_avg_monthly_Ko(daily_tdew, daily_tmin, avg_monthly_Ko):
     """Computes dewpoint temperature from daily minimum temperature and average monthly Ko (dew point depression)
-    Args:
-        daily_tdew: existing daily tdew
-        daily_tmin: daily tmin
-        avg_monthly_Ko: average monthly Ko
-    Returns:
-        daily_value: filled daily tdew
+    Parameters
+    ---------
+    daily_tdew :
+        existing daily tdew
+    daily_tmin :
+        daily tmin
+    avg_monthly_Ko :
+        average monthly Ko
+
+    Returns
+    -------
+    daily_value :
+        filled daily tdew
+
     """
+
     if pd.isnull(daily_tdew):
         return daily_tmin - avg_monthly_Ko
     else:
@@ -325,16 +340,19 @@ def tdew_from_avg_monthly_Ko(daily_tdew, daily_tmin, avg_monthly_Ko):
 
 def _dewpoint_temperature(ea):
     """Dew point temperature (Eq. 8)
+
     Parameters
     ----------
     ea : ndarray
         Actual vapor pressure [kPa].
+
     Returns
     -------
     tdew : scalar or array_like of shape(M, )
         Dew point temperature [C].
 
     """
+
     return (237.3 * np.log(ea / 0.6108)) / (17.27 - np.log(ea / 0.6108))
 
 # renamed from q_from_ea
@@ -358,6 +376,7 @@ def _specific_humidity(ea, pair):
     ea = q * pair / (0.622 + 0.378 * q)
 
     """
+
     return 0.622 * ea / (pair - 0.378 * ea)
 
 # renamed from es_ice_from_t
@@ -379,6 +398,7 @@ def _es_ice(temperature):
     Murray (1967) equation for sat. vap pressure over ice
 
     """
+
     return 0.6108 * np.exp((21.87 * t) / (t + 265.5))
 
 def tdew_from_ea(ea):
@@ -394,6 +414,7 @@ def tdew_from_ea(ea):
             Dew point temperature [C].
 
     """
+
     return (237.3 * np.log(ea / 0.6108)) / (17.27 - np.log(ea / 0.6108))
 
 def file_logger(logger = logging.getLogger(''), log_level = logging.DEBUG,
@@ -452,21 +473,27 @@ def parse_int_set(nputstr = ""):
     return selection
 
 def is_leap_year(year_to_test):
-    """Test if year is a leap year
+    """Check if year is a leap year
 
-        Args:
-            year_to_test: year to test
+        Parameters
+        ---------
+        year_to_test : int
+            year to test
 
-        Returns:
-            boolean: True or False
+        Returns
+        : boolean
+            True
+            False
+
         """
+
     if year_to_test % 4 == 0 and year_to_test %100 != 0 or year_to_test % 400 == 0:
         return True
     else:
         return False
 
 def get_ts_freq(time_step, ts_quantity, wyem = 12):
-    """ Get pandas time frequency given time_step and ts_quantity
+    """ et pandas time frequency given time_step and ts_quantity
 
      Args:
         time_step: RiverWare style string timestep

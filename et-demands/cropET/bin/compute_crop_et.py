@@ -16,7 +16,7 @@ import runoff
 def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     """Crop et computations
 
-        Arguments
+        Parameters
         ---------
         data :
 

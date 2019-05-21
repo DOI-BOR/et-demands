@@ -1,5 +1,8 @@
-#!/usr/bin/env python
+"""ref_et_data.py
+Defines MetNodesData and MetNode class
+Called by met_nodes.py
 
+"""
 import datetime
 import logging
 import os
@@ -11,13 +14,21 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../lib')))
 import ref_et_data
 import ret_utils
-import mod_dmis
+import mod_dmis # NO LONGER USED - REMOVE CALLS IN CODE
 
-# move this to a unit conversion section / function
+# MOVE TO UNIT CONVERSION SCRIPT / SECTION
 mpdToMps = 3.2808399 * 5280 / 86400
 
 class MetNodesData():
-    """Functions for loading Met Node Meta Data from static text file"""
+    """Functions for loading Met Node Meta Data from static text file
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
         self.met_nodes_data = dict()
@@ -29,14 +40,21 @@ class MetNodesData():
     def set_met_nodes_meta_data(self, cfg):
         """Extract Met Node Meta Data from specified file
 
-        This function builds MetNode objects and must be run first.
+        Parameters
+        ----------
+        cfg :
+            configuration data from INI file
 
-        Args:
-            cfg: configuration data from INI file
+        Returns
+        -------
+        None
 
-        Returns:
-            None
+        Notes
+        -----
+        This function builds MetNode objects and must be run first
+
         """
+
         logging.debug('  Reading Met Nodes Meta Data from {0}'.format(cfg.met_nodes_meta_data_path))
         try:
             # Get list of 0 based line numbers to skip
@@ -64,11 +82,9 @@ class MetNodesData():
                 pass
 
             # remove excess baggage from column names
-
             columns = [x.replace(' (feet)', '').replace('decimal ','') for x in columns]
 
             # parse met node met data for each node id
-
             for rc, row in df.iterrows():
                 met_node = MetNode()
                 if not(met_node.read_mnmd_from_row(row.tolist(), columns,
@@ -82,12 +98,19 @@ class MetNodesData():
     def read_avg_monthly_data(self, cfg):
         """Reads average monthly tmax, tmin, Ko, and wind for met nodes
 
-        Args:
-            cfg: configuration data from INI file
-            mnd: Met node data (dict)
+        Parameters
+        ---------
+        cfg :
+            configuration data from INI file
+        mnd : dict
+            Met node data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        :
+            True
+            False
+
         """
 
         if cfg.input_met['avgm_tmax_path'] is None:
@@ -140,7 +163,15 @@ class MetNodesData():
                 sys.exit()
 
 class MetNode():
-    """Class for managing times series data of one Met Node"""
+    """Class for managing times series data of one Met Node
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
 
@@ -157,12 +188,19 @@ class MetNode():
             Wind Station No, Wind Station Name, Dewpoint Depression Station No, Dewpoint Depression Station Name
             MET Data Path, Ref ET Data Path, TR_b0, TR_b1, TR_b2, Source Met Id    # these are optional
 
-        Args:
-            data (list): one row of Met Nodes Meta Data
+        Parameters
+        ---------
+            data : list
+                one row of Met Nodes Meta Data
 
-        Returns:
-            True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         # met node id is node id for ref et computations
         # source met id is met id in input met data file
         # source met id is automatically set to met node id if not provided
@@ -243,25 +281,30 @@ class MetNode():
     def read_and_fill_met_data(self, met_node_count, cfg, mnd):
         """Read meteorological/climate data for single station and fill missing values
 
-        Args:
-            met_node_count: count of met node being processed
-            cfg: configuration data from INI file
-            mnd: Met node data (dict)
+        Parameters
+        ---------
+        met_node_count : int
+            count of met node being processed
+        cfg :
+            configuration data from INI file
+        mnd : dict
+            Met node data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         logging.debug('Reading and filling meteorological data')
-        if cfg.input_met['data_structure_type'].upper() == 'SF P':
-            success = self.SF_P_input_met_data(cfg)
-        else:
-            success = self.DMI_input_met_data(met_node_count, cfg, mnd)
+        success = self.input_met_data(cfg)
         if not success:
             logging.error('Unable to read and fill daily input meteorological data.')
             return False
 
         # Check/modify units
-
         for field_key, field_units in cfg.input_met['units'].items():
             if field_units is None:
                 continue
@@ -380,7 +423,6 @@ class MetNode():
             self.input_met_df['snow_depth'].fillna(0)
 
         # Calculate TDew from specific humidity or TMin and Ko
-
         if 'tdew' in input_met_columns:
             try:    # fill by interpolation
                 self.input_met_df['tdew'].interpolate(method = 'time', limit = 3, limit_direction = 'both', inplace = True)
@@ -420,14 +462,20 @@ class MetNode():
             return False
         return True
 
-    def SF_P_input_met_data(self, cfg):
+    def input_met_data(self, cfg):
         """Read meteorological/climate data for single station in station files with all parameters
 
-        Args:
-            cfg: configuration data from INI file
+        Parameters
+        ---------
+        cfg :
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
 
         if self.met_data_path is not None:
@@ -497,94 +545,22 @@ class MetNode():
             return False
         return True
 
-    def DMI_input_met_data(self, met_node_count, cfg, mnd):
-        """Read meteorological/climate data for single station using specified DMI format
-
-        Args:
-            met_node_count: count of met node being processed
-            cfg: configuration data from INI file
-
-        Returns:
-            success: True or False
-        """
-
-        # Read data from files by fields
-
-        self.input_met_df = None
-        input_buffer = None
-        field_count = 0
-        for field_key, field_name in cfg.input_met['fields'].items():
-            if field_name is None or field_name.lower() == 'date': continue
-            if field_name.lower() == 'year' or field_name.lower() == 'month': continue
-            if field_name.lower() == 'day' or field_name.lower() == 'doy': continue
-            if cfg.input_met['fnspec'][field_key].lower() == 'estimated': continue
-            if cfg.input_met['fnspec'][field_key].lower() == 'unused': continue
-            field_count += 1
-
-            # pull data for field_name
-
-            if met_node_count == 1:
-                if '%p' in cfg.input_met['name_format']:    # one file per parameter
-                    input_met_path = os.path.join(cfg.input_met['ws'],
-                        cfg.input_met['name_format'].replace('%p', cfg.input_met['fnspec'][field_key]))
-                else:    # shared file
-                    input_met_path = os.path.join(cfg.input_met['ws'], cfg.input_met['name_format'])
-                if not os.path.isfile(input_met_path):
-                    logging.error('ERROR:  input met file for {0} is {1} does not exist'.format(field_key, input_met_path))
-                    return False
-                logging.debug('  Input met path for {0} is {1}'.format(field_key, input_met_path))
-                if cfg.input_met['data_structure_type'].upper() == 'PF S.P':
-                    if cfg.input_met['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(input_met_path, cfg.input_met['header_lines'],
-                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity,
-                                cfg.input_met['delimiter'], cfg.start_dt, cfg.end_dt)
-                    elif cfg.input_met['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(input_met_path, cfg.input_met['header_lines'],
-                                cfg.input_met['names_line'], cfg.time_step, cfg.ts_quantity,
-                                cfg.input_met['delimiter'], cfg.start_dt, cfg.end_dt)
-                    elif cfg.input_met['file_type'].lower() == 'xls' or cfg.input_met['file_type'].lower() == 'wb':
-                        if '%p' in cfg.input_met['name_format'] or field_count == 1:
-                            input_buffer = pd.ExcelFile(input_met_path)
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(input_buffer,
-                                cfg.input_met['wsspec'][field_key],
-                                cfg.input_met['header_lines'], cfg.input_met['names_line'],
-                                cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
-                    else:
-                        logging.error('ERROR:  File type {} is not supported'.format(cfg.input_met['file_type']))
-                        return False
-                    if param_df is None:
-                        logging.error('ERROR:  unable to read {}'.format(input_met_path))
-                        return False
-                    else:
-                        if cfg.start_dt is None:
-                            pydt = param_df.index[0]
-                            cfg.start_dt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
-                        if cfg.end_dt is None:
-                            pydt = param_df.index[len(param_df) - 1]
-                            cfg.end_dt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
-                        param_df = mod_dmis.ReduceDataframeToParameter(param_df, field_name)
-                        mnd.met_nodes_input_met_data[field_key] = param_df
-                    del param_df
-        del input_buffer
-
-        # pull met node's data from parameter data frames
-
-        self.input_met_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
-        for field_key, param_df in mnd.met_nodes_input_met_data.items():
-            self.input_met_df[field_key] = mod_dmis.ReadOneDataframeColumn(param_df, self.source_met_id,
-                    cfg.input_met['fields'][field_key], cfg.input_met['units'][field_key], 1,
-                    cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt).values
-        return True
-
     def calculate_and_post_ret_data(self, cfg):
-        """Computer reference ET's and post specified ref ET's and met data
+        """Computes reference et and posts reference et and met data
 
-        Args:
-            cfg: configuration data from INI file
+        Parameters
+        ---------
+        cfg :
+            configuration data from INI file
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        : boolean
+            True
+            False
+
         """
+
         logging.debug('Computing Reference ET and post ref et and and meteorological data')
 
         try:
@@ -686,7 +662,6 @@ class MetNode():
             data_fields = list(daily_refet_df.columns)
 
             # set up aggregations
-
             aggregation_func = {}
             for fn in data_fields:
                 fc = cfg.refet_out['out_data_fields'].index(fn)
@@ -706,7 +681,6 @@ class MetNode():
                 annual_refet_df = daily_refet_df.resample('AS').apply( aggregation_func)
 
             # set up output fields
-
             if cfg.daily_refet_flag:
                 adj_daily_fields = []
                 if 'year' in cfg.used_refet_out_fields:
@@ -791,7 +765,6 @@ class MetNode():
                             monthly_refet_df[cfg.refet_out['fields']['month']].map(lambda x: ' %2d' % x)
 
                 # post monthly output
-
                 monthly_refet_path = os.path.join(cfg.monthly_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(monthly_refet_path))
                 with open(monthly_refet_path, 'w') as monthly_refet_f:
@@ -826,7 +799,6 @@ class MetNode():
                             annual_refet_df[cfg.refet_out['fields']['year']].map(lambda x: ' %4d' % x)
 
                 # post annual output
-
                 annual_refet_path = os.path.join(cfg.annual_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(annual_refet_path))
                 with open(annual_refet_path, 'w') as annual_refet_f:

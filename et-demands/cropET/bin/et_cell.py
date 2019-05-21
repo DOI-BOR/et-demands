@@ -48,7 +48,7 @@ class ETCellData():
     def set_cell_properties(self, data):
         """Extract ET cells properties data from specified file
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -113,7 +113,7 @@ class ETCellData():
     def set_cell_crops(self, data):
         """Read crop crop flags using specified file type
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -135,7 +135,7 @@ class ETCellData():
     def read_cell_crops_txt(self, data):
         """Extract et cell crop data from text file
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -178,7 +178,7 @@ class ETCellData():
     def read_cell_crops_xls_xlrd(self, data):
         """Extract et cell crop data from Excel using xlrd
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -227,7 +227,7 @@ class ETCellData():
     def set_cell_cuttings(self, data):
         """Extract mean cutting data from specified file
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -288,7 +288,7 @@ class ETCellData():
     def filter_crops(self, data):
         """filters crop list using crop_skip_list or crop_test_list from INI
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -351,7 +351,7 @@ class ETCellData():
     def filter_cells(self, data):
         """Remove cells with no active crops
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -395,7 +395,7 @@ class ETCellData():
     def set_static_crop_params(self, crop_params):
         """set static crop parameters
 
-        Arguments
+        Parameters
         ---------
         crop_params :
 
@@ -418,7 +418,7 @@ class ETCellData():
     def set_static_crop_coeffs(self, crop_coeffs):
         """set static crop coefficients
 
-        Arguments
+        Parameters
         ---------
         crop_coeffs :
 
@@ -440,7 +440,7 @@ class ETCellData():
     def set_spatial_crop_params(self, calibration_ws):
         """set spatial crop parameters from spatial calibration
 
-        Arguments
+        Parameters
         ---------
         crop_coeffs :
 
@@ -621,7 +621,7 @@ class ETCell():
     def read_cell_properties_from_row(self, row, columns, elev_units = 'feet'):
         """ Parse row of data from ET Cells properties file
 
-        Arguments
+        Parameters
         ---------
         row : list
             one row of ET Cells Properties
@@ -729,7 +729,7 @@ class ETCell():
     def init_crops_from_row(self, data, crop_numbers):
         """Parse row of data
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -757,7 +757,7 @@ class ETCell():
     def set_input_timeseries(self, cell_count, data, cells):
         """Wrapper for setting all refet and met data
 
-        Arguments
+        Parameters
         ---------
         cell_count : int
             count of et cell being processed
@@ -782,7 +782,7 @@ class ETCell():
         if not self.set_weather_data(cell_count, data, cells):
             return False
         if data.phenology_option > 0:
-            if not self.set_historic_temps(cell_count, data, cells):
+            if not self.set_historical_temps(cell_count, data, cells):
                 return False
 
         # Process climate arrays
@@ -792,7 +792,7 @@ class ETCell():
     def set_refet_data(self, data, cells):
         """Read ETo/ETr data file for single station
 
-        Arguments
+        Parameters
         ---------
         cell_count :
             count of et cell being processed
@@ -857,7 +857,7 @@ class ETCell():
         """Read meteorological/climate data for single station with all
             parameters
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -931,7 +931,7 @@ class ETCell():
     def set_refet_ratio_data(self, data):
         """Read ETo/ETr ratios static file
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -1026,7 +1026,7 @@ class ETCell():
         """Read meteorological data for single station and fill missing
             values
 
-        Arguments
+        Parameters
         ---------
         cell_count :
             count of et cell being processed
@@ -1162,7 +1162,7 @@ class ETCell():
         """Read meteorological/climate data for single station with all
             parameters
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -1242,10 +1242,10 @@ class ETCell():
             return False
         return True
 
-    def set_historic_temps(self, cell_count, data, cells):
-        """Read historic max and min temperatures to support historic phenology
+    def set_historical_temps(self, cell_count, data, cells):
+        """Read historical max and min temperatures to support historic phenology
 
-        Arguments
+        Parameters
         ---------
         cell_count : int
             count of et cell being processed
@@ -1262,12 +1262,12 @@ class ETCell():
 
         """
 
-        logging.debug('Read historic temperature data')
+        logging.debug('Read historical temperature data')
         # if data.hist_temps['data_structure_type'].upper() == 'SF P':
         # 'SF P' is now the only accepted data structure type
-        success = self.SF_P_historic_temps(data)
+        success = self.historical_temps(data)
         if not success:
-            logging.error('Unable to read historic temperature data.')
+            logging.error('Unable to read historical temperature data.')
             return False
         else:
             logging.info('\nPhenology option enabled.'
@@ -1294,11 +1294,11 @@ class ETCell():
                                      self.hist_temps_df.index]
         return True
 
-    def SF_P_historic_temps(self, data):
+    def historical_temps(self, data):
         """Read meteorological/climate data for single station with all
             parameters
 
-        Arguments
+        Parameters
         ---------
         data : dict
             configuration data from INI file
@@ -1374,119 +1374,6 @@ class ETCell():
             return False
         return True
 
-    # NOT CURRENTLY USED, REMOVE? - DB 05/20/2019
-    def DMI_historic_temps(self, cell_count, data, cells):
-        """Read meteorological/climate data for single station using specified
-            DMI format
-
-        Arguments
-        ---------
-        cell_count : int
-            count of et cell being processed
-        data : dict
-            configuration data from INI file
-
-        Returns
-        -------
-        : boolean
-            True
-            False
-
-        """
-
-        # Read data from files by fields
-        self.hist_temps_df = None
-        input_buffer = None
-        field_count = 0
-        for field_key, field_name in data.hist_temps['fields'].items():
-            if field_name is None or field_name.lower() == 'date':
-                continue
-            if field_name.lower() == 'year' or field_name.lower() == 'month':
-                continue
-            if field_name.lower() == 'day' or field_name.lower() == 'doy':
-                continue
-            if data.hist_temps['fnspec'][field_key].lower() == 'estimated':
-                continue
-            if data.hist_temps['fnspec'][field_key].lower() == 'unused':
-                continue
-
-            # pull data for field_name
-            if cell_count == 1:
-                last_path = ''
-                if '%p' in data.hist_temps['name_format']:
-                    historic_path = os.path.join(data.hist_temps['ws'],
-                    data.hist_temps['name_format'].replace(
-                        '%p', data.hist_temps['fnspec'][field_key]))
-                else:
-                    historic_path = os.path.join(
-                        data.hist_temps['ws'], data.hist_temps['name_format'])
-                if not os.path.isfile(historic_path):
-                    logging.error('ERROR:  historic data path for {0} is {1}'
-                                  ' does not exist'.format(field_key,
-                                                           historic_path))
-                    return False
-                logging.debug('  historic data path for {0} is {1}'.format(
-                    field_key, historic_path))
-                # Use keyword function calls
-                if data.hist_temps['data_structure_type'].upper() == 'PF S.P':
-                    if data.hist_temps['file_type'].lower() == 'csf':
-                        param_df = mod_dmis.ColumnSlotToDataframe(
-                            historic_path, data.hist_temps['header_lines'],
-                                data.hist_temps['names_line'], 'day', 1,
-                                data.hist_temps['delimiter'], data.start_dt, data.end_dt)
-                    elif data.hist_temps['file_type'].lower() == 'rdb':
-                        param_df = mod_dmis.TextRDBToDataframe(
-                            historic_path, data.hist_temps['header_lines'],
-                                data.hist_temps['names_line'], 'day', 1,
-                                data.hist_temps['delimiter'], data.start_dt,
-                            data.end_dt)
-                    elif data.hist_temps['file_type'].lower() == 'xls' or \
-                            data.hist_temps['file_type'].lower() == 'wb':
-                        if '%p' in data.hist_temps['name_format'] or \
-                                field_count == 1:
-                            # What are historic_buffer and last_path used for
-                            historic_buffer = pd.ExcelFile(historic_path)
-                        last_path = historic_path
-                        param_df = mod_dmis.ExcelWorksheetToDataframe(
-                            input_buffer, data.hist_temps['wsspec'][field_key],
-                            data.hist_temps['header_lines'],
-                            data.hist_temps['names_line'],
-                            'day', 1, data.start_dt, data.end_dt)
-                    else:
-                        logging.error('ERROR:  File type {} is not supported'.
-                                      format(data.hist_temps['file_type']))
-                        return False
-                    if param_df is None:
-                        logging.error('ERROR:  unable to read {}'.format(
-                            historic_path))
-                        return False
-                    else:
-                        if data.start_dt is None:
-                            pydt = param_df.index[0]
-                            data.start_dt = pd.to_datetime(datetime.datetime(
-                                pydt.year, pydt.month, pydt.day, pydt.hour,
-                                pydt.minute))
-                        if data.end_dt is None:
-                            pydt = param_df.index[len(param_df) - 1]
-                            data.end_date = pd.to_datetime(datetime.datetime(
-                                pydt.year, pydt.month, pydt.day, pydt.hour,
-                                pydt.minute))
-                        param_df = mod_dmis.ReduceDataframeToParameter(
-                            param_df, field_name)
-                        cells.et_cells_historic_data[field_key] = param_df
-                    del param_df
-        del input_buffer
-
-        # pull et cell's data from parameter data frames
-        self.hist_temps_df = mod_dmis.make_ts_dataframe('day', 1, data.start_dt,
-                                                        data.end_dt)
-        for field_key, param_df in cells.et_cells_historic_data.items():
-            self.hist_temps_df[field_key] = mod_dmis.ReadOneDataframeColumn(
-                param_df, self.refet_id, data.hist_temps['fields'][field_key],
-                data.hist_temps['units'][field_key], 1, 'day', 1,
-                data.start_dt, data.end_dt).values
-        return True
-
     def process_climate(self, data):
         """process meterological data into climate data
             a) Compute long term averages (DAY LOOP)
@@ -1501,7 +1388,7 @@ class ETCell():
                  mint, hops)
             c) compute long term mean cumGDD0 from sums (JDOY LOOP)
 
-        Arguments
+        Parameters
         ---------
         data : dict
             data from INI file

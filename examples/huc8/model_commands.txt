@@ -30,10 +30,10 @@ python ..\..\et-demands\prep\build_static_files.py --ini huc_example.ini
 # Run Model
 
 #-4 Run CET
-python run_cet.py -i huc_example.ini
+python run_cet.py -i huc_example_cet.ini
 
 #-4b Run CET with debug and verbose options on
-python run_cet.py -i huc_example.ini -v -d
+python run_cet.py -i huc_example_cet.ini -v -d
 
 # ------------------------------------------------------------------------------
 # Run Post-Processing

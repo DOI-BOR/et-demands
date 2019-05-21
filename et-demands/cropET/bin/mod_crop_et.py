@@ -24,7 +24,7 @@ def main(ini_path, log_level=logging.WARNING,
          cal_flag=False, mp_procs=1):
     """Main function for running crop ET model
 
-    Arguments
+    Parameters
     ---------
     ini_path : str
         absolute file path of INI file
@@ -72,7 +72,6 @@ def main(ini_path, log_level=logging.WARNING,
     data = crop_et_data.CropETData()
 
     # Read INI file
-
     data.read_cet_ini(ini_path, debug_flag)
 
     # Start file logging once INI file has been read
@@ -215,15 +214,27 @@ def main(ini_path, log_level=logging.WARNING,
 def cell_mp(tup):
     """Pool multiprocessing friendly function
 
+    Parameters
+    ---------
+    tup :
+
+    Returns
+    -------
+    :
+
+    Notes
+    -----
     mp.Pool needs all inputs are packed into single tuple
     Tuple is unpacked and and single processing version of function is called
+
     """
+
     return cell_sp(*tup)
 
 def cell_sp(cell_count, data, cell, mp_procs=1):
     """Compute crop cycle for each cell
 
-    Arguments
+    Parameters
     ---------
     cell_count : int
         count of cell being processed
@@ -248,7 +259,7 @@ def cell_sp(cell_count, data, cell, mp_procs=1):
 
 def is_valid_file(parser, arg):
     """checks if file is valid
-    Arguments
+    Parameters
     ---------
     parser : argparse.ArgumentParser instance
 
@@ -274,7 +285,7 @@ def is_valid_file(parser, arg):
 def is_valid_directory(parser, arg):
     """checks if directory is valid
 
-    Arguments
+    Parameters
     ---------
     parser : argparse.ArgumentParser instance
 
@@ -290,7 +301,6 @@ def is_valid_directory(parser, arg):
     -----
     Uses the argparse module
 
-
     """
 
     if not os.path.isdir(arg):
@@ -301,7 +311,7 @@ def is_valid_directory(parser, arg):
 def parse_args():
     """initialize parser
 
-    Arguments
+    Parameters
     ---------
     None
 

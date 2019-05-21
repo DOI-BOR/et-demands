@@ -33,7 +33,7 @@ class CropETData:
 
     def read_cet_ini(self, ini_path, debug_flag=False):
         """Read and parse INI file
-        Arguments
+        Parameters
         ---------
         ini_path : str
             absolute file path to INI file
@@ -1081,11 +1081,6 @@ class CropETData:
                     self.hist_temps['file_type'] = 'csv'
             except:
                 self.hist_temps['file_type'] = 'csv'
-            try:
-                self.hist_temps['data_structure_type'] = config.get(hist_temps_sec, 'data_structure_type')
-                if self.hist_temps['data_structure_type'] is None or self.hist_temps['data_structure_type'] == 'None': self.hist_temps['data_structure_type'] = 'SF P'
-            except:
-                self.hist_temps['data_structure_type'] = 'SF P'
             self.hist_temps['name_format'] = config.get(hist_temps_sec,
                                                         'name_format')
             self.hist_temps['header_lines'] = config.getint(hist_temps_sec,
@@ -1204,7 +1199,7 @@ class CropETData:
     def set_crop_params(self):
         """ List of <CropParameter> instances
 
-        Arguments
+        Parameters
         ---------
         None
 
@@ -1247,7 +1242,7 @@ class CropETData:
     def set_crop_coeffs(self):
         """ List of <CropCoeff> instances
 
-        Arguments
+        Parameters
         ---------
         None
 
@@ -1263,8 +1258,8 @@ class CropETData:
 
     def set_crop_co2(self):
         """Set crop CO2 type using values in INI
-        
-        Arguments
+
+        Parameters
         ---------
         None
 
