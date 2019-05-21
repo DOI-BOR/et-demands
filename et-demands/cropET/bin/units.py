@@ -1,6 +1,6 @@
 """Units.py
 Functions for unit conversions
-
+NOT CURRENTLY USED - PLACEHOLDER TO MOVE UNIT DEFS AND UNIT CONVERSIONS
 """
 
 import math

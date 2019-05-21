@@ -9,6 +9,20 @@ import util
 def open_water_evap(cell, foo_day):
     """Calculate open water evaporation
 
+    Attributes
+    ----------
+    cell :
+
+    foo_day :
+
+    Returns
+    -------
+    : float
+        et / etref : if etref > 0.03
+        0.4 : if etref < 0.03
+
+    Notes
+    -----
     For deep lakes and reservoirs apply an aerodynamic approach
         based on Allen and Tasumi (2005)
     Called by kcb_daily.kcb_daily()

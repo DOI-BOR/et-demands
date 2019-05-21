@@ -1,7 +1,33 @@
+"""runoff.py
+Defines function runoff for computing SCS curve number runoff
+called by compute_crop_et.py
+
+"""
+
 import logging
 
 def runoff(foo, foo_day, debug_flag=False):
-    """Curve number method for computing runoff."""
+    """Curve number method for computing runoff
+    Attributes
+    ---------
+    foo :
+
+    foo_day :
+
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    ADD REFS!
+
+    """
+
     # logging.debug('runoff()')
 
     # Bring in CNII for antecedent condition II from crop-soil combination

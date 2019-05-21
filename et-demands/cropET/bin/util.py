@@ -1,7 +1,13 @@
+"""util.py
+Defines meteorology, season, date, and logger functions
+Called by compute_crop_et.py, crop_et_data.py, et_cell.py, mod_crop_et.py,
+    open_water_evap.py
+
+"""
+
 import datetime as dt
 import logging
 import os
-
 import pandas as pd
 import numpy as np
 
@@ -55,16 +61,16 @@ def pair_from_elev(elevation):
         NumPy array of air pressures [kPa]
     """
     # version converted from vb.net
-    
+
     # return 101.3 * ((293. - 0.0065 * elevm) / 293.) ** (9.8 / (0.0065 * 286.9)) # kPa ' standardized by ASCE 2005
-    
+
     # version from from DRI
-    
+
     # return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.26)
 
     # version extended to better match vb.net version
     # 5.255114352 = 9.8 / (0.0065 * 286.9
-    
+
     return 101.3 * np.power((293.0 - 0.0065 * elevation) / 293.0, 5.255114352)
 
 def ea_from_q(p, q):

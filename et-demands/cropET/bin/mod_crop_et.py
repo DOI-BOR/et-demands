@@ -10,13 +10,14 @@ import logging
 import multiprocessing as mp
 import os
 import sys
-from time import clock
+import time
 import pandas as pd
-import util
+
 
 import crop_et_data
 import crop_cycle
 import et_cell
+import util
 
 def main(ini_path, log_level=logging.WARNING,
          etcid_to_run='ALL', debug_flag=False,
@@ -26,7 +27,7 @@ def main(ini_path, log_level=logging.WARNING,
     Arguments
     ---------
     ini_path : str
-        file path of INI file
+        absolute file path of INI file
     log_level : logging.lvl
     etcid_to_run :
         et cell id to run
@@ -50,7 +51,7 @@ def main(ini_path, log_level=logging.WARNING,
 
     """
 
-    clock_start = clock()
+    clock_start = time.perf_counter()
 
     # Start console logging immediately
     logger = util.console_logger(log_level=log_level)
@@ -181,7 +182,7 @@ def main(ini_path, log_level=logging.WARNING,
         del pool, results
 
     logging.warning('\nCROPET Run Completed')
-    logging.info('\n{} seconds'.format(clock()-clock_start))
+    logging.info('\n{} seconds'.format(time.perf_counter()-clock_start))
 
     # Print summary stats to screen
     # This should be moved to separate function, module, or tool
@@ -252,7 +253,7 @@ def is_valid_file(parser, arg):
     parser : argparse.ArgumentParser instance
 
     arg : str
-        file absolute path
+        absolute file path
 
     Returns
     -------
@@ -278,7 +279,7 @@ def is_valid_directory(parser, arg):
     parser : argparse.ArgumentParser instance
 
     arg : str
-        directory absolute path
+        absolute directory path
 
     Returns
     -------
@@ -296,7 +297,6 @@ def is_valid_directory(parser, arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:
         return arg
-
 
 def parse_args():
     """initialize parser
