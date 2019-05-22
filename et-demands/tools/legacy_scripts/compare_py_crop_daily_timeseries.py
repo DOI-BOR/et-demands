@@ -97,14 +97,14 @@ def main(project_ws, crop_str=''):
         test_path = os.path.join(test_ws, test_name)
         base_path = os.path.join(base_ws, base_name)
         try:
-            test_df = pd.read_table(
+            test_df = pd.read_csv(
                 test_path, engine='python', sep=test_sep, header=test_header,
                 comment=test_comment)
         except:
             logging.warning('  Pandas could not open the test file')
             continue
         try:
-            base_df = pd.read_table(
+            base_df = pd.read_csv(
                 base_path, engine='python', sep=base_sep, header=base_header,
                 comment=base_comment)
         except:

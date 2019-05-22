@@ -173,7 +173,7 @@ class ETCell():
                     logging.error('ERROR:  input crop et file {} does not exist'.format(input_cet_path))
                     return False
                 logging.debug('  {0}'.format(input_cet_path))
-                crop_df = pd.read_table(input_cet_path, engine = 'python',
+                crop_df = pd.read_csv(input_cet_path, engine = 'python',
                         header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
                         skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
                         comment = "#", na_values = ['NaN'])
@@ -284,12 +284,12 @@ class ETCell():
                 return False
             logging.debug('  {0}'.format(input_cet_path))
             """
-                crop_df = pd.read_table(input_cet_path, engine = 'python',
+                crop_df = pd.read_csv(input_cet_path, engine = 'python',
                         header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
                         skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
                         comment = "#", na_values = ['NaN'])
             """
-            rdb_cet_df = pd.read_table(input_cet_path, engine = 'python',
+            rdb_cet_df = pd.read_csv(input_cet_path, engine = 'python',
                     header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
                     skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
                     comment = "#", na_values = ['NaN'])
@@ -519,7 +519,7 @@ class ETCell():
                         header = cfg.ccm_names_line - len(data_skip) - 1, 
                         skiprows = data_skip, na_values = ['NaN'])
             else:
-                input_df = pd.read_table(cfg.cell_mix_path, engine = 'python', 
+                input_df = pd.read_csv(cfg.cell_mix_path, engine = 'python',
                         header = cfg.ccm_names_line - len(data_skip) - 1, 
                         skiprows = data_skip, sep = cfg.ccm_delimiter)
             input_df.rename(columns = {input_df.columns[1]:'ETCellID'}, inplace = True) 

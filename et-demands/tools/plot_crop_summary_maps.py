@@ -377,7 +377,7 @@ def main(ini_path, show_flag=False, save_flag=True, label_flag=False,
             logging.debug('    {0}'.format(os.path.basename(input_path)))
 
             # Read data from file into record array (structured array)
-            daily_df = pd.read_table(
+            daily_df = pd.read_csv(
                 input_path, header=0, comment='#', sep=sep)
             logging.debug(
                 '    Fields: {0}'.format(', '.join(daily_df.columns.values)))

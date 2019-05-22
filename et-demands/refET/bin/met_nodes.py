@@ -66,7 +66,7 @@ class MetNodesData():
                         header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, na_values = ['NaN'])
             else:
-#                df = pd.read_table(cfg.met_nodes_meta_data_path, engine = 'python',
+#                df = pd.read_csv(cfg.met_nodes_meta_data_path, engine = 'python',
                 df = pd.read_csv(cfg.met_nodes_meta_data_path, engine = 'python',
                         header = cfg.mnmd_names_line - len(data_skip) - 1,
                         skiprows = data_skip, sep = cfg.mnmd_delimiter, na_values = ['NaN'])
@@ -490,7 +490,7 @@ class MetNode():
         # Get list of 0 based line numbers to skip
         # Ignore header but assume header was set as 1's based index
         data_skip = [i for i in range(cfg.input_met['header_lines']) if i + 1 != cfg.input_met['names_line']]
-#        self.input_met_df = pd.read_table(input_met_path, engine = 'python',
+#        self.input_met_df = pd.read_csv(input_met_path, engine = 'python',
         self.input_met_df = pd.read_csv(input_met_path, engine = 'python',
                 header = cfg.input_met['names_line'] - len(data_skip) - 1,
                 skiprows = data_skip, sep = cfg.input_met['delimiter'],

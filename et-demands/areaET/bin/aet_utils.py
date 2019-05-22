@@ -104,7 +104,7 @@ def read_average_monthly_csv_data(fn, skip_lines = 1, delimiter = ","):
     """
     d = {}
     try:
-        df = pd.read_table(fn, engine = 'python', index_col = 0, header = None, 
+        df = pd.read_csv(fn, engine = 'python', index_col = 0, header = None,
                 skiprows = skip_lines, sep = delimiter)
         df.drop(list(df.columns)[0], axis = 1, inplace = True)
         

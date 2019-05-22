@@ -1727,7 +1727,7 @@ class AreaETConfig():
             params_df = pd.read_excel(self.crop_params_path, sheetname = self.crop_params_ws, 
                 header = None, skiprows = self.crop_params_header_lines -1, na_values = ['NaN'])
         else:
-            params_df = pd.read_table(self.crop_params_path, delimiter = self.crop_params_delimiter, 
+            params_df = pd.read_csv(self.crop_params_path, delimiter = self.crop_params_delimiter,
                     header = None, skiprows = self.crop_params_header_lines -1, na_values = ['NaN'])
         params_df.applymap(str)
         params_df.fillna('0', inplace = True)
