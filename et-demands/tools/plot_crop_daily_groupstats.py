@@ -303,26 +303,26 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
    
         # groupby stats
 #        doy_mean= doy_df[0].groupby(doy_df[0]).mean().as_matrix()
-        season_median= season_df[0].groupby(doy_df[0]).median().as_matrix()
-        kc_median=kc_df[0].groupby(doy_df[0]).median().as_matrix()
-        kcb_median=kcb_df[0].groupby(doy_df[0]).median().as_matrix()
-#        etbas_median=etbas_df[0].groupby(doy_df[0]).median().as_matrix()
-        pmet_median=pmet_df[0].groupby(doy_df[0]).median().as_matrix()
-#        etpot_median=etpot_df[0].groupby(doy_df[0]).median().as_matrix()
-        etact_median=etact_df[0].groupby(doy_df[0]).median().as_matrix()
+        season_median= season_df[0].groupby(doy_df[0]).median().values
+        kc_median=kc_df[0].groupby(doy_df[0]).median().values
+        kcb_median=kcb_df[0].groupby(doy_df[0]).median().values
+#        etbas_median=etbas_df[0].groupby(doy_df[0]).median().values
+        pmet_median=pmet_df[0].groupby(doy_df[0]).median().values
+#        etpot_median=etpot_df[0].groupby(doy_df[0]).median().values
+        etact_median=etact_df[0].groupby(doy_df[0]).median().values
         # 25% and 75% Percentiles of all years
-        kc_q25=kc_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        kcb_q25=kcb_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        etbas_q25=etbas_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        pmet_q25=pmet_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        etpot_q25=etpot_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        etact_q25=etact_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        kc_q75=kc_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-        kcb_q75=kcb_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        etbas_q75=etbas_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        etpot_q75=etpot_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-        etact_q75=etact_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        pmet_q75=pmet_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
+        kc_q25=kc_df[0].groupby(doy_df[0]).quantile(0.25).values
+        kcb_q25=kcb_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        etbas_q25=etbas_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        pmet_q25=pmet_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        etpot_q25=etpot_df[0].groupby(doy_df[0]).quantile(0.25).values
+        etact_q25=etact_df[0].groupby(doy_df[0]).quantile(0.25).values
+        kc_q75=kc_df[0].groupby(doy_df[0]).quantile(0.75).values
+        kcb_q75=kcb_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        etbas_q75=etbas_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        etpot_q75=etpot_df[0].groupby(doy_df[0]).quantile(0.75).values
+        etact_q75=etact_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        pmet_q75=pmet_df[0].groupby(doy_df[0]).quantile(0.75).values
         
         
         
