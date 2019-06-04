@@ -24,16 +24,16 @@ python ..\..\et-demands\prep\download_statsgo_shapefiles.py --ini huc_example_pr
 python ..\..\et-demands\prep\et_demands_zonal_stats.py --ini huc_example_prep.ini
 
 #-3 Build Static Files
-python ..\..\et-demands\prep\build_static_files.py --ini huc_example.ini
+python ..\..\et-demands\prep\build_static_files.py --ini huc_example_prep.ini
 
 # ------------------------------------------------------------------------------
 # Run Model
 
 #-4 Run CET
-python run_cet.py -i huc_example_cet.ini
+python ../../et-demands/cropET/bin/run_cet.py -i huc_example_cet.ini -b ../../et-demands/cropET/bin/
 
 #-4b Run CET with debug and verbose options on
-python run_cet.py -i huc_example_cet.ini -v -d
+python ../../et-demands/cropET/bin/run_cet.py -i huc_example_cet.ini -b ../../et-demands/cropET/bin/ -v -d
 
 # ------------------------------------------------------------------------------
 # Run Post-Processing

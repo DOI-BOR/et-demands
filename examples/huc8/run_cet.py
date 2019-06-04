@@ -7,20 +7,42 @@ import os
 import subprocess
 import sys
 
-def main(ini_path, verbose_flag = False, 
-        etcid_to_run = 'ALL', cal_flag = False, 
+def main(ini_path, bin_ws = '', verbose_flag = False,
+        etcid_to_run = 'ALL', cal_flag = False,
         debug_flag = False, mp_procs = 1):
     """Wrapper for running crop et model
 
-    Args:
-        ini_path (str): file path of the project INI file
-        verbose_flag (bool): If True, print info level comments
-        etcid_to_run: ET Cell id to run in lieu of 'ALL'
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        mp_procs (int): number of cores to use
+    Arguments
+    ---------
+    ini_path : str
+        file path of the project INI file
+    bin_ws : str
+        path of source code directory
+    verbose_flag : boolean
+        True : print info level comments
+    etcid_to_run :
+        ET Cell id to run in lieu of 'ALL'
+    cal_flag : boolean
+        True :
+        False :
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+    mp_procs : int
+        number of cores to use
 
-    Returns:
-        None
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    -i, --ini, ini_path : INI file path
+    -b, --bin, bin_ws : source code directory path
+    -v, --verbose, verbose_flag : print info level comments
+    -m, --metid, mnid_to_run : user specified met id to run
+    -d, --debug, debug_flag : save debug level comments to debug.txt
+    -mp, --multiprocessing, mp_procs : number of processers to use
+    --cal, cal_flag : display mean annual start/end dates to screen
     """
     # print ini_path
 
@@ -29,10 +51,10 @@ def main(ini_path, verbose_flag = False,
     # Crop ET demands python function
 
     script_path = os.path.join(bin_ws, 'mod_crop_et.py')
-    print(script_path)
-
+    print('bin_ws - ' + bin_ws)
+    print('ini_path - ' + ini_path)
     # Check input folder/path
-    
+
     if not os.path.isfile(ini_path):
         print('Crop ET demands input file does not exist\n  %s' % (ini_path))
         sys.exit()
@@ -44,7 +66,7 @@ def main(ini_path, verbose_flag = False,
         sys.exit()
 
     # Run Crop ET Demands Model
-    
+
     args_list = ['python', script_path, '-i', ini_path]
     args_list.append('-c')
     args_list.append(etcid_to_run)
@@ -56,13 +78,16 @@ def main(ini_path, verbose_flag = False,
         args_list.extend(['-mp', str(mp_procs)])
     subprocess.call(args_list)
 
-def parse_args():  
+def parse_args():
     parser = argparse.ArgumentParser(
         description='Crop ET-Demands',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', metavar='PATH',
         type = lambda x: is_valid_file(parser, x), help='Input file')
+    parser.add_argument(
+        '-b', '--bin', metavar='DIR',
+        type = lambda x: is_valid_directory(parser, x), help = 'Source code directory path')
     parser.add_argument(
         '-d', '--debug', action="store_true", default=False,
         help = "Save debug level comments to debug.txt")
@@ -73,7 +98,7 @@ def parse_args():
         '-v', '--verbose', action="store_true", default=False,
         help = "Print info level comments")
     parser.add_argument(
-        '-mp', '--multiprocessing', default=1, type=int, 
+        '-mp', '--multiprocessing', default=1, type=int,
         metavar='N', nargs='?', const=mp.cpu_count(),
         help='Number of processers to use')
     parser.add_argument(
@@ -82,10 +107,13 @@ def parse_args():
     args = parser.parse_args()
 
     # Convert INI path to an absolute path if necessary
-    
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
-    # print "\nargs are\n", args, "\n"
+
+    # Convert source code dir to an absolute path if necessary
+    if args.bin and os.path.isfile(os.path.abspath(args.bin)):
+        args.bin = os.path.abspath(args.bin)
+
     return args
 
 def get_ini_path(workspace):
@@ -114,6 +142,6 @@ if __name__ == '__main__':
         ini_path = args.ini
     else:
         ini_path = get_ini_path(os.getcwd())
-    main(ini_path, verbose_flag=args.verbose, 
-        etcid_to_run = args.etcid, cal_flag = args.cal, 
+    main(ini_path, bin_ws = args.bin, verbose_flag=args.verbose,
+        etcid_to_run = args.etcid, cal_flag = args.cal,
         debug_flag = args.debug, mp_procs=args.multiprocessing)

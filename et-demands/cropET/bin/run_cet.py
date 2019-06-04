@@ -1,12 +1,4 @@
-"""run_cet.py
-wrapper for running crop et model
-called by user from command line
-
-TODO -
-    REMOVE HARDCODDED bin_ws AND READ FROM INI FILE
-    ADD COMMENTS TO DESCRIBE RUN FLAGS
-
-"""
+#!/usr/bin/env python
 
 import argparse
 import logging
@@ -14,26 +6,27 @@ import multiprocessing as mp
 import os
 import subprocess
 import sys
-import tkinter as tk
-import tkinter.filedialog
 
-def main(ini_path, verbose_flag=False,
-        etcid_to_run='ALL', cal_flag=False,
-        debug_flag=False, mp_procs=1):
+def main(ini_path, bin_ws = '', verbose_flag = False,
+        etcid_to_run = 'ALL', cal_flag = False,
+        debug_flag = False, mp_procs = 1):
     """Wrapper for running crop et model
 
-    Parameters
+    Arguments
     ---------
     ini_path : str
         file path of the project INI file
+    bin_ws : str
+        path of source code directory
     verbose_flag : boolean
         True : print info level comments
-        False
     etcid_to_run :
         ET Cell id to run in lieu of 'ALL'
+    cal_flag : boolean
+        True :
+        False :
     debug_flag : boolean
         True : write debug level comments to debug.txt
-        False
     mp_procs : int
         number of cores to use
 
@@ -43,19 +36,24 @@ def main(ini_path, verbose_flag=False,
 
     Notes
     -----
+    -i, --ini, ini_path : INI file path
+    -b, --bin, bin_ws : source code directory path
+    -v, --verbose, verbose_flag : print info level comments
+    -m, --metid, mnid_to_run : user specified met id to run
+    -d, --debug, debug_flag : save debug level comments to debug.txt
+    -mp, --multiprocessing, mp_procs : number of processers to use
+    --cal, cal_flag : display mean annual start/end dates to screen
 
     """
-    # print ini_path
-
-    bin_ws = r'..\..\et-demands\cropET\bin'
 
     # Crop ET demands python function
-
-    script_path = os.path.join(bin_ws, 'mod_crop_et.py')
-    print(script_path)
+    if bin_ws is None:
+        print('Source code directory path (-b) not provided')
+        sys.exit()
+    else:
+        script_path = os.path.join(bin_ws, 'mod_crop_et.py')
 
     # Check input folder/path
-
     if not os.path.isfile(ini_path):
         print('Crop ET demands input file does not exist\n  %s' % (ini_path))
         sys.exit()
@@ -67,7 +65,6 @@ def main(ini_path, verbose_flag=False,
         sys.exit()
 
     # Run Crop ET Demands Model
-
     args_list = ['python', script_path, '-i', ini_path]
     args_list.append('-c')
     args_list.append(etcid_to_run)
@@ -80,29 +77,15 @@ def main(ini_path, verbose_flag=False,
     subprocess.call(args_list)
 
 def parse_args():
-    """initialize parser
-
-    Parameters
-    ---------
-    None
-
-    Returns
-    -------
-    args : argparser.parse_args method
-
-
-    Notes
-    -----
-    Uses the argparse module
-
-    """
-
     parser = argparse.ArgumentParser(
         description='Crop ET-Demands',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', metavar='PATH',
         type = lambda x: is_valid_file(parser, x), help='Input file')
+    parser.add_argument(
+        '-b', '--bin', metavar='DIR',
+        type = lambda x: is_valid_directory(parser, x), help = 'Source code directory path')
     parser.add_argument(
         '-d', '--debug', action="store_true", default=False,
         help = "Save debug level comments to debug.txt")
@@ -122,87 +105,30 @@ def parse_args():
     args = parser.parse_args()
 
     # Convert INI path to an absolute path if necessary
-
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
         args.ini = os.path.abspath(args.ini)
-    # print "\nargs are\n", args, "\n"
+
+    # Convert source code dir to an absolute path if necessary
+    if args.bin and os.path.isfile(os.path.abspath(args.bin)):
+        args.bin = os.path.abspath(args.bin)
+
     return args
 
 def get_ini_path(workspace):
-    """parses user-entered ini_path
-
-    Parameters
-    ---------
-    workspace :
-
-
-    Returns
-    -------
-    ini_path : str
-        absolute file path of INI file
-
-    Notes
-    -----
-    Uses tkinter and tkinter.filedialog modules
-    Updated syntax and packages for Python 3.x
-
-    """
-
-    root = tk.Tk()
-    ini_path = tkinter.filedialog.askopenfilename(
+    import Tkinter, tkFileDialog
+    root = Tkinter.Tk()
+    ini_path = tkFileDialog.askopenfilename(
         initialdir=workspace, parent=root, filetypes=[('INI files', '.ini')],
         title='Select the target INI file')
     root.destroy()
     return ini_path
 
 def is_valid_file(parser, arg):
-    """checks if file is valid
-    Parameters
-    ---------
-    parser : argparse.ArgumentParser instance
-
-    arg : str
-        absolute file path
-
-    Returns
-    -------
-    args : argparser.parse_args method
-
-
-    Notes
-    -----
-    Uses the argparse module
-    Also defined in mod_crop_et.py
-
-    """
-
     if not os.path.isfile(arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
-
 def is_valid_directory(parser, arg):
-    """checks if directory is valid
-
-    Parameters
-    ---------
-    parser : argparse.ArgumentParser instance
-
-    arg : str
-        absolute directory path
-
-    Returns
-    -------
-    args : argparser.parse_args method
-
-
-    Notes
-    -----
-    Uses the argparse module
-    Also defined in mod_crop_et.py
-
-    """
-
     if not os.path.isdir(arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:
@@ -214,6 +140,6 @@ if __name__ == '__main__':
         ini_path = args.ini
     else:
         ini_path = get_ini_path(os.getcwd())
-    main(ini_path, verbose_flag=args.verbose,
+    main(ini_path, bin_ws = args.bin, verbose_flag=args.verbose,
         etcid_to_run = args.etcid, cal_flag = args.cal,
         debug_flag = args.debug, mp_procs=args.multiprocessing)

@@ -30,8 +30,9 @@ def main(ini_path, overwrite_flag=False):
     ----------
     ini_path : str
         File path of the parameter INI file.
-    overwrite_flag : bool
-        If True, overwrite existing shapefile (the default is False).
+    overwrite_flag : boolean
+        True : overwrite existing shapefile
+        False : default
 
     Returns
     -------
@@ -214,6 +215,7 @@ def main(ini_path, overwrite_flag=False):
     zone_full_ds = shp_driver.Open(zone_path, 0)
     zone_full_lyr = zone_full_ds.GetLayer()
     zone_full_osr = zone_full_lyr.GetSpatialRef()
+
     # Check that the ET zones shapefile is in a projected coordinate system
     if zone_full_osr.IsGeographic():
         logging.error('\nERROR: The ET zones shapefile must be in a '

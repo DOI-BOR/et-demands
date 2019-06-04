@@ -85,7 +85,7 @@ def main(ini_path, area_threshold=10,
     try:
         crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     except:
-        logging.error('crop_et_ws parameter must be set in the INI file, '
+        logging.error('crop_et_folder parameter must be set in the INI file, '
                       'exiting')
         return False
     try:
