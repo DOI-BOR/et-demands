@@ -1,11 +1,3 @@
-#--------------------------------
-# Name:         plot_crop_daily_timeseries.py
-# Purpose:      Plot full daily data timeseries
-# Author:       Charles Morton, modified by C. Pearson for groupstat output
-# Created       2016-07-19, 2017-12-14
-# Python:       2.7
-#--------------------------------
-
 import argparse
 # import ConfigParser
 import datetime as dt
@@ -28,7 +20,7 @@ import util
 def main(ini_path, figure_show_flag=False, figure_save_flag=True,
          figure_size=(1000, 300), start_date=None, end_date=None,
          crop_str=''):
-    """Plot full daily data by crop
+    """Plot daily average, median, quantile data for all years by crop
 
     Args:
         ini_path (str): file path of the project INI file
@@ -146,7 +138,8 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
     #        from win32api import GetSystemMetrics
     #        figure_width = int(0.92 * GetSystemMetrics(0))
     #        figure_height = int(0.28 * GetSystemMetrics(1))
-    #        logging.info('  {0} {1}'.format(GetSystemMetrics(0), GetSystemMetrics(1)))
+    #        logging.info('  {0} {1}'.format(GetSystemMetrics(0),
+    #  GetSystemMetrics(1)))
     #        logging.info('  {0} {1}'.format(figure_width, figure_height))
     #     :
     #        figure_width = 1200
@@ -154,7 +147,8 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
 
     # Regular expressions
     data_re = re.compile('(?P<CELLID>\w+)_crop_(?P<CROP>\d+).csv$', re.I)
-    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$', re.I)
+    # data_re = re.compile('(?P<CELLID>\w+)_daily_crop_(?P<CROP>\d+).csv$',
+    #  re.I)
 
     # Build list of all data files
     data_file_list = sorted(
@@ -172,7 +166,8 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         logging.debug('')
         logging.info('  {0}'.format(file_name))
 
-        # station, crop_num = os.path.splitext(file_name)[0].split('_daily_crop_')
+        # station, crop_num = os.path.splitext(file_name)[0].split(
+        # '_daily_crop_')
         station, crop_num = os.path.splitext(file_name)[0].split('_crop_')
         crop_num = int(crop_num)
         logging.debug('    Station:         {0}'.format(station))
@@ -193,7 +188,7 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
             logging.debug('    Crop:            {0}'.format(crop_name))
 
         # Read data from file into record array (structured array)
-        daily_df = pd.read_table(file_path, header=0, comment='#', sep=sep)
+        daily_df = pd.read_csv(file_path, header=0, comment='#', sep=sep)
         logging.debug('    Fields: {0}'.format(
             ', '.join(daily_df.columns.values)))
         daily_df[date_field] = pd.to_datetime(daily_df[date_field])
@@ -201,14 +196,13 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         daily_df[year_field] = daily_df.index.year
         # daily_df[year_field] = daily_df[date_field].map(lambda x: x.year)
 
-        #Get PMET type from fieldnames in daily .csv
-        field_names=daily_df.columns
-        PMET_str=field_names[4]
+        # Get PMET type from fieldnames in daily .csv
+        field_names = daily_df.columns
+        PMET_str = field_names[4]
 #        if 'PMETr' in field_names:
 #            PMET_str='PMETr'
 #        else:
 #            PMET_str='PMETo'
-        
 
         # Build list of unique years
         year_array = np.sort(np.unique(
@@ -248,23 +242,6 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
             np.unique(np.array(daily_df[year_field]).astype(np.int)))
         logging.debug('    Plot Years: {0}'.format(
             ', '.join(list(util.ranges(year_sub_array.tolist())))))
-        # logging.debug('    Plot Years: {0}'.format(
-        #    ','.join(map(str, year_sub_array.tolist()))))
-
-        # Initial range of timeseries to show
-        # For now default to last ~8 year
-#        if sub_x_range_flag:
-#            x_range = Range1d(
-#                np.datetime64(dt.datetime(
-#                    max(crop_year_end - 9, crop_year_start), 1, 1), 's'),
-#                np.datetime64(dt.datetime(crop_year_end + 1, 1, 1), 's'),
-#                bounds=(
-#                    np.datetime64(dt.datetime(crop_year_start, 1, 1), 's'),
-#                    np.datetime64(dt.datetime(crop_year_end + 1, 1, 1), 's')))
-#        else:
-#            x_range = Range1d(
-#                np.datetime64(dt.datetime(crop_year_start, 1, 1), 's'),
-#                np.datetime64(dt.datetime(crop_year_end + 1, 1, 1), 's'))
 
         # Build separate arrays for each field of non-crop specific data
         dt_array = daily_df.index.date
@@ -287,45 +264,41 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         kc_array = etact_array / pmet_array
         kcb_array = etbas_array / pmet_array
         
-        #build dataframes for grouby input        
-        doy_df=pd.DataFrame(doy_array)
-        pmet_df=pd.DataFrame(pmet_array.transpose())        
-        etact_df=pd.DataFrame(etact_array.transpose())
-#        etpot_df=pd.DataFrame(etpot_array.transpose())
-#        etbas_df=pd.DataFrame(etbas_array.transpose())
-#        irrig_df=pd.DataFrame(irrig_array.transpose())
-        season_df=pd.DataFrame(season_array.transpose())
-#        runoff_df=pd.DataFrame(runoff_array.transpose())
-#        dperc_df=pd.DataFrame(dperc_array.transpose())
-        kc_df=pd.DataFrame(kc_array.transpose())
-        kcb_df=pd.DataFrame(kcb_array.transpose())
-        
-   
+        # build dataframes for grouby input
+        doy_df = pd.DataFrame(doy_array)
+        pmet_df = pd.DataFrame(pmet_array.transpose())
+        etact_df = pd.DataFrame(etact_array.transpose())
+#        etpot_df = pd.DataFrame(etpot_array.transpose())
+#        etbas_df = pd.DataFrame(etbas_array.transpose())
+#        irrig_df = pd.DataFrame(irrig_array.transpose())
+        season_df = pd.DataFrame(season_array.transpose())
+#        runoff_df = pd.DataFrame(runoff_array.transpose())
+#        dperc_df = pd.DataFrame(dperc_array.transpose())
+        kc_df = pd.DataFrame(kc_array.transpose())
+        kcb_df = pd.DataFrame(kcb_array.transpose())
+
         # groupby stats
-#        doy_mean= doy_df[0].groupby(doy_df[0]).mean().as_matrix()
-        season_median= season_df[0].groupby(doy_df[0]).median().as_matrix()
-        kc_median=kc_df[0].groupby(doy_df[0]).median().as_matrix()
-        kcb_median=kcb_df[0].groupby(doy_df[0]).median().as_matrix()
-#        etbas_median=etbas_df[0].groupby(doy_df[0]).median().as_matrix()
-        pmet_median=pmet_df[0].groupby(doy_df[0]).median().as_matrix()
-#        etpot_median=etpot_df[0].groupby(doy_df[0]).median().as_matrix()
-        etact_median=etact_df[0].groupby(doy_df[0]).median().as_matrix()
+#        doy_mean = doy_df[0].groupby(doy_df[0]).mean().values
+        season_median = season_df[0].groupby(doy_df[0]).median().values
+        kc_median = kc_df[0].groupby(doy_df[0]).median().values
+        kcb_median = kcb_df[0].groupby(doy_df[0]).median().values
+#        etbas_median = etbas_df[0].groupby(doy_df[0]).median().values
+        pmet_median = pmet_df[0].groupby(doy_df[0]).median().values
+#        etpot_median = etpot_df[0].groupby(doy_df[0]).median().values
+        etact_median = etact_df[0].groupby(doy_df[0]).median().values
         # 25% and 75% Percentiles of all years
-        kc_q25=kc_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        kcb_q25=kcb_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        etbas_q25=etbas_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        pmet_q25=pmet_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-#        etpot_q25=etpot_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        etact_q25=etact_df[0].groupby(doy_df[0]).quantile(0.25).as_matrix()
-        kc_q75=kc_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-        kcb_q75=kcb_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        etbas_q75=etbas_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        etpot_q75=etpot_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-        etact_q75=etact_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-#        pmet_q75=pmet_df[0].groupby(doy_df[0]).quantile(0.75).as_matrix()
-        
-        
-        
+        kc_q25 = kc_df[0].groupby(doy_df[0]).quantile(0.25).values
+        kcb_q25 = kcb_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        etbas_q25 = etbas_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        pmet_q25 = pmet_df[0].groupby(doy_df[0]).quantile(0.25).values
+#        etpot_q25 = etpot_df[0].groupby(doy_df[0]).quantile(0.25).values
+        etact_q25 = etact_df[0].groupby(doy_df[0]).quantile(0.25).values
+        kc_q75 = kc_df[0].groupby(doy_df[0]).quantile(0.75).values
+        kcb_q75 = kcb_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        etbas_q75 = etbas_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        etpot_q75 = etpot_df[0].groupby(doy_df[0]).quantile(0.75).values
+        etact_q75 = etact_df[0].groupby(doy_df[0]).quantile(0.75).values
+#        pmet_q75 = pmet_df[0].groupby(doy_df[0]).quantile(0.75).values
 
         # NIWR is ET - precip + runoff + deep percolation
         # Don't include deep percolation when irrigating
@@ -336,9 +309,10 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         # etact_sub_array = np.delete(etact_array, np.where(leap_array)[0])
         # niwr_sub_array = np.delete(niwr_array, np.where(leap_array)[0])
         
-        #Manually create date range array for display of month/day on x-axis
-        x_range = Range1d(dt.datetime(2000,1,1), dt.datetime(2000,12,31))
-        np_x_range= np.arange(dt.datetime(2000,1,1), dt.datetime(2001,1,1), dt.timedelta(days=1)).astype(dt.datetime)
+        # Manually create date range array for display of month/day on x-axis
+        x_range = Range1d(dt.datetime(2000, 1, 1), dt.datetime(2000, 12, 31))
+        np_x_range = np.arange(dt.datetime(2000, 1, 1), dt.datetime(2001, 1, 1),
+                               dt.timedelta(days=1)).astype(dt.datetime)
 
         # Timeseries figures of daily data
         output_name = '{0}_crop_{1:02d}_avg'.format(
@@ -348,60 +322,72 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         f = output_file(output_path, title=output_name)
         TOOLS = 'xpan,xwheel_zoom,box_zoom,reset,save'
 
-        f1 = figure(x_axis_type='datetime',x_range=x_range,
-            width=figure_size[0], height=figure_size[1],
-            tools=TOOLS, toolbar_location="right",
-            active_scroll="xwheel_zoom")
-            # title='Evapotranspiration', x_axis_type='datetime',
+        f1 = figure(x_axis_type='datetime', x_range=x_range,
+                    width=figure_size[0], height=figure_size[1],
+                    tools=TOOLS, toolbar_location="right",
+                    active_scroll="xwheel_zoom")
+        # title='Evapotranspiration', x_axis_type='datetime',
 #        if refet_type == 'ETo':    
         f1.line(np_x_range, etact_median, color='blue', legend='ETact Median')
-        f1.line(np_x_range, etact_q75, color='red', legend='ETact 75th percentile')
-        f1.line(np_x_range, etact_q25, color='green', legend='ETact 25th percentile')
-        f1.line(np_x_range, pmet_median, color='black', legend=PMET_str+' Median', line_dash="dashed")
+        f1.line(np_x_range, etact_q75, color='red',
+                legend='ETact 75th percentile')
+        f1.line(np_x_range, etact_q25, color='green',
+                legend='ETact 25th percentile')
+        f1.line(np_x_range, pmet_median, color='black',
+                legend=PMET_str+' Median', line_dash="dashed")
 #        else:
-#            f1.line(np_x_range, et_median, color='blue', legend='ETr Median')
-#            f1.line(np_x_range, etbas_q75, color='red', legend='ETr 75th percentile')
-#            f1.line(np_x_range, etpot_q25, color='green', legend='ETr 25th percentile')
+#            f1.line(np_x_range, et_median, color='blue',
+        #  legend='ETr Median')
+#            f1.line(np_x_range, etbas_q75, color='red',
+        #  legend='ETr 75th percentile')
+#            f1.line(np_x_range, etpot_q25, color='green',
+        #  legend='ETr 25th percentile')
 #                # line_dash="dashdot")
         # f1.title = 'Evapotranspiration [mm]'
         f1.grid.grid_line_alpha = 0.3
         f1.yaxis.axis_label = 'Evapotranspiration [mm]'
         f1.yaxis.axis_label_text_font_size = figure_ylabel_size
-        f1.xaxis.formatter=DatetimeTickFormatter(years=['%m/%d'], months=['%m/%d'], days=['%m/%d'])
+        f1.xaxis.formatter = DatetimeTickFormatter(years=['%m/%d'],
+                                                   months=['%m/%d'],
+                                                   days=['%m/%d'])
         # f1.xaxis.bounds = x_bounds
-        
 
-        f2 = figure(x_axis_type='datetime',x_range=x_range,
-            width=figure_size[0], height=figure_size[1],
-            tools=TOOLS, toolbar_location="right",
-            active_scroll="xwheel_zoom")
+        f2 = figure(x_axis_type='datetime', x_range=x_range,
+                    width=figure_size[0], height=figure_size[1],
+                    tools=TOOLS, toolbar_location="right",
+                    active_scroll="xwheel_zoom")
         f2.line(np_x_range, kc_median, color='blue', legend='Kc Median')
         f2.line(np_x_range, kc_q75, color='red', legend='Kc 75th percentile')
         f2.line(np_x_range, kc_q25, color='green', legend='Kc 25th percentile')
-        f2.line(np_x_range, season_median, color='black', legend='Season Median',
-                line_dash="dashed")
+        f2.line(np_x_range, season_median, color='black',
+                legend='Season Median', line_dash="dashed")
 #         f2.title = 'Kc and Kcb (dimensionless)'
         f2.grid.grid_line_alpha = 0.3
         f2.yaxis.axis_label = 'Kc (dimensionless)'
         f2.yaxis.axis_label_text_font_size = figure_ylabel_size
-        f2.xaxis.formatter=DatetimeTickFormatter(years=['%m/%d'], months=['%m/%d'], days=['%m/%d'])
+        f2.xaxis.formatter = DatetimeTickFormatter(years=['%m/%d'],
+                                                   months=['%m/%d'],
+                                                   days=['%m/%d'])
 
-        f3 = figure(x_axis_type='datetime',x_range=x_range,
-            width=figure_size[0], height=figure_size[1],
-            tools=TOOLS, toolbar_location="right",
-            active_scroll="xwheel_zoom")
+        f3 = figure(x_axis_type='datetime', x_range=x_range,
+                    width=figure_size[0], height=figure_size[1],
+                    tools=TOOLS, toolbar_location="right",
+                    active_scroll="xwheel_zoom")
         f3.line(np_x_range, kcb_median, color='blue', legend='Kcb Median')
         f3.line(np_x_range, kcb_q75, color='red', legend='Kcb 75th percentile')
-        f3.line(np_x_range, kcb_q25, color='green', legend='Kcb 25th percentile')
-        f3.line(np_x_range, season_median, color='black', legend='Season Median',
-                line_dash="dashed")
+        f3.line(np_x_range, kcb_q25, color='green',
+                legend='Kcb 25th percentile')
+        f3.line(np_x_range, season_median, color='black',
+                legend='Season Median', line_dash="dashed")
         # f3.title = 'PPT and Irrigation [mm]'
         f3.grid.grid_line_alpha = 0.3
 #        f3.xaxis.axis_label = 'Day of Year'
         f3.xaxis.axis_label_text_font_size = figure_ylabel_size
         f3.yaxis.axis_label = 'Kcb (dimensionless)'
         f3.yaxis.axis_label_text_font_size = figure_ylabel_size
-        f3.xaxis.formatter=DatetimeTickFormatter(years=['%m/%d'], months=['%m/%d'], days=['%m/%d'])
+        f3.xaxis.formatter = DatetimeTickFormatter(years=['%m/%d'],
+                                                   months=['%m/%d'],
+                                                   days=['%m/%d'])
 
         if figure_show_flag:
             # Open in a browser
@@ -477,7 +463,8 @@ if __name__ == '__main__':
         ini_path = util.get_path(os.getcwd(), 'Select the target INI file')
     # Try using the current working directory if there is only one INI
     # Could look for daily_stats folder, run_basin.py, and/or ini file
-    elif len([x for x in os.listdir(os.getcwd()) if x.lower().endswith('.ini')]) == 1:
+    elif len([x for x in os.listdir(os.getcwd()) if x.lower().endswith(
+            '.ini')]) == 1:
         ini_path = [
             os.path.join(os.getcwd(), x) for x in os.listdir(os.getcwd())
             if x.lower().endswith('.ini')][0]

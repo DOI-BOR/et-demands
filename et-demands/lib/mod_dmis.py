@@ -217,7 +217,7 @@ def ReadOneColumnSlot(file_path, header_lines, names_line, stationToRead,
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
         data_skip = [i for i in range(header_lines) if i + 1 != names_line]
-        input_df = pd.read_table(file_path, engine = 'python',
+        input_df = pd.read_csv(file_path, engine = 'python',
                 header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                 sep = valuesSeparator, na_values = mia_value)
         if input_df.empty:
@@ -349,7 +349,7 @@ def ReadOneTextRDB(file_path, header_lines, names_line, stationToRead,
         if names_line == 0:
             # default column names and locations
             
-            input_df = pd.read_table(file_path, engine = 'python', 
+            input_df = pd.read_csv(file_path, engine = 'python',
                     header = None, sep = valuesSeparator, na_values = mia_value)
             if input_df.empty:
                 logging.error("No data read in file" + file_path)
@@ -365,7 +365,7 @@ def ReadOneTextRDB(file_path, header_lines, names_line, stationToRead,
             
             # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
             data_skip = [i for i in range(header_lines) if i + 1 != names_line]
-            input_df = pd.read_table(file_path, engine = 'python',
+            input_df = pd.read_csv(file_path, engine = 'python',
                     header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                     na_values = mia_value, sep = valuesSeparator)
             if input_df.empty:
@@ -634,7 +634,7 @@ def ColumnSlotToDataframe(file_path, header_lines, names_line,
     try:
         # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
         data_skip = [i for i in range(header_lines) if i + 1 != names_line]
-        input_df = pd.read_table(file_path, engine = 'python', 
+        input_df = pd.read_csv(file_path, engine = 'python',
                 header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                 sep = valuesSeparator, na_values = mia_value)
         if input_df.empty:
@@ -730,7 +730,7 @@ def TextRDBToDataframe(file_path, header_lines, names_line,
         if names_line == 0:
             # default column names and locations
             
-            input_df = pd.read_table(file_path, engine = 'python', 
+            input_df = pd.read_csv(file_path, engine = 'python',
                     header = None, sep = valuesSeparator, na_value = mia_value)
             if input_df.empty:
                 logging.error("No data read in file" + file_path)
@@ -746,7 +746,7 @@ def TextRDBToDataframe(file_path, header_lines, names_line,
             
             # Get list of 0 based line numbers to skip - Ignore header but assume header was set as 1's based index
             data_skip = [i for i in range(header_lines) if i + 1 != names_line]
-            input_df = pd.read_table(file_path, engine = 'python',
+            input_df = pd.read_csv(file_path, engine = 'python',
                     header = names_line - len(data_skip) - 1, skiprows = data_skip, 
                     na_values = mia_value, sep = valuesSeparator)
             if input_df.empty:

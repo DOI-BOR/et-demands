@@ -122,7 +122,7 @@ def main(ts_ini_name = None, sheet_delim = None, missing_data_value = 'NaN',
             header = cfg.names_line - 1, skip_rows = data_skip, 
             na_values = cfg.missing_data_value)
     else:
-        data_df = pd.read_table(cfg.file_path, sep = cfg.sheet_delim, 
+        data_df = pd.read_csv(cfg.file_path, sep = cfg.sheet_delim,
             engine = 'python', header = cfg.names_line - 1, 
             skiprows = data_skip, na_values = cfg.missing_data_value)
 

@@ -94,6 +94,6 @@ out_df.to_csv(out_file,  columns=out_order, sep='\t',
 #            header = '\t'.join(out_header), comments='')
 
 #%% Testing
-# refet_ratios_df = pd.read_table('D:\upper_co\static\ETrRatiosMon.txt',
+# refet_ratios_df = pd.read_csv('D:\upper_co\static\ETrRatiosMon.txt',
 #                                 delimiter='\t', header=None,
 #                                 skiprows=1 - 1, na_values=['NaN'])

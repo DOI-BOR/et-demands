@@ -217,7 +217,7 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
 
         # Read data from file into record array (structured array)
         
-        daily_df = pd.read_table(file_path, header = 0, comment = '#', sep = sep)
+        daily_df = pd.read_csv(file_path, header = 0, comment = '#', sep = sep)
         logging.debug('    Fields: {0}'.format(
             ', '.join(daily_df.columns.values)))
         daily_df[date_field] = pd.to_datetime(daily_df[date_field])
