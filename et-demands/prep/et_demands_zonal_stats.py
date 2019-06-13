@@ -281,7 +281,6 @@ def main(ini_path, overwrite_flag=False):
     cross_dict = dict()
     for index, row in cross_df.iterrows():
         # cross_dict[int(row.cdl_no)] = list(map(int, str(row.etd_no).split(',')))
-        # Does the input crop have to be an int or can it be a str????
         cross_dict[row.cdl_no] = list(map(int, str(row.etd_no).split(',')))
     # logging.debug(crop_num_dict)
 
@@ -289,8 +288,14 @@ def main(ini_path, overwrite_flag=False):
     # Because the spatial index is extent based,
     #   this may include crops that don't intersect the zones.
     input_crops = sorted(list(set(c['value'] for c in crop_dict.values())))
-    etd_crops = sorted(list(set(
-        x for c in crop_dict.values() for x in cross_dict[c['value']])))
+    try:
+        etd_crops = sorted(list(set(
+            x for c in crop_dict.values() for x in cross_dict[c['value']])))
+    except KeyError as e:
+        logging.error('\nError: Input crop not found in crosswalk file. '
+                      'Missing Crop: {}\n Exiting.'.format(e))
+        sys.exit()
+
     logging.info('\nInput Crops: {}'.format(', '.join(map(str, input_crops))))
     logging.info('Demands Crops: {}'.format(', '.join(map(str, etd_crops))))
 
