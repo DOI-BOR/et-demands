@@ -564,7 +564,6 @@ class ETCellData():
                         cell_id))
                     continue
                 for field_name, row_value in zip(crop_fields, record):
-                    print(cell_id)
                     # DEADBEEF - I really want to skip non-crop parameter fields
                     # but also tell the user if a crop param field is missing
 
