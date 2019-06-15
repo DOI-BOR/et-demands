@@ -465,6 +465,7 @@ class ETCellData():
             for item in os.listdir(calibration_ws)
             if crop_dbf_re.match(item)])
 
+
         #Check to see if crop_dbf_dict is empty
         if not crop_dbf_dict:
             logging.error('\nSpatially Varying Calibration Files Do Not Exist.'
@@ -551,14 +552,19 @@ class ETCellData():
             crop_f = shapefile.Reader(crop_dbf)
             crop_fields = [f[0] for f in crop_f.fields if f[0] !=
                            'DeletionFlag']
+
             for record in crop_f.iterRecords():
-                cell_id = record[crop_fields.index(cell_id_field)]
+                # convert cell_id from .shp to str to match etcells type
+                cell_id = str(record[crop_fields.index(cell_id_field)])
 
                 # Skip cells
-
                 if cell_id not in self.et_cells_dict.keys():
+                    logging.info('CellID: {} not in et cell list. Not reading spatial'
+                                 ' crop parameters for this cell.'.format(
+                        cell_id))
                     continue
                 for field_name, row_value in zip(crop_fields, record):
+                    print(cell_id)
                     # DEADBEEF - I really want to skip non-crop parameter fields
                     # but also tell the user if a crop param field is missing
 
@@ -575,6 +581,7 @@ class ETCellData():
                             setattr(
                                 self.et_cells_dict[cell_id].crop_params[
                                     crop_num], param_name, float(row_value))
+
                         except:
                             logging.warning(
                                 ('  The spatial crop parameter was not '
