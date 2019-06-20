@@ -1049,7 +1049,6 @@ class RefETConfig():
             self.refet_out['units']['asceg'] = 'mm/day'
 
         # drop unused fields
-
         all_refet_out_fields = ['date', 'year', 'month', 'day', 'doy', 'tmax', 'tmin', 'ppt', 'snow', 'snow_depth', 'rs', 'wind', 'q', 'tdew', 'ascer', 'asceg']
         for k, v in sorted(self.refet_out['fnspec'].items()):
             if not v is None:
@@ -1059,20 +1058,19 @@ class RefETConfig():
                         del self.refet_out['fnspec'][k]
                         del self.refet_out['fields'][k]
                 except: pass
+
         for k, v in sorted(self.refet_out['fields'].items()):
             if v is None:
                 try: del self.refet_out['fields'][k]
                 except: pass
 
         # Check units
-
         for k, v in sorted(self.refet_out['units'].items()):
             if v is not None and v.lower() not in units_list:
                 logging.error('  ERROR: {0} units {1} are not currently supported'.format(k, v))
                 sys.exit()
 
         # set up header lines
-
         self.used_refet_out_fields = [fn for fn in all_refet_out_fields if fn in self.refet_out['fields'].keys()]
         self.refet_out['data_out_fields'] = [fn for fn in self.used_refet_out_fields if fn not in ['date', 'year', 'month', 'day', 'doy']]
         self.refet_out['refet_out_fields'] = [fn for fn in self.used_refet_out_fields if fn in ['ascer', 'asceg']]

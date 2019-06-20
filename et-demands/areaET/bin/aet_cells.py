@@ -1,4 +1,13 @@
-#!/usr/bin/env python
+"""aet_cells.py
+Defines AETCellsData and ETCell classes
+Defines seasonal_ctetdata, crop_percents, calculate_ratios,
+    apply_annual_ratios, compute_flow, compute_daily_volume,
+    compute_monthly_volume, compute_annual_volume, compute_daily_fractions,
+    user_begin_date, user_end_date
+
+Called by mod_area_et.py
+
+"""
 
 import datetime
 import logging
@@ -18,7 +27,16 @@ import mod_dmis
 mmHaPerDay_to_cms = 0.001 * 10000 / 86400    # 0.001 (mm/m) * 10000 (m2/hectare) / 86400 (seconds/day)
 
 class AETCellsData():
-    """Functions for loading ET Cell data fromstatic text files"""
+    """Functions for loading ET Cell data from static text files
+
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
         self.et_cells_data = dict()
@@ -30,12 +48,17 @@ class AETCellsData():
     def set_cell_crops(self, cfg):
         """ExtractET cell crop data
 
-        Args:
-            cfg: configuration data from INI file
+        Parameters
+        ----------
+        cfg :
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
+
         logging.info('\nSetting cell crop types by ET cell')
         if ".xls" in cfg.cell_crops_path.lower():
             self.read_cell_crops_xls_xlrd(cfg)
@@ -45,12 +68,17 @@ class AETCellsData():
     def read_cell_crops_txt(self, cfg):
         """ExtractET cell crop data from text file
 
-        Args:
-            cfg: configuration data from INI file
+        Parameters
+        ----------
+        cfg :
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
+
         a = np.loadtxt(cfg.cell_crops_path, delimiter = cfg.cell_crops_delimiter, dtype = 'str')
         crop_type_numbers = a[cfg.cell_crops_names_line - 1, 4:].astype(int)
         crop_type_names = a[cfg.cell_crops_names_line, 4:]
@@ -67,12 +95,17 @@ class AETCellsData():
     def read_cell_crops_xls_xlrd(self, cfg):
         """ExtractET cell crop data from Excel using xlrd
 
-        Args:
-            cfg: configuration data from INI file
+        Parameters
+        ----------
+        cfg :
+            configuration data from INI file
 
-        Returns:
-            None
+        Returns
+        -------
+        None
+
         """
+
         wb = xlrd.open_workbook(cfg.cell_crops_path)
         ws = wb.sheet_by_name(cfg.cell_crops_ws)
         num_crops = int(ws.cell_value(cfg.cell_crops_names_line - 1, 1))
@@ -96,6 +129,16 @@ class AETCellsData():
             self.et_cells_data[cell.cell_id] = cell
 
 class ETCell():
+    """
+
+    Attributes
+    ----------
+
+    Notes
+    -----
+
+    """
+
     def __init__(self):
         """ """
 
@@ -106,11 +149,21 @@ class ETCell():
     def init_crops_from_row(self, row, crop_numbers):
         """Parse row of et cell data
 
-        Args:
-            row: row of data being processed
-            cfg: configuration data from INI file
-            crop_number: list of crop numbers
+        Parameters
+        ----------
+        row :
+            row of data being processed
+        cfg :
+            configuration data from INI file
+        crop_number :
+            list of crop numbers
+
+        Returns
+        -------
+        None
+
         """
+
         self.cell_id = row[0]
         self.cell_name = row[1]
         self.cell_irr_flag = row[3].astype(int)
@@ -120,17 +173,24 @@ class ETCell():
     def crop_types_cycle(self, cell_count, cfg, cells):
         """Read crop types data for et cell and compute some output
 
-        Args:
-            cell_count: count of ET cellbeing processed
-            cfg: configuration data from INI file
-            cells: ET cell data (dict)
+        Parameters
+        ----------
+        cell_count :
+            count of ET cells being processed
+        cfgc:
+            configuration data from INI file
+        cells : dict
+            ET cell data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        True
+        False
+
         """
+
         try:
             # parse used crop types
-
             self.usedCropTypes = []
             self.numUsedCropTypes = 0
             for ctCount in range(0, self.numberCropTypes, 1):
@@ -154,19 +214,27 @@ class ETCell():
     def DRI_input_cet_data(self, cell_count, cfg, cells):
         """Read crop ET data for single station in DRI station files with all parameters
 
-        Args:
-            cell_count: count of et cell id being processed
-            cfg: configuration data from INI file
-            cells: ET cell data (dict)
+        Parameters
+        ----------
+        cell_count :
+            count of et cell id being processed
+        cfg :
+            configuration data from INI file
+        cells : dict
+            ET cell data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        True
+        False
+
         """
+
         crops_dict = {}
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(cfg.input_cet['header_lines']) if i + 1 <> cfg.input_cet['names_line']]
+            data_skip = [i for i in range(cfg.input_cet['header_lines']) if i + 1 != cfg.input_cet['names_line']]
             for ctCount in range(0, self.numUsedCropTypes, 1):
                 input_cet_path = os.path.join(cfg.input_cet['ws'], cfg.input_cet['name_format'].replace('%c', '%02d' % self.usedCropTypes[ctCount]) % self.cell_id)
                 if not os.path.isfile(input_cet_path):
@@ -174,8 +242,8 @@ class ETCell():
                     return False
                 logging.debug('  {0}'.format(input_cet_path))
                 crop_df = pd.read_csv(input_cet_path, engine = 'python',
-                        header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
-                        skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
+                        header = cfg.input_cet['names_line'] - len(data_skip) - 1,
+                        skiprows = data_skip, sep = cfg.input_cet['delimiter'],
                         comment = "#", na_values = ['NaN'])
 
                 # Check fields
@@ -194,7 +262,7 @@ class ETCell():
                 crop_df['niwr'] = crop_df['cir'].values
 
                 # Convert date strings to datetimes and index on date
-        
+
                 if cfg.input_cet['fields']['date'] is not None:
                     crop_df['date'] = pd.to_datetime(crop_df['date'])
                 else:
@@ -207,16 +275,16 @@ class ETCell():
                 crop_df.set_index('date', inplace = True)
                 if cell_count == 0 and ctCount == 0:
                     # verify period
-        
+
                     if cfg.start_dt is None:
                         pydt = crop_df.index[0]
                         cfg.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-                    if cfg.end_dt is None: 
+                    if cfg.end_dt is None:
                         pydt = crop_df.index[len(crop_df) - 1]
                         cfg.end_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-            
+
                 # truncate period
-        
+
                 try:
                     crop_df = crop_df.truncate(before = cfg.start_dt, after = cfg.end_dt)
                 except:
@@ -227,30 +295,30 @@ class ETCell():
                     return False
 
                 # compute seasonally adjusted crop et, effective precipitation and irrigation water requirement
-                
+
                 try:
-                    crop_df['cet'], crop_df['effprcp'], crop_df['cir'] = seasonal_ctetdata(cfg.ngs_toggle, 
-                        cfg.crop_irr_flags[self.usedCropTypes[ctCount] - 1], crop_df['season'], crop_df['etact'], 
+                    crop_df['cet'], crop_df['effprcp'], crop_df['cir'] = seasonal_ctetdata(cfg.ngs_toggle,
+                        cfg.crop_irr_flags[self.usedCropTypes[ctCount] - 1], crop_df['season'], crop_df['etact'],
                         crop_df['etpot'], crop_df['ppt'], crop_df['sro'], crop_df['dperc'], crop_df['sir'], crop_df['niwr'])
                 except:
                     logging.error('\n  ERROR: ' + str(sys.exc_info()[0]) +  ' occurred computing seasonally adjusted crop type et data for ' +  self.cell_id + ' from DRI format\n')
                     return False
-                
+
                 if ctCount == 0:
                     # store ET Cell reference ET and precip if first crop
 
                     self.etcData_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                     self.etcData_df['refet'] = crop_df['refet']
                     self.etcData_df['ppt'] = crop_df['ppt']
-                
-                # drop unused columns               
+
+                # drop unused columns
 
                 for fn in list(crop_df.columns):
                     if fn not in ['date', 'year', 'cet', 'effprcp', 'cir', 'season']:
                         crop_df.drop(fn, axis = 1, inplace = True)
-                        
+
                 # add crop number column
-                
+
                 crop_df['Crop Num'] = self.usedCropTypes[ctCount]
                 crop_df.reset_index(inplace = True)
                 crops_dict[self.usedCropTypes[ctCount]] = crop_df
@@ -265,19 +333,27 @@ class ETCell():
     def RDB_input_cet_data(self, cell_count, cfg, cells):
         """Read crop ET data for single ET cell using RDB format
 
-        Args:
-            cell_count: count of ET cell being processed
-            cfg: configuration data from INI file
-            cells: ET cell data (dict)
+        Parameters
+        ----------
+        cell_count :
+            count of ET cell being processed
+        cfg :
+            configuration data from INI file
+        cells : dict
+            ET cell data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        True
+        False
+
         """
+
         crops_dict = {}
         try:
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(cfg.input_cet['header_lines']) if i + 1 <> cfg.input_cet['names_line']]
+            data_skip = [i for i in range(cfg.input_cet['header_lines']) if i + 1 != cfg.input_cet['names_line']]
             input_cet_path = os.path.join(cfg.input_cet['ws'], cfg.input_cet['name_format'].replace('%s', self.cell_id)).replace("%c", "")
             if not os.path.isfile(input_cet_path):
                 logging.error('ERROR:  input crop et file {} does not exist'.format(input_cet_path))
@@ -285,16 +361,16 @@ class ETCell():
             logging.debug('  {0}'.format(input_cet_path))
             """
                 crop_df = pd.read_csv(input_cet_path, engine = 'python',
-                        header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
-                        skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
+                        header = cfg.input_cet['names_line'] - len(data_skip) - 1,
+                        skiprows = data_skip, sep = cfg.input_cet['delimiter'],
                         comment = "#", na_values = ['NaN'])
             """
             rdb_cet_df = pd.read_csv(input_cet_path, engine = 'python',
-                    header = cfg.input_cet['names_line'] - len(data_skip) - 1, 
-                    skiprows = data_skip, sep = cfg.input_cet['delimiter'], 
+                    header = cfg.input_cet['names_line'] - len(data_skip) - 1,
+                    skiprows = data_skip, sep = cfg.input_cet['delimiter'],
                     comment = "#", na_values = ['NaN'])
             crop_num_col = list(rdb_cet_df.columns)[0]
-            rdb_cet_df[crop_num_col] = rdb_cet_df[[crop_num_col]].apply(lambda s: int(*s), axis = 1, raw = True, reduce = True)
+            rdb_cet_df[crop_num_col] = rdb_cet_df[[crop_num_col]].apply(lambda s: int(*s), axis = 1, raw = True, result_type = 'reduce')
 
             # Check fields
 
@@ -302,8 +378,8 @@ class ETCell():
                 if (field_name is not None and field_name not in rdb_cet_df.columns):
                     if cfg.input_cet['fnspec'][field_key].lower() == 'estimated': continue
                     if cfg.input_cet['fnspec'][field_key].lower() == 'unused': continue
-                    logging.error(('\n  ERROR: Field "{0}" was not found in {1}\n' + 
-                             '    Check {2}_field value in INI file').format(field_name, 
+                    logging.error(('\n  ERROR: Field "{0}" was not found in {1}\n' +
+                             '    Check {2}_field value in INI file').format(field_name,
                              os.path.basename(input_cet_path), field_key))
                     return False
                 # Rename dataframe fields
@@ -311,7 +387,7 @@ class ETCell():
             rdb_cet_df['niwr'] = rdb_cet_df['cir'].values
 
             # Convert date strings to datetimes and index on date
-        
+
             if cfg.input_cet['fields']['date'] is not None:
                 rdb_cet_df['date'] = pd.to_datetime(rdb_cet_df['date'])
             else:
@@ -328,23 +404,23 @@ class ETCell():
                     logging.error('\nERROR: ' + str(sys.exc_info()[0]) + 'occurred subsetting crop type ', crop_type, '.\n')
                 crop_df.reset_index(inplace = True)
                 crop_df.set_index('date', inplace = True)
-                
+
                 # sub set data for this crop
-                
+
                 if cell_count == 0 and ctCount == 0:
                     # verify period
-        
+
                     if cfg.start_dt is None:
                         pydt = crop_df.index[0]
                         sdt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
                         cfg.start_dt = pd.to_datetime(sdt)
-                    if cfg.end_dt is None: 
+                    if cfg.end_dt is None:
                         pydt = crop_df.index[len(crop_df) - 1]
                         edt = datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute)
                         cfg.end_dt = pd.to_datetime(edt)
-            
+
                 # truncate period
-        
+
                 try:
                     crop_df = crop_df.truncate(before = cfg.start_dt, after = cfg.end_dt)
                 except:
@@ -352,30 +428,30 @@ class ETCell():
                     return False
 
                 # compute seasonally adjusted crop et, effective precipitation and irrigation water requirement
-                
+
                 try:
-                    crop_df['cet'], crop_df['effprcp'], crop_df['cir'] = seasonal_ctetdata(cfg.ngs_toggle, 
-                        cfg.crop_irr_flags[self.usedCropTypes[ctCount] - 1], crop_df['season'], crop_df['etact'], 
+                    crop_df['cet'], crop_df['effprcp'], crop_df['cir'] = seasonal_ctetdata(cfg.ngs_toggle,
+                        cfg.crop_irr_flags[self.usedCropTypes[ctCount] - 1], crop_df['season'], crop_df['etact'],
                         crop_df['etpot'], crop_df['ppt'], crop_df['sro'], crop_df['dperc'], crop_df['sir'], crop_df['niwr'])
                 except:
                     logging.error('\n  ERROR: ' + str(sys.exc_info()[0]) +  ' occurred computing seasonally adjusted crop type et data for ' +  self.cell_id + ' from RDB format\n')
                     return False
-                
+
                 if ctCount == 0:
                     # store ET Cell reference ET and precip if first crop
 
                     self.etcData_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                     self.etcData_df['refet'] = crop_df['refet']
                     self.etcData_df['ppt'] = crop_df['ppt']
-                
-                # drop unused columns               
+
+                # drop unused columns
 
                 for fn in list(crop_df.columns):
                     if fn not in ['date', 'year', 'cet', 'effprcp', 'cir', 'season']:
                         crop_df.drop(fn, axis = 1, inplace = True)
-                        
+
                 # add crop number column
-                
+
                 crop_df['Crop Num'] = self.usedCropTypes[ctCount]
                 crop_df.reset_index(inplace = True)
                 crops_dict[self.usedCropTypes[ctCount]] = crop_df
@@ -391,7 +467,7 @@ class ETCell():
     def dist_ngs_to_gs(self, cfg):
         """Redistribute et's and cir's to growing season
 
-        Args:
+        Parameters:
             cfg: configuration data from INI file
 
         Returns:
@@ -429,7 +505,7 @@ class ETCell():
                             gsED = prev_dt
 
                             # set non growing season values to 0.0
-    
+
                             for tdt in mod_dmis.make_dt_index(cfg.time_step, cfg.ts_quantity, ngsSD, ngsED):
                                 adjCrop_df.at[tdt, 'cir'] = 0.0
                                 adjCrop_df.at[tdt, 'cet'] = 0.0
@@ -483,7 +559,7 @@ class ETCell():
                 # if self.usedCropTypes[ctCount] == 3: adjCrop_df.to_csv(path_or_buf = "crop3.csv", sep = ",")
 
                 # add crop number column
-                
+
                 adjCrop_df['Crop Num'] = self.usedCropTypes[ctCount]
                 adjCrop_df.reset_index(inplace = True)
                 crops_dict[self.usedCropTypes[ctCount]] = adjCrop_df
@@ -501,38 +577,38 @@ class ETCell():
     def read_cell_crop_mix(self, cfg):
         """Read annual acres, cropping percentages, and crop information for an ET Cell
 
-        Args:
+        Parameters:
             cfg: configuration data from INI file
 
         Returns:
             success: True or False
         """
-        
+
         # set up some stuff
-        
+
         try: # verify file existence and opening
             # Get list of 0 based line numbers to skip
             # Ignore header but assume header was set as 1's based index
-            data_skip = [i for i in range(cfg.ccm_header_lines) if i + 1 <> cfg.ccm_names_line]
-            if '.xls' in cfg.cell_mix_path.lower(): 
-                input_df = pd.read_excel(cfg.cell_mix_path, sheetname = cfg.cell_mix_ws, 
-                        header = cfg.ccm_names_line - len(data_skip) - 1, 
+            data_skip = [i for i in range(cfg.ccm_header_lines) if i + 1 != cfg.ccm_names_line]
+            if '.xls' in cfg.cell_mix_path.lower():
+                input_df = pd.read_excel(cfg.cell_mix_path, sheetname = cfg.cell_mix_ws,
+                        header = cfg.ccm_names_line - len(data_skip) - 1,
                         skiprows = data_skip, na_values = ['NaN'])
             else:
                 input_df = pd.read_csv(cfg.cell_mix_path, engine = 'python',
-                        header = cfg.ccm_names_line - len(data_skip) - 1, 
+                        header = cfg.ccm_names_line - len(data_skip) - 1,
                         skiprows = data_skip, sep = cfg.ccm_delimiter)
-            input_df.rename(columns = {input_df.columns[1]:'ETCellID'}, inplace = True) 
-            input_df['ETCellID'] = input_df[[input_df.columns[1]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
+            input_df.rename(columns = {input_df.columns[1]:'ETCellID'}, inplace = True)
+            input_df['ETCellID'] = input_df[[input_df.columns[1]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
             input_df = input_df.query('ETCellID == @self.cell_id').copy().reset_index(drop = True)
             input_df.drop(['ETCellID'], axis = 1, inplace = True)
-            if cfg.ccm_ts_type == 1: 
+            if cfg.ccm_ts_type == 1:
                 # constant crop mix - copy 9999 year to other years
 
                 if input_df.columns[0].lower() == 'year':
                     if input_df.columns[0] == 'Year':
-                        input_df.rename(columns = {'Year':'year'}, inplace = True) 
-                    input_df['year'] = input_df[['year']].apply(lambda s: int(*s), axis = 1, raw = True, reduce = True)
+                        input_df.rename(columns = {'Year':'year'}, inplace = True)
+                    input_df['year'] = input_df[['year']].apply(lambda s: int(*s), axis = 1, raw = True, result_type = 'reduce')
                 # input_df.drop(input_df.columns[0], axis = 1, inplace = True)
                 y9999_df = input_df.copy()
                 del input_df
@@ -553,16 +629,16 @@ class ETCell():
                 # variable crop mix - set up year column
                 if input_df.columns[0].lower() == 'year':
                     if input_df.columns[0] == 'Year':
-                        input_df.rename(columns = {'Year':'year'}, inplace = True) 
-                    input_df['year'] = input_df[['year']].apply(lambda s: int(*s), axis = 1, raw = True, reduce = True)
+                        input_df.rename(columns = {'Year':'year'}, inplace = True)
+                    input_df['year'] = input_df[['year']].apply(lambda s: int(*s), axis = 1, raw = True, result_type = 'reduce')
                 else:
                     # convert dates to years
-                    
+
                     input_df['year'] = pd.to_datetime(self.input_met_df['Date']).year
                     input_df.drop('Date', axis = 1, inplace = True)
 
                 # verify crop mix years for user's period
-                
+
                 if input_df['year'][0] > cfg.start_dt.year:
                     logging.warning("First year is after start year in crop mix for " + self.cell_id + ".")
                     return False
@@ -571,7 +647,7 @@ class ETCell():
                     return False
 
                 # truncate for user's period
-                
+
                 input_df = input_df[input_df['year'] >= cfg.start_dt.year]
                 if input_df is None:
                     logging.warning("Incomplete period in crop mix for " + self.cell_id + ".")
@@ -580,16 +656,16 @@ class ETCell():
                 if input_df is None:
                     logging.warning("Incomplete period in crop mix for " + self.cell_id + ".")
                     return False
-            input_df[input_df.columns[4]] = input_df[[input_df.columns[4]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
-            input_df[input_df.columns[5]] = input_df[[input_df.columns[5]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
-            input_df[input_df.columns[6]] = input_df[[input_df.columns[6]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
-            input_df[input_df.columns[7]] = input_df[[input_df.columns[7]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
+            input_df[input_df.columns[4]] = input_df[[input_df.columns[4]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
+            input_df[input_df.columns[5]] = input_df[[input_df.columns[5]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
+            input_df[input_df.columns[6]] = input_df[[input_df.columns[6]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
+            input_df[input_df.columns[7]] = input_df[[input_df.columns[7]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
             input_df['UserBegDate'] = input_df[['year', input_df.columns[4], input_df.columns[5]]].apply(lambda s : user_begin_date(*s),axis = 1)
             input_df['UserEndDate'] = input_df[['year', input_df.columns[6], input_df.columns[7]]].apply(lambda s : user_end_date(*s),axis = 1)
-            input_df[input_df.columns[1]] = input_df[[input_df.columns[1]]].apply(lambda s: str(*s), axis = 1, raw = True, reduce = True)
+            input_df[input_df.columns[1]] = input_df[[input_df.columns[1]]].apply(lambda s: str(*s), axis = 1, raw = True, result_type = 'reduce')
             input_df.rename(columns = {input_df.columns[1]:'UserCropName'}, inplace = True)
             input_df.rename(columns = {input_df.columns[3]:'CropNumber'}, inplace = True)
-            input_df['CropNumber'] = input_df[['CropNumber']].apply(lambda s: int(*s), axis = 1, raw = True, reduce = True)
+            input_df['CropNumber'] = input_df[['CropNumber']].apply(lambda s: int(*s), axis = 1, raw = True, result_type = 'reduce')
             self.user_crops_list = pd.unique(input_df[input_df.columns[1]].values).tolist()
             try:
                 self.user_crops_list.remove('Total')
@@ -600,9 +676,9 @@ class ETCell():
                     try:
                         self.user_crops_list.remove('TOTAL')
                     except: pass
-            
+
             # process annual total data
-            
+
             self.ann_crops_df = input_df[input_df['UserCropName'] == 'Total'].copy().reset_index(drop = True)
             ann_crops_columns = list(self.ann_crops_df.columns)
             self.ann_crops_df.drop(ann_crops_columns[1], axis = 1, inplace = True)
@@ -614,11 +690,11 @@ class ETCell():
             for fn in list(self.ann_crops_df.columns):
                 if fn not in ['year', 'area', 'UserBegDate', 'UserEndDate', 'CropCount']:
                     self.ann_crops_df.drop(fn, axis = 1, inplace = True)
-            
+
             # get rid of 'Total' row in crop mix
-            
+
             self.ann_crops_df.set_index('year', inplace = True)
-            input_df = input_df[input_df['UserCropName'] <> 'Total'].copy().reset_index(drop = True)
+            input_df = input_df[input_df['UserCropName'] != 'Total'].copy().reset_index(drop = True)
 
             # parse crop data for user's run period
 
@@ -626,10 +702,10 @@ class ETCell():
             for yCount in range(0, cfg.number_years):
                 year_to_use += 1
                 year_df = input_df[input_df['year'] == year_to_use].copy().reset_index(drop = True)
-                year_df[year_df.columns[2]] = year_df[[year_df.columns[2]]].apply(lambda s: float(*s), axis = 1, raw = True, reduce = True)
-                
+                year_df[year_df.columns[2]] = year_df[[year_df.columns[2]]].apply(lambda s: float(*s), axis = 1, raw = True, result_type = 'reduce')
+
                 # set crop percents
-                
+
                 year_df['CropPercents'] = crop_percents(cfg.ccm_mix_type, self.ann_crops_df['area'][year_to_use], year_df[year_df.columns[2]])
 
                 # drop unused columns
@@ -639,9 +715,9 @@ class ETCell():
                         year_df.drop(fn, axis = 1, inplace = True)
                 ubd = datetime.datetime(year_to_use, 1, 1)
                 ued = datetime.datetime(year_to_use, 12, 31)
-                        
+
                 # check for missing crops
-                
+
                 year_crops = year_df['UserCropName'].values.tolist()
                 for crop in self.user_crops_list:
                     if crop not in year_crops:
@@ -653,9 +729,9 @@ class ETCell():
                 del year_df
             del input_df
             self.crops_mix_df.reset_index(drop = True, inplace = True)
-            
+
             # convert area units from acre to hectare if needed
-            
+
             if cfg.area_units_type == 1:
                 self.ann_crops_df['area'] *= 0.40468564224
             return True
@@ -666,7 +742,7 @@ class ETCell():
     def compute_area_requirements(self, cell_count, cfg, cells):
         """ compute area requirements as rates, flows, or proportions
 
-        Args:
+        Parameters:
             cell_count: count of ET cellbeing processed
             cfg: configuration data from INI file
             cells: ET cell data (dict)
@@ -683,7 +759,7 @@ class ETCell():
             self.etcData_df['season'] = np.zeros((cfg.number_days), dtype = int)
             self.etcCropIRs_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
             self.etcCropETs_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
-            
+
             # loop thru ET Cell's (user) crops
 
             for cCount in range(0, len(self.user_crops_list)):
@@ -699,14 +775,14 @@ class ETCell():
                 ct_index = self.crop_type_index(crop_mix_df['CropNumber'][cfg.start_dt.year])
 
                 # set up crop by crop and weighted output
-                
+
                 if ct_index > -1:
                     # pick up crop cir's and et's and compute straight ET Cell cir's, et's and eff precip for current year
 
                     ct_df = self.crops_df.xs(crop_mix_df['CropNumber'][cfg.start_dt.year], level = 0, drop_level = False)
                     ct_df.reset_index(inplace = True)
                     ct_df.set_index('date', inplace = True)
-                    
+
                     # following loop is really really slow; unclear how to speed it up
 
                     for dt, ctdata in ct_df.iterrows():
@@ -724,16 +800,16 @@ class ETCell():
                                 self.etcCropIRs_df.at[dt, cir_col_name] = ctdata['cir']
                     del ct_df
                 del crop_mix_df
-                
+
             # apply no negative ir's to crop by crop ir's if toggled
-            
+
             # cfg.neg_nirs_toggle = 2    # debug
             if cfg.neg_nirs_toggle == 2 or cfg.neg_nirs_toggle == 3:
                 adj_daily_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 col_names = list(self.etcCropIRs_df.columns)
-            
+
                 # compute non negative values and set up aggregations
-            
+
                 aggregation_func = {}
                 for col_name in col_names:
                     adj_daily_df[col_name] = np.maximum(self.etcCropIRs_df[col_name].values, 0.0)
@@ -744,7 +820,7 @@ class ETCell():
                 unadj_ann_df = self.etcCropIRs_df.resample('AS').apply( aggregation_func)
                 adj_ann_df = adj_daily_df.resample('AS').apply( aggregation_func)
                 del aggregation_func
-                
+
                 # compute annual ratios for retaining annual totals
 
                 ann_adj_ratios_df = pd.DataFrame(index = adj_ann_df.index)
@@ -752,7 +828,7 @@ class ETCell():
                     ann_adj_ratios_df['adj'] = adj_ann_df[col_name].values
                     ann_adj_ratios_df['unadj'] = unadj_ann_df[col_name].values
                     ann_adj_ratios_df[col_name] = ann_adj_ratios_df[['adj', 'unadj']].apply(lambda s : calculate_ratios(*s),axis = 1)
-                    
+
                 # apply annual ratios to retain annual totals
 
                 del self.etcCropIRs_df
@@ -761,9 +837,9 @@ class ETCell():
                     self.etcCropIRs_df[col_name] = apply_annual_ratios(cfg.start_dt, adj_daily_df.index, adj_daily_df[col_name].values, ann_adj_ratios_df[col_name].values)
                     self.etcCropIRs_df[col_name] = np.maximum(self.etcCropIRs_df[col_name].values, 0.0)
                 del adj_daily_df, unadj_ann_df, adj_ann_df, ann_adj_ratios_df
-            
+
             # set up and/or post requested crop by crop output
-            
+
             if cfg.output_cet_flag:
                 if not self.setup_output_cet_data(cell_count, cfg, cells): return False
             else:
@@ -774,15 +850,15 @@ class ETCell():
                 del self.etcCropIRs_df
 
             # compute running average weighted et for smoothing if toggled
-            
+
             # cfg.et_smoothing_days = 20    # debug
             if cfg.et_smoothing_days > 1:
                 # compute running averages
-                
+
                 daily_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 daily_df['straight'] = self.etcData_df['et']
                 daily_df['smoothed'] = pd.rolling_mean(daily_df['straight'], window = cfg.et_smoothing_days, center = True, min_periods = 1)
-                
+
                 # compute annual sums
 
                 aggregation_func = {}
@@ -790,16 +866,16 @@ class ETCell():
                     aggregation_func.update({col_name: np.sum})
                 annual_df = daily_df.resample('AS').apply( aggregation_func)
                 del aggregation_func
-                
+
                 # compute annual ratios
-                
+
                 annual_df['ratios'] = annual_df[['straight', 'smoothed']].apply(lambda s : calculate_ratios(*s),axis = 1)
-                
+
                 # apply ratios
-                
+
                 """
                 # following verified that annual sums are resepected
-                
+
                 daily_df['et'] = apply_annual_ratios(cfg.start_dt, daily_df.index, daily_df['smoothed'].values, annual_df['ratios'].values)
                 aggregation_func.update({'et': np.sum})
                 del annual_df
@@ -810,7 +886,7 @@ class ETCell():
                 """
                 self.etcData_df['et'] = apply_annual_ratios(cfg.start_dt, daily_df.index, daily_df['smoothed'].values, annual_df['ratios'].values)
                 del daily_df, annual_df
-            
+
             # compute ET cell net irrigation requirement
 
             for dt, dailydata in self.etcData_df.iterrows():
@@ -822,13 +898,13 @@ class ETCell():
                     self.etcData_df.at[dt, 'effprcp'] = 0.0
 
             # apply no negative ir's to weighted ir's if toggled
-            
+
             # cfg.neg_nirs_toggle = 1    # debug
             if cfg.neg_nirs_toggle == 1 or cfg.neg_nirs_toggle == 3:
                 daily_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 daily_df['unadjusted'] = self.etcData_df['nir']
                 daily_df['adjusted'] = np.maximum(daily_df['unadjusted'].values, 0.0)
-                
+
                 # compute annual sums
 
                 aggregation_func = {}
@@ -836,27 +912,27 @@ class ETCell():
                     aggregation_func.update({col_name: np.sum})
                 annual_df = daily_df.resample('AS').apply( aggregation_func)
                 del aggregation_func
-                
+
                 # compute annual ratios
-                
+
                 annual_df['ratios'] = annual_df[['adjusted', 'unadjusted']].apply(lambda s : calculate_ratios(*s),axis = 1)
-                
+
                 # apply ratios
-                
+
                 self.etcData_df['nir'] = apply_annual_ratios(cfg.start_dt, daily_df.index, daily_df['adjusted'].values, annual_df['ratios'].values)
                 self.etcData_df['nir'] = np.maximum(self.etcData_df['nir'].values, 0.0)
                 del daily_df, annual_df
 
             # compute running average weighted ir for smoothing if toggled
-            
+
             # cfg.nir_smoothing_days = 20    # debug
             if cfg.nir_smoothing_days > 1:
                 # compute running averages
-                
+
                 daily_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 daily_df['straight'] = self.etcData_df['nir']
                 daily_df['smoothed'] = pd.rolling_mean(daily_df['straight'], window = cfg.nir_smoothing_days, center = True, min_periods = 1)
-                
+
                 # compute annual sums
 
                 aggregation_func = {}
@@ -864,13 +940,13 @@ class ETCell():
                     aggregation_func.update({col_name: np.sum})
                 annual_df = daily_df.resample('AS').apply( aggregation_func)
                 del aggregation_func
-                
+
                 # compute annual ratios
-                
+
                 annual_df['ratios'] = annual_df[['straight', 'smoothed']].apply(lambda s : calculate_ratios(*s),axis = 1)
-                
+
                 # apply ratios
-                
+
                 self.etcData_df['nir'] = apply_annual_ratios(cfg.start_dt, daily_df.index, daily_df['smoothed'].values, annual_df['ratios'].values)
                 del daily_df, annual_df
 
@@ -885,14 +961,14 @@ class ETCell():
             del aggregation_func
             self.etcData_df['nirfrac'] = compute_daily_fractions(cfg.start_dt, daily_df.index, daily_df['nir'].values, monthly_df['nir'].values)
             del daily_df, monthly_df
-            
+
             # compute weighted et and ir as flow
-            
+
             self.etcData_df['etflow'] = compute_flow(cfg.start_dt, self.etcData_df.index, self.etcData_df['et'].values, self.ann_crops_df['area'].values)
             self.etcData_df['nirflow'] = compute_flow(cfg.start_dt, self.etcData_df.index, self.etcData_df['nir'].values, self.ann_crops_df['area'].values)
 
             # set up and/or post requested weighted output
-            
+
             if not self.setup_output_aet_data(cell_count, cfg, cells): return False
             return True
         except:
@@ -902,7 +978,7 @@ class ETCell():
     def setup_output_aet_data(self, cell_count, cfg, cells):
         """Set up aet output data
 
-        Args:
+        Arg
             cell_count: count of et cell being processed
             cfg: configuration data from INI file
             cells: ET Cell data (dict)
@@ -911,9 +987,9 @@ class ETCell():
             success: True or False
         """
         logging.debug('Processing specified area et data')
-        
+
         try:
-            
+
             # Check/modify units
 
             for field_key, field_units in cfg.output_aet['units'].items():
@@ -946,19 +1022,19 @@ class ETCell():
                     self.etcData_df = self.etcData_df.rename(columns={fn:cfg.output_aet['fields'][fn]})
                 else:
                     self.etcData_df.drop(fn, axis = 1, inplace = True)
-            if 'date' in cfg.output_aet['fields'] and cfg.output_aet['fields']['date'] is not None: 
+            if 'date' in cfg.output_aet['fields'] and cfg.output_aet['fields']['date'] is not None:
                 try:
                     daily_output_aet_df.index.set_names(cfg.output_aet['fields']['date'], inplace = True)
                 except: pass    # Index is probably already named 'Date'
             data_fields = list(self.etcData_df.columns)
 
             # set up aggregations
-            
+
             aggregation_func = {}
             for fn in data_fields:
                 fc = cfg.output_aet['out_data_fields'].index(fn)
                 field_name = cfg.output_aet['data_out_fields'][fc]
-                if "flow" in field_name: 
+                if "flow" in field_name:
                     aggregation_func.update({fn: np.mean})
                 else:
                     aggregation_func.update({fn: np.sum})
@@ -968,25 +1044,25 @@ class ETCell():
             if cfg.annual_output_aet_flag:
                 # annual_output_aet_df = self.etcData_df.resample('AS').apply( aggregation_func)
                 annual_output_aet_df = self.etcData_df.resample('A').apply( aggregation_func)
-             
+
             # set up output fields
 
             if cfg.daily_output_aet_flag:
                 adj_daily_fields = []
-                if 'year' in cfg.used_output_aet_fields: 
+                if 'year' in cfg.used_output_aet_fields:
                     adj_daily_fields.append(cfg.output_aet['fields']['year'])
                     self.etcData_df[cfg.output_aet['fields']['year']] = self.etcData_df.index.year
-                if 'month' in cfg.used_output_aet_fields: 
+                if 'month' in cfg.used_output_aet_fields:
                     adj_daily_fields.append(cfg.output_aet['fields']['month'])
                     self.etcData_df[cfg.output_aet['fields']['month']] = self.etcData_df.index.month
-                if 'day' in cfg.used_output_aet_fields: 
+                if 'day' in cfg.used_output_aet_fields:
                     adj_daily_fields.append(cfg.output_aet['fields']['day'])
                     self.etcData_df[cfg.output_aet['fields']['day']] = self.etcData_df.index.day
-                if 'doy' in cfg.used_output_aet_fields: 
+                if 'doy' in cfg.used_output_aet_fields:
                     adj_daily_fields.append(cfg.output_aet['fields']['doy'])
                     self.etcData_df[cfg.output_aet['fields']['doy']] = self.etcData_df.index.doy
                 adj_daily_fields.extend(cfg.output_aet['out_data_fields'])
-            
+
                 # convert flows to volume if specified
 
                 if cfg.output_aet['daily_volume_units'] is not None:
@@ -999,14 +1075,14 @@ class ETCell():
                     minutes = cfg.output_aet['daily_minute_offset'])
             if cfg.monthly_output_aet_flag:
                 adj_monthly_fields = []
-                if 'year' in cfg.used_output_aet_fields: 
+                if 'year' in cfg.used_output_aet_fields:
                     adj_monthly_fields.append(cfg.output_aet['fields']['year'])
                     monthly_output_aet_df[cfg.output_aet['fields']['year']] = monthly_output_aet_df.index.year
-                if 'month' in cfg.used_output_aet_fields: 
+                if 'month' in cfg.used_output_aet_fields:
                     adj_monthly_fields.append(cfg.output_aet['fields']['month'])
                     monthly_output_aet_df[cfg.output_aet['fields']['month']] = monthly_output_aet_df.index.month
                 adj_monthly_fields.extend(cfg.output_aet['out_data_fields'])
-            
+
                 # convert flows to volume if specified
 
                 if cfg.output_aet['monthly_volume_units'] is not None:
@@ -1019,11 +1095,11 @@ class ETCell():
                     minutes = cfg.output_aet['monthly_minute_offset'])
             if cfg.annual_output_aet_flag:
                 adj_annual_fields = []
-                if 'year' in cfg.used_output_aet_fields: 
+                if 'year' in cfg.used_output_aet_fields:
                     adj_annual_fields.append(cfg.output_aet['fields']['year'])
                     annual_output_aet_df[cfg.output_aet['fields']['year']] = annual_output_aet_df.index.year
                 adj_annual_fields.extend(cfg.output_aet['out_data_fields'])
-            
+
                 # convert flows to volume if specified
 
                 if cfg.output_aet['annual_volume_units'] is not None:
@@ -1036,57 +1112,58 @@ class ETCell():
                     minutes = cfg.output_aet['annual_minute_offset'])
             if cfg.output_aet['data_structure_type'].upper() == 'SF P':
                 logging.debug('Posting specified area et data')
-                
+
                 # post SF P format output
 
                 if cfg.daily_output_aet_flag:
                     # format date attributes if values are formatted
-                    
+
                     if cfg.output_aet['daily_float_format'] is not None:
-                        if 'year' in cfg.used_out_aet_fields:
+                        if 'year' in cfg.used_output_aet_fields:
                             self.etcData_df[cfg.out_aet['fields']['year']] = \
                                 self.etcData_df[cfg.out_aet['fields']['year']].map(lambda x: ' %4d' % x)
-  	                if 'month' in cfg.used_out_aet_fields:
+                    if 'month' in cfg.used_output_aet_fields:
                             self.etcData_df[cfg.out_aet['fields']['month']] = \
                                 self.etcData_df[cfg.out_aet['fields']['month']].map(lambda x: ' %2d' % x)
-	                if 'day' in cfg.used_out_aet_fields:
+                    if 'day' in cfg.used_output_aet_fields:
                             self.etcData_df[cfg.out_aet['fields']['day']] = \
                                 self.etcData_df[cfg.out_aet['fields']['day']].map(lambda x: ' %2d' % x)
-	                if 'doy' in cfg.used_out_aet_fields:
+                    if 'doy' in cfg.used_output_aet_fields:
                             self.etcData_df[cfg.out_aet['fields']['doy']] = \
                                 self.etcData_df[cfg.out_aet['fields']['doy']].map(lambda x: ' %3d' % x)
-                                
+
                     # post daily output
-            
+
                     daily_output_aet_path = os.path.join(cfg.daily_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(daily_output_aet_path))
                     with open(daily_output_aet_path, 'w') as daily_output_aet_f:
                         daily_output_aet_f.write(cfg.output_aet['daily_header1'] + '\n')
                         if cfg.output_aet['header_lines'] == 2:
                             daily_output_aet_f.write(cfg.output_aet['daily_header2'] + '\n')
-           	        if 'date' in cfg.used_output_aet_fields:
-                            self.etcData_df.to_csv(daily_output_aet_f, sep = cfg.output_aet['delimiter'], 
-                                header = False, date_format = cfg.output_aet['daily_date_format'],
-                                float_format = cfg.output_aet['daily_float_format'],
-                                na_rep = 'NaN', columns = adj_daily_fields)
-    	                else:
-                            self.etcData_df.to_csv(daily_output_aet_f, sep = cfg.output_aet['delimiter'],
-                                header = False, index = False, na_rep = 'NaN', columns = adj_daily_fields, 
-                                float_format = cfg.output_aet['daily_float_format'])
+                        if 'date' in cfg.used_output_aet_fields:
+                                self.etcData_df.to_csv(daily_output_aet_f, sep = cfg.output_aet['delimiter'],
+                                    header = False, date_format = cfg.output_aet['daily_date_format'],
+                                    float_format = cfg.output_aet['daily_float_format'],
+                                    na_rep = 'NaN', columns = adj_daily_fields)
+                        else:
+                                self.etcData_df.to_csv(daily_output_aet_f, sep = cfg.output_aet['delimiter'],
+                                    header = False, index = False, na_rep = 'NaN', columns = adj_daily_fields,
+                                    float_format = cfg.output_aet['daily_float_format'])
                     del self.etcData_df, daily_output_aet_path, adj_daily_fields
+
                 if cfg.monthly_output_aet_flag:
                     # format date attributes if values are formatted
-                    
+
                     if cfg.output_aet['monthly_float_format'] is not None:
-                        if 'year' in cfg.used_out_aet_fields:
+                        if 'year' in cfg.used_output_aet_fields:
                             monthly_output_aet_df[cfg.out_aet['fields']['year']] = \
                                 monthly_output_aet_df[cfg.out_aet['fields']['year']].map(lambda x: ' %4d' % x)
-  	                if 'month' in cfg.used_out_aet_fields:
+                    if 'month' in cfg.used_output_aet_fields:
                             monthly_output_aet_df[cfg.out_aet['fields']['month']] = \
                                 monthly_output_aet_df[cfg.out_aet['fields']['month']].map(lambda x: ' %2d' % x)
 
                     # post monthly output
-            
+
                     monthly_output_aet_path = os.path.join(cfg.monthly_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(monthly_output_aet_path))
                     with open(monthly_output_aet_path, 'w') as monthly_output_aet_f:
@@ -1094,25 +1171,24 @@ class ETCell():
                         if cfg.output_aet['header_lines'] == 2:
                             monthly_output_aet_f.write(cfg.output_aet['monthly_header2'] + '\n')
                         if 'date' in cfg.used_output_aet_fields:
-                            monthly_output_aet_df.to_csv(monthly_output_aet_f, sep = cfg.output_aet['delimiter'], 
+                            monthly_output_aet_df.to_csv(monthly_output_aet_f, sep = cfg.output_aet['delimiter'],
                                 header = False, date_format = cfg.output_aet['monthly_date_format'],
                                 float_format = cfg.output_aet['monthly_float_format'],
                                 na_rep = 'NaN', columns = adj_monthly_fields)
-    	                else:
+                        else:
                             monthly_output_aet_df.to_csv(monthly_output_aet_f, sep = cfg.output_aet['delimiter'],
-                                header = False, index = False, na_rep = 'NaN', columns = adj_monthly_fields, 
+                                header = False, index = False, na_rep = 'NaN', columns = adj_monthly_fields,
                                 float_format = cfg.output_aet['monthly_float_format'])
                     del monthly_output_aet_df, monthly_output_aet_path, adj_monthly_fields
                 if cfg.annual_output_aet_flag:
                     # format date attributes if values are formatted
-                    
+
                     if cfg.output_aet['annual_float_format'] is not None:
-                        if 'year' in cfg.used_out_aet_fields:
+                        if 'year' in cfg.used_output_aet_fields:
                             annual_output_aet_df[cfg.out_aet['fields']['year']] = \
                                 annual_output_aet_df[cfg.out_aet['fields']['year']].map(lambda x: ' %4d' % x)
 
                     # post annual output
-            
                     annual_output_aet_path = os.path.join(cfg.annual_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(annual_output_aet_path))
                     with open(annual_output_aet_path, 'w') as annual_output_aet_f:
@@ -1120,13 +1196,13 @@ class ETCell():
                         if cfg.output_aet['header_lines'] == 2:
                             annual_output_aet_f.write(cfg.output_aet['annual_header2'] + '\n')
                         if 'date' in cfg.used_output_aet_fields:
-                            annual_output_aet_df.to_csv(annual_output_aet_f, sep = cfg.output_aet['delimiter'], 
+                            annual_output_aet_df.to_csv(annual_output_aet_f, sep = cfg.output_aet['delimiter'],
                                 header = False, date_format = cfg.output_aet['annual_date_format'],
                                 float_format = cfg.output_aet['annual_float_format'],
                                 na_rep = 'NaN', columns = adj_annual_fields)
-    	                else:
+                        else:
                             annual_output_aet_df.to_csv(annual_output_aet_f, sep = cfg.output_aet['delimiter'],
-                                header = False, index = False, na_rep = 'NaN', columns = adj_annual_fields, 
+                                header = False, index = False, na_rep = 'NaN', columns = adj_annual_fields,
                                 float_format = cfg.output_aet['annual_float_format'])
                     del annual_output_aet_df, annual_output_aet_path, adj_annual_fields
             else:    # formats other than SF P
@@ -1135,7 +1211,7 @@ class ETCell():
                     logging.warning('Setting up specified area et data by parameter')
 
                     # construct empty data frame for each output parameter
-                    
+
                     if cfg.daily_output_aet_flag:
                         daily_index = pd.date_range(cfg.start_dt, cfg.end_dt, freq = "D", name = "Date")
                         daily_index = daily_index + pd.Timedelta( \
@@ -1195,20 +1271,28 @@ class ETCell():
     def setup_output_cir_data(self, cell_count, cfg, cells):
         """Set up optional cir data output
 
-        Args:
-            cell_count: count of cir node being processed
-            cfg: configuration data from INI file
-            cells: ET cells data (dict)
+        Parameters
+        ----------
+        cell_count :
+            count of cir node being processed
+        cfg :
+            configuration data from INI file
+        cells : dict
+            ET cells data
 
-        Returns:
-            success: True or False
+        Returns
+        -------
+        True
+        False
+
         """
+
         logging.debug('Processing individual cir output')
         try:
-            if 'date' in cfg.output_cir['fields'] and cfg.output_cir['fields']['date'] is not None: 
+            if 'date' in cfg.output_cir['fields'] and cfg.output_cir['fields']['date'] is not None:
                 self.etcCropIRs_df.index.set_names(cfg.output_cir['fields']['date'], inplace = True)
             data_fields = list(self.etcCropIRs_df.columns)
-        
+
             # Check/modify units
 
             if cfg.output_cir['cir_units'].lower() == 'in*100':
@@ -1231,7 +1315,7 @@ class ETCell():
                     self.etcCropIRs_df[col_name] *= 0.001
 
             # set up aggregations
-            
+
             aggregation_func = {}
             for col_name in data_fields:
                 aggregation_func.update({col_name: np.sum})
@@ -1241,19 +1325,19 @@ class ETCell():
             if cfg.annual_output_cir_flag:
                 # annual_output_cir_df = self.etcCropIRs_df.resample('AS').apply( aggregation_func)
                 annual_output_cir_df = self.etcCropIRs_df.resample('A').apply( aggregation_func)
-             
+
             # set up output fields
 
             if cfg.daily_output_cir_flag:
                 # adj_daily_fields = list(self.etcCropIRs_df.columns)
                 adj_daily_fields = []
-                if cfg.output_cir['fields']['year'] is not None: 
+                if cfg.output_cir['fields']['year'] is not None:
                     adj_daily_fields.append(cfg.output_cir['fields']['year'])
                     self.etcCropIRs_df[cfg.output_cir['fields']['year']] = self.etcCropIRs_df.index.year
-                if cfg.output_cir['fields']['month'] is not None: 
+                if cfg.output_cir['fields']['month'] is not None:
                     adj_daily_fields.append(cfg.output_cir['fields']['month'])
                     self.etcCropIRs_df[cfg.output_cir['fields']['month']] = self.etcCropIRs_df.index.month
-                if cfg.output_cir['fields']['day'] is not None: 
+                if cfg.output_cir['fields']['day'] is not None:
                     adj_daily_fields.append(cfg.output_cir['fields']['day'])
                     self.etcCropIRs_df[cfg.output_cir['fields']['day']] = self.etcCropIRs_df.index.day
                 adj_daily_fields.extend(data_fields)
@@ -1263,10 +1347,10 @@ class ETCell():
             if cfg.monthly_output_cir_flag:
                 # adj_monthly_fields = list(monthly_output_cir_df)
                 adj_monthly_fields = []
-                if cfg.output_cir['fields']['year'] is not None: 
+                if cfg.output_cir['fields']['year'] is not None:
                     adj_monthly_fields.append(cfg.output_cir['fields']['year'])
                     monthly_output_cir_df[cfg.output_cir['fields']['year']] = monthly_output_cir_df.index.year
-                if cfg.output_cir['fields']['month'] is not None: 
+                if cfg.output_cir['fields']['month'] is not None:
                     adj_monthly_fields.append(cfg.output_cir['fields']['month'])
                     monthly_output_cir_df[cfg.output_cir['fields']['month']] = monthly_output_cir_df.index.month
                 adj_monthly_fields.extend(data_fields)
@@ -1276,7 +1360,7 @@ class ETCell():
             if cfg.annual_output_cir_flag:
                 # adj_annual_fields = list(annual_output_cir_df)
                 adj_annual_fields = []
-                if cfg.output_cir['fields']['year'] is not None: 
+                if cfg.output_cir['fields']['year'] is not None:
                     adj_annual_fields.append(cfg.output_cir['fields']['year'])
                     annual_output_cir_df[cfg.output_cir['fields']['year']] = annual_output_cir_df.index.year
                 adj_annual_fields.extend(data_fields)
@@ -1285,28 +1369,28 @@ class ETCell():
                     minutes = cfg.output_cir['annual_minute_offset'])
             if cfg.output_cir['data_structure_type'].upper() == 'SF P':
                 logging.debug('Posting individual cir output')
-                
+
                 # post SF P format output
 
                 # set up header(s)
-                
-                if cfg.output_cir['fields']['date'] is None: 
+
+                if cfg.output_cir['fields']['date'] is None:
                     header1 = ""
                 else:
                     header1 = cfg.output_cir['fields']['date']
-                if cfg.output_cir['fields']['year'] is not None: 
+                if cfg.output_cir['fields']['year'] is not None:
                     if header1 == "":
                         header1 = cfg.output_cir['fields']['year']
                     else:
                         header1 = header1 + \
                             cfg.output_cir['delimiter'] + cfg.output_cir['fields']['year']
-                if cfg.output_cir['fields']['month'] is not None: 
+                if cfg.output_cir['fields']['month'] is not None:
                     if header1 == "":
                         header1 = cfg.output_cir['fields']['month']
                     else:
                         header1 = header1 + \
                             cfg.output_cir['delimiter'] + cfg.output_cir['fields']['month']
-                if cfg.output_cir['fields']['day'] is not None: 
+                if cfg.output_cir['fields']['day'] is not None:
                     if header1 == "":
                         header1 =  cfg.output_cir['fields']['day']
                     else:
@@ -1314,23 +1398,23 @@ class ETCell():
                             cfg.output_cir['delimiter'] + cfg.output_cir['fields']['day']
                 for fn in data_fields:
                     header1 = header1 + cfg.output_cir['delimiter'] + fn
-                if cfg.output_cir['fields']['date'] is None: 
+                if cfg.output_cir['fields']['date'] is None:
                     header2 = ""
                 else:
                     header2 = "Units"
-                if cfg.output_cir['fields']['year'] is not None: 
+                if cfg.output_cir['fields']['year'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cir['fields']['year']
                     else:
                         header2 = header2 + \
                             cfg.output_cir['delimiter'] + cfg.output_cir['fields']['year']
-                if cfg.output_cir['fields']['month'] is not None: 
+                if cfg.output_cir['fields']['month'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cir['fields']['month']
                     else:
                         header2 = header2 + \
                             cfg.output_cir['delimiter'] + cfg.output_cir['fields']['month']
-                if cfg.output_cir['fields']['day'] is not None: 
+                if cfg.output_cir['fields']['day'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cir['fields']['day']
                     else:
@@ -1340,24 +1424,24 @@ class ETCell():
                     header2 = header2 + cfg.output_cir['delimiter'] + cfg.output_cir['cir_units']
                 if cfg.daily_output_cir_flag:
                     # post daily output
-            
+
                     daily_output_cir_path = os.path.join(cfg.daily_output_cir_ws, cfg.output_cir['name_format'] % self.cell_id)
                     logging.debug('  Daily CIR output path is {0}'.format(daily_output_cir_path))
                     with open(daily_output_cir_path, 'w') as daily_output_cir_f:
                         daily_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             daily_output_cir_f.write(header2 + '\n')
-                        if cfg.output_cir['fields']['date'] is None: 
+                        if cfg.output_cir['fields']['date'] is None:
                             self.etcCropIRs_df.to_csv(daily_output_cir_f, sep = cfg.output_cir['delimiter'],
-                                header = False, index = False, columns = adj_daily_fields, 
+                                header = False, index = False, columns = adj_daily_fields,
                                 na_rep = 'NaN', float_format = cfg.output_cir['daily_float_format'])
-    	                else:
-                            self.etcCropIRs_df.to_csv(daily_output_cir_f, sep = cfg.output_cir['delimiter'], 
+                        else:
+                            self.etcCropIRs_df.to_csv(daily_output_cir_f, sep = cfg.output_cir['delimiter'],
                                 header = False, date_format = cfg.output_cir['daily_date_format'],
                                 float_format = cfg.output_cir['daily_float_format'],
                                 na_rep = 'NaN', columns = adj_daily_fields)
                     del self.etcCropIRs_df, daily_output_cir_path, adj_daily_fields
-                if cfg.output_cir['fields']['day'] is not None: 
+                if cfg.output_cir['fields']['day'] is not None:
                     drop_string = cfg.output_cir['delimiter'] + cfg.output_cir['fields']['day']
                     header1 = header1.replace(drop_string, '')
                     header2 = header2.replace(drop_string, '')
@@ -1370,35 +1454,35 @@ class ETCell():
                         monthly_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             monthly_output_cir_f.write(header2 + '\n')
-                        if cfg.output_cir['fields']['date'] is None: 
+                        if cfg.output_cir['fields']['date'] is None:
                             monthly_output_cir_df.to_csv(monthly_output_cir_f, sep = cfg.output_cir['delimiter'],
-                                header = False, index = False, columns = adj_monthly_fields, 
+                                header = False, index = False, columns = adj_monthly_fields,
                                 na_rep = 'NaN', float_format = cfg.output_cir['monthly_float_format'])
-    	                else:
-                            monthly_output_cir_df.to_csv(monthly_output_cir_f, sep = cfg.output_cir['delimiter'], 
+                        else:
+                            monthly_output_cir_df.to_csv(monthly_output_cir_f, sep = cfg.output_cir['delimiter'],
                                 header = False, date_format = cfg.output_cir['monthly_date_format'],
                                 float_format = cfg.output_cir['monthly_float_format'],
                                 na_rep = 'NaN', columns = adj_monthly_fields)
                     del monthly_output_cir_df, monthly_output_cir_path, adj_monthly_fields
-                if cfg.output_cir['fields']['month'] is not None: 
+                if cfg.output_cir['fields']['month'] is not None:
                     drop_string = cfg.output_cir['delimiter'] + cfg.output_cir['fields']['month']
                     header1 = header1.replace(drop_string, '')
                     header2 = header2.replace(drop_string, '')
                 if cfg.annual_output_cir_flag:
                     # post annual output
-            
+
                     annual_output_cir_path = os.path.join(cfg.annual_output_cir_ws, cfg.output_cir['name_format'] % self.cell_id)
                     logging.debug('  Annual CIR output path is {0}'.format(annual_output_cir_path))
                     with open(annual_output_cir_path, 'w') as annual_output_cir_f:
                         annual_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             annual_output_cir_f.write(header2 + '\n')
-                        if cfg.output_cir['fields']['date'] is None: 
+                        if cfg.output_cir['fields']['date'] is None:
                             annual_output_cir_df.to_csv(annual_output_cir_f, sep = cfg.output_cir['delimiter'],
-                                header = False, index = False, columns = adj_annual_fields, 
+                                header = False, index = False, columns = adj_annual_fields,
                                 na_rep = 'NaN', float_format = cfg.output_cir['annual_float_format'])
-    	                else:
-                            annual_output_cir_df.to_csv(annual_output_cir_f, sep = cfg.output_cir['delimiter'], 
+                        else:
+                            annual_output_cir_df.to_csv(annual_output_cir_f, sep = cfg.output_cir['delimiter'],
                                 header = False, date_format = cfg.output_cir['annual_date_format'],
                                 float_format = cfg.output_cir['annual_float_format'],
                                 na_rep = 'NaN', columns = adj_annual_fields)
@@ -1430,7 +1514,7 @@ class ETCell():
     def setup_output_cet_data(self, cell_count, cfg, cells):
         """Set up optional cet data output
 
-        Args:
+        Parameters:
             cell_count: count of cet node being processed
             cfg: configuration data from INI file
             cells: ET cells data (dict)
@@ -1440,10 +1524,10 @@ class ETCell():
         """
         logging.debug('Processing individual cet output')
         try:
-            if 'date' in cfg.output_cet['fields'] and cfg.output_cet['fields']['date'] is not None: 
+            if 'date' in cfg.output_cet['fields'] and cfg.output_cet['fields']['date'] is not None:
                 self.etcCropETs_df.index.set_names(cfg.output_cet['fields']['date'], inplace = True)
             data_fields = list(self.etcCropETs_df.columns)
-        
+
             # Check/modify units
 
             if cfg.output_cet['cet_units'].lower() == 'in*100':
@@ -1466,7 +1550,7 @@ class ETCell():
                     self.etcCropETs_df[col_name] *= 0.001
 
             # set up aggregations
-            
+
             aggregation_func = {}
             for col_name in data_fields:
                 aggregation_func.update({col_name: np.sum})
@@ -1476,19 +1560,19 @@ class ETCell():
             if cfg.annual_output_cet_flag:
                 # annual_output_cet_df = self.etcCropETs_df.resample('AS').apply( aggregation_func)
                 annual_output_cet_df = self.etcCropETs_df.resample('A').apply( aggregation_func)
-             
+
             # set up output fields
 
             if cfg.daily_output_cet_flag:
                 # adj_daily_fields = list(self.etcCropETs_df.columns)
                 adj_daily_fields = []
-                if cfg.output_cet['fields']['year'] is not None: 
+                if cfg.output_cet['fields']['year'] is not None:
                     adj_daily_fields.append(cfg.output_cet['fields']['year'])
                     self.etcCropETs_df[cfg.output_cet['fields']['year']] = self.etcCropETs_df.index.year
-                if cfg.output_cet['fields']['month'] is not None: 
+                if cfg.output_cet['fields']['month'] is not None:
                     adj_daily_fields.append(cfg.output_cet['fields']['month'])
                     self.etcCropETs_df[cfg.output_cet['fields']['month']] = self.etcCropETs_df.index.month
-                if cfg.output_cet['fields']['day'] is not None: 
+                if cfg.output_cet['fields']['day'] is not None:
                     adj_daily_fields.append(cfg.output_cet['fields']['day'])
                     self.etcCropETs_df[cfg.output_cet['fields']['day']] = self.etcCropETs_df.index.day
                 adj_daily_fields.extend(data_fields)
@@ -1498,10 +1582,10 @@ class ETCell():
             if cfg.monthly_output_cet_flag:
                 # adj_monthly_fields = list(monthly_output_cet_df)
                 adj_monthly_fields = []
-                if cfg.output_cet['fields']['year'] is not None: 
+                if cfg.output_cet['fields']['year'] is not None:
                     adj_monthly_fields.append(cfg.output_cet['fields']['year'])
                     monthly_output_cet_df[cfg.output_cet['fields']['year']] = monthly_output_cet_df.index.year
-                if cfg.output_cet['fields']['month'] is not None: 
+                if cfg.output_cet['fields']['month'] is not None:
                     adj_monthly_fields.append(cfg.output_cet['fields']['month'])
                     monthly_output_cet_df[cfg.output_cet['fields']['month']] = monthly_output_cet_df.index.month
                 adj_monthly_fields.extend(data_fields)
@@ -1511,7 +1595,7 @@ class ETCell():
             if cfg.annual_output_cet_flag:
                 # adj_annual_fields = list(annual_output_cet_df)
                 adj_annual_fields = []
-                if cfg.output_cet['fields']['year'] is not None: 
+                if cfg.output_cet['fields']['year'] is not None:
                     adj_annual_fields.append(cfg.output_cet['fields']['year'])
                     annual_output_cet_df[cfg.output_cet['fields']['year']] = annual_output_cet_df.index.year
                 adj_annual_fields.extend(data_fields)
@@ -1520,28 +1604,28 @@ class ETCell():
                     minutes = cfg.output_cet['annual_minute_offset'])
             if cfg.output_cet['data_structure_type'].upper() == 'SF P':
                 logging.debug('Posting individual cet output')
-                
+
                 # post SF P format output
 
                 # set up header(s)
-                
-                if cfg.output_cet['fields']['date'] is None: 
+
+                if cfg.output_cet['fields']['date'] is None:
                     header1 = ""
                 else:
                     header1 = cfg.output_cet['fields']['date']
-                if cfg.output_cet['fields']['year'] is not None: 
+                if cfg.output_cet['fields']['year'] is not None:
                     if header1 == "":
                         header1 = cfg.output_cet['fields']['year']
                     else:
                         header1 = header1 + \
                             cfg.output_cet['delimiter'] + cfg.output_cet['fields']['year']
-                if cfg.output_cet['fields']['month'] is not None: 
+                if cfg.output_cet['fields']['month'] is not None:
                     if header1 == "":
                         header1 = cfg.output_cet['fields']['month']
                     else:
                         header1 = header1 + \
                             cfg.output_cet['delimiter'] + cfg.output_cet['fields']['month']
-                if cfg.output_cet['fields']['day'] is not None: 
+                if cfg.output_cet['fields']['day'] is not None:
                     if header1 == "":
                         header1 =  cfg.output_cet['fields']['day']
                     else:
@@ -1549,23 +1633,23 @@ class ETCell():
                             cfg.output_cet['delimiter'] + cfg.output_cet['fields']['day']
                 for fn in data_fields:
                     header1 = header1 + cfg.output_cet['delimiter'] + fn
-                if cfg.output_cet['fields']['date'] is None: 
+                if cfg.output_cet['fields']['date'] is None:
                     header2 = ""
                 else:
                     header2 = "Units"
-                if cfg.output_cet['fields']['year'] is not None: 
+                if cfg.output_cet['fields']['year'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cet['fields']['year']
                     else:
                         header2 = header2 + \
                             cfg.output_cet['delimiter'] + cfg.output_cet['fields']['year']
-                if cfg.output_cet['fields']['month'] is not None: 
+                if cfg.output_cet['fields']['month'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cet['fields']['month']
                     else:
                         header2 = header2 + \
                             cfg.output_cet['delimiter'] + cfg.output_cet['fields']['month']
-                if cfg.output_cet['fields']['day'] is not None: 
+                if cfg.output_cet['fields']['day'] is not None:
                     if header2 == "":
                         header2 = cfg.output_cet['fields']['day']
                     else:
@@ -1575,24 +1659,24 @@ class ETCell():
                     header2 = header2 + cfg.output_cet['delimiter'] + cfg.output_cet['cet_units']
                 if cfg.daily_output_cet_flag:
                     # post daily output
-            
+
                     daily_output_cet_path = os.path.join(cfg.daily_output_cet_ws, cfg.output_cet['name_format'] % self.cell_id)
                     logging.debug('  Daily CET output path is {0}'.format(daily_output_cet_path))
                     with open(daily_output_cet_path, 'w') as daily_output_cet_f:
                         daily_output_cet_f.write(header1 + '\n')
                         if cfg.output_cet['header_lines'] == 2:
                             daily_output_cet_f.write(header2 + '\n')
-                        if cfg.output_cet['fields']['date'] is None: 
+                        if cfg.output_cet['fields']['date'] is None:
                             self.etcCropETs_df.to_csv(daily_output_cet_f, sep = cfg.output_cet['delimiter'],
-                                header = False, index = False, columns = adj_daily_fields, 
+                                header = False, index = False, columns = adj_daily_fields,
                                 na_rep = 'NaN', float_format = cfg.output_cet['daily_float_format'])
-    	                else:
-                            self.etcCropETs_df.to_csv(daily_output_cet_f, sep = cfg.output_cet['delimiter'], 
+                        else:
+                            self.etcCropETs_df.to_csv(daily_output_cet_f, sep = cfg.output_cet['delimiter'],
                                 header = False, date_format = cfg.output_cet['daily_date_format'],
                                 float_format = cfg.output_cet['daily_float_format'],
                                 na_rep = 'NaN', columns = adj_daily_fields)
                     del self.etcCropETs_df, daily_output_cet_path, adj_daily_fields
-                if cfg.output_cet['fields']['day'] is not None: 
+                if cfg.output_cet['fields']['day'] is not None:
                     drop_string = cfg.output_cet['delimiter'] + cfg.output_cet['fields']['day']
                     header1 = header1.replace(drop_string, '')
                     header2 = header2.replace(drop_string, '')
@@ -1606,31 +1690,31 @@ class ETCell():
                         if cfg.output_cet['header_lines'] == 2:
                             monthly_output_cet_f.write(header2 + '\n')
                         if cfg.output_cet['monthly_float_format'] is None:
-                            if cfg.output_cet['fields']['date'] is None: 
+                            if cfg.output_cet['fields']['date'] is None:
                                 monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, index = False, columns = adj_monthly_fields)
-    	                    else:
-                                monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'], 
+                            else:
+                                monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, date_format = cfg.output_cet['monthly_date_format'],
                                     columns = adj_monthly_fields)
                         else:    # formatted output causes loss of precision in crop et computations
-                            if cfg.output_cet['fields']['date'] is None: 
+                            if cfg.output_cet['fields']['date'] is None:
                                 monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'],
-                                    header = False, index = False, columns = adj_monthly_fields, 
+                                    header = False, index = False, columns = adj_monthly_fields,
                                     float_format = cfg.output_cet['monthly_float_format'])
-    	                    else:
-                                monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'], 
+                            else:
+                                monthly_output_cet_df.to_csv(monthly_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, date_format = cfg.output_cet['monthly_date_format'],
                                     float_format = cfg.output_cet['monthly_float_format'],
                                     columns = adj_monthly_fields)
                     del monthly_output_cet_df, monthly_output_cet_path, adj_monthly_fields
-                if cfg.output_cet['fields']['month'] is not None: 
+                if cfg.output_cet['fields']['month'] is not None:
                     drop_string = cfg.output_cet['delimiter'] + cfg.output_cet['fields']['month']
                     header1 = header1.replace(drop_string, '')
                     header2 = header2.replace(drop_string, '')
                 if cfg.annual_output_cet_flag:
                     # post annual output
-            
+
                     annual_output_cet_path = os.path.join(cfg.annual_output_cet_ws, cfg.output_cet['name_format'] % self.cell_id)
                     logging.debug('  Annual CET output path is {0}'.format(annual_output_cet_path))
                     with open(annual_output_cet_path, 'w') as annual_output_cet_f:
@@ -1638,20 +1722,20 @@ class ETCell():
                         if cfg.output_cet['header_lines'] == 2:
                             annual_output_cet_f.write(header2 + '\n')
                         if cfg.output_cet['annual_float_format'] is None:
-                            if cfg.output_cet['fields']['date'] is None: 
+                            if cfg.output_cet['fields']['date'] is None:
                                 annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, index = False, columns = adj_annual_fields)
-        	            else:
-                                annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'], 
+                            else:
+                                annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, date_format = cfg.output_cet['annual_date_format'],
                                     columns = adj_annual_fields)
                         else:    # formatted output causes loss of precision in crop et computations
-                            if cfg.output_cet['fields']['date'] is None: 
+                            if cfg.output_cet['fields']['date'] is None:
                                 annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'],
-                                    header = False, index = False, columns = adj_annual_fields, 
+                                    header = False, index = False, columns = adj_annual_fields,
                                     float_format = cfg.output_cet['annual_float_format'])
-    	                    else:
-                                annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'], 
+                            else:
+                                annual_output_cet_df.to_csv(annual_output_cet_f, sep = cfg.output_cet['delimiter'],
                                     header = False, date_format = cfg.output_cet['annual_date_format'],
                                     float_format = cfg.output_cet['annual_float_format'],
                                     columns = adj_annual_fields)
@@ -1683,12 +1767,18 @@ class ETCell():
     def crop_type_index(self, crop_number):
         """crop type index
 
-        Args:
-            crop_number: crop number to index
+        Parameters
+        ----------
+        crop_number :
+            crop number to index
 
-        Returns:
-            ct_index
+        Returns
+        -------
+        ct_index :
+
+
         """
+
         try:
             ct_index = self.usedCropTypes.index(crop_number)
         except:
@@ -1697,21 +1787,39 @@ class ETCell():
 
 def seasonal_ctetdata(ngs_toggle, crop_irr_flag, season, actet, potet, precip, runoff, deep_perc, sim_irr, niwr):
     """Seasonal crop type et
-    
-    Args:
-        ngs_toggle: non growing season toggle
-        crop_irr_flag: crop irrigation flag
-        season: season flag
-        actet: actual crop type et
-        potet: potential crop type et
-        precip: total precipitation
-        runoff: surface runoff
-        deep_perc: deep percolation
-        sim_irr: simulated irrigation
 
-    Returns:
-        cet, eff_prcp, cir: seasonally adjusted crop type et data
+    Parameters
+    ----------
+    ngs_toggle : int
+        non growing season toggle
+
+    crop_irr_flag :
+        crop irrigation flag
+    season : int
+        season flag
+            0 :
+    actet :
+        actual crop type et
+    potet :
+        potential crop type et
+    precip :
+        total precipitation
+    runoff :
+        surface runoff
+    deep_perc :
+        deep percolation
+    sim_irr : num
+        simulated irrigation
+
+    Returns
+    -------
+    cet
+    eff_prcp
+    cir :
+        seasonally adjusted crop type et data
+
     """
+
     if ngs_toggle == 2 and season == 0:
         cet = 0.0
         eff_prcp = 0.0
@@ -1737,14 +1845,23 @@ def seasonal_ctetdata(ngs_toggle, crop_irr_flag, season, actet, potet, precip, r
 def crop_percents(crop_mix_type, irr_area, area_or_percent):
     """computes crop percents from crop area and total area
 
-    Args:
-        crop_mix_type: 0 for percents 1 for areas
-        irr_area: total irrigated area
-        area_or_percent: input area or percent
+    Parameters
+    ----------
+    crop_mix_type : int
+        0 : percents
+        1 : areas
+    irr_area :
+        total irrigated area
+    area_or_percent :
+        input area or percent
 
-    Returns:
-        crop_percent
+    Returns
+    -------
+    crop_percent :
+        crop percent
+
     """
+
     if crop_mix_type == 1:
         if irr_area == 0.0:
             crop_percent  = 0.0
@@ -1757,92 +1874,150 @@ def crop_percents(crop_mix_type, irr_area, area_or_percent):
 def calculate_ratios(c1, c2):
     """Calculate ratios of two NumPy arrays or df columns
 
-    Args:
-        c1: column 1 values
-        c2: column 2 values
+    Parameters
+    ----------
+    c1 :
+        column 1 values
+    c2 :
+        column 2 values
 
-    Returns:
-        NumPy array of ratios
+    Returns
+    -------
+     : array
+        ratios
+
     """
+
     if c2 == 0.0:
         return 1.0
     else:
         return c1 / c2
-    
+
 def apply_annual_ratios(ref_date, dt, ib_values, ann_ratios):
     """Apply annual ratios to daily array
 
-    Args
-        ref_date: Reference date
-        dt: DateTimeIndex
-        ib_values: NumPy array of values to be adjusted
-        ann_ratios: annual adjustment ratios
+    Parameters
+        ref_date : datetime
+            reference date
+        dt :
+            DateTimeIndex
+        ib_values : array
+            values to be adjusted
+        ann_ratios : array
+            annual adjustment ratios
 
-    Returns:
-        NumPy array of adjusted values
+    Returns
+    -------
+    ratio_adjust : array
+        adjusted values
+
     """
-    yCount = dt.year - ref_date.year
-    return ib_values * ann_ratios[yCount]
-    
+
+    year_count = dt.year - ref_date.year
+    ratio_adjust = ib_values * ann_ratios[year_count]
+    return ratio_adjust
+
 def compute_flow(ref_date, dt, rate_values, area_values):
     """Compute flow from rate and area
 
-    Args
-        ref_date: Reference date
-        dt: DateTimeIndex
-        rate_values: NumPy array of rates
-        area_values: annual areas
+    Parameters
+    ----------
+    ref_date : datetime
+        reference date
+    dt :
+        DateTimeIndex
+    rate_values : array
+        rates
+    area_values : array
+        annual areas
 
-    Returns:
-        NumPy array of adjusted values
+    Returns
+    -------
+    rate_adjust : array
+        adjusted values
+
     """
-    yCount = dt.year - ref_date.year
-    return rate_values * area_values[yCount] * mmHaPerDay_to_cms
-    
+
+    year_count = dt.year - ref_date.year
+    rate_adjust = rate_values * area_values[year_count] * mmHaPerDay_to_cms
+    return rate_adjust
+
 def compute_daily_volume(dt, flow_values, units):
     """Convert daily flow to a volume
 
-    Args
-        dt: DateTimeIndex
-        flow_values: NumPy array of flows
-        unit: output units
+    Parameters
+    ----------
+    dt :
+        DateTimeIndex
+    flow_values : array
+        flows
+    unit : str
+        output units
+            acre-feet
+            af
+            acre-ft
 
-    Returns:
-        NumPy array of volumes
+    Returns
+    -------
+    volume_values : array
+        volumes
+
     """
+
     if ("acre-feet" in units.lower() or "af" in units.lower() or "acre-ft" in units.lower()):
         volume_values = flow_values * 1.983471074
     else:
         volume_values = flow_values * 86400.0
     return volume_values
-    
+
 def compute_monthly_volume(dt, flow_values, units):
     """Convert monthly flow to a volume
 
-    Args
-        dt: DateTimeIndex
-        flow_values: NumPy array of flows
-        unit: output units
+    Parameters
+    ----------
+    dt :
+        DateTimeIndex
+    flow_values : array
+        flows
+    unit : str
+        output units
+            acre-feet
+            af
+            acre-ft
 
-    Returns:
-        NumPy array of volumes
+    Returns
+    -------
+    volume_values : array
+        volumes
+
     """
+
     if ("acre-feet" in units.lower() or "af" in units.lower() or "acre-ft" in units.lower()):
         volume_values = flow_values * dt.days_in_month * 1.983471074
     else:
         volume_values = flow_values * dt.days_in_month * 86400.0
     return volume_values
-    
+
 def compute_annual_volume(years, flow_values, units):
     """Convert annual flow to a volume
 
-    Args
-        years: NumPy array of years
-        flow_values: NumPy array of flows
-        unit: output units
+    Parameters
+    ----------
+    years : array
+        years
+    flow_values : array
+        flows
+    unit : str
+        output units
+            acre-feet
+            af
+            acre-ft
 
-    Returns:
-        NumPy array of volumes
+    Returns
+    -------
+    volume_values : array
+        volumes
+
     """
     volume_values = np.copy(flow_values)
     for yCount, year in enumerate(years):
@@ -1857,92 +2032,92 @@ def compute_annual_volume(years, flow_values, units):
             else:
                 volume_values[yCount] = flow_values[yCount] * 365 * 86400.0
     return volume_values
-    
-def compute_annual_volume_not_working(year, flow_values, units):
-    """Convert annual flow to a volume
 
-    Args
-        year: NumPy array of years
-        flow_values: NumPy array of flows
-        unit: output units
-
-    Returns:
-        NumPy array of volumes
-    """
-    if ("acre-feet" in units.lower() or "af" in units.lower()):
-        if (year % 400 == 0 or year % 100 == 0 or year % 4 == 0):
-            volume_values = flow_values * 366 * 1.983471074
-        else:
-            volume_values = flow_values * 365 * 1.983471074
-    else:
-        if (year % 400 == 0 or year % 100 == 0 or year % 4 == 0):
-            volume_values = flow_values * 366 * 86400.0
-        else:
-            volume_values = flow_values * 365 * 86400.0
-    return volume_values
-    
 def compute_daily_fractions(ref_date, dt, daily_values, monthly_values):
     """Compute daily fractdions for daily and monthly values arrays
 
-    Args:
-        ref_date: Reference date
-        dt: DateTimeIndex
-        daily_values: NumPy array of daily values
-        monthly_values: NumPy array of monthly values
+    Parameters
+    ----------
+    ref_date : datetime
+        reference date
+    dt :
+        DateTimeIndex
+    daily_values : array
+        daily values
+    monthly_values : array
+        monthly values
 
-    Returns:
-        NumPy array of daily fractions
+    Returns
+    -------
+    daily_fractions: array
+        daily fractions
+
     """
-    mCount = 12 * (dt.year - ref_date.year - 1) + dt.month - ref_date.month + 12
+
+    mon_count = 12 * (dt.year - ref_date.year - 1) + dt.month - ref_date.month + 12
     try:
-        daily_fractions = daily_values / monthly_values[mCount]
+        daily_fractions = daily_values / monthly_values[mon_count]
     except:
         daily_fractions = 1.0 / dt.days_in_month
     return daily_fractions
-    
+
 def user_begin_date(year_to_use, ibm, ibd):
     """computes user begin date
 
-    Args:
-        year_to_use: year to process
-        ibm: input begin month
-        ibd: input begin day
+    Parameters
+    ----------
+    year_to_use :
+        year to process
+    ibm : numeric
+        input begin month
+    ibd : numeric
+        input begin day
 
-    Returns:
-        begin_date
+    Returns
+    -------
+    begin_date :
+
     """
+
     try:
-        begMonth = max(1, min(12, int(ibm)))
+        begin_month = max(1, min(12, int(ibm)))
     except:
-        begMonth = 1
+        begin_month = 1
     try:
-        begDay = max(1, min(31, int(ibd)))
+        begin_day = max(1, min(31, int(ibd)))
     except:
-        begDay = 1
-    begin_date = datetime.datetime(year_to_use, begMonth, begDay)
+        begin_day = 1
+    begin_date = datetime.datetime(year_to_use, begin_month, begin_day)
     return begin_date
 
 def user_end_date(year_to_use, iem, ied):
     """computes user end date
 
-    Args:
-        year_to_use: year to process
-        iem: input end month
-        ied: input end day
+    Parameters
+    ----------
+    year_to_use :
+        year to process
+    iem : numeric
+        input end month
+    ied : numeric
+        input end day
 
-    Returns:
-        end_dt
+    Returns
+    -------
+    end_date :
+
     """
+
     try:
-        endMonth = max(1, min(12, int(iem)))
+        end_month = max(1, min(12, int(iem)))
     except:
-        endMonth = 12
+        end_month = 12
     try:
-        endDay = max(1, min(31, int(ied)))
+        end_day = max(1, min(31, int(ied)))
     except:
-        endDay = 31
-    end_dt = datetime.datetime(year_to_use, endMonth, endDay)
-    return end_dt
+        end_day = 31
+    end_date = datetime.datetime(year_to_use, end_month, end_day)
+    return end_date
 
 if __name__ == '__main__':
     pass

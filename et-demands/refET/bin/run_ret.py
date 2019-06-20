@@ -1,5 +1,5 @@
 """run_cet.py
-wrapper for running crop et model
+wrapper for running reference et model
 called by user from command line
 
 """

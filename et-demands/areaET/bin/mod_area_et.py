@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""mod_area_et.py
+Main area et model code
+called by run_aet.py
+
+"""
 
 import argparse
 import datetime
@@ -7,7 +11,7 @@ import multiprocessing as mp
 import os
 import sys
 import shutil
-from time import clock
+import time
 
 import numpy as np
 import pandas as pd
@@ -21,20 +25,30 @@ import mod_dmis
 def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag = False, mp_procs = 1):
     """ Main function for running Area ET model
 
-    Args:
-        ini_path (str): file path ofproject INI file
-        log_level (logging.lvl): 
-        etcid_to_run: ET Cell id to run in lieu of 'ALL'
-        debug_flag (bool): If True, write debug level comments to debug.txt
-        mp_procs (int): number of cores to use for multiprocessing
+    Arguments
+    ---------
+    ini_path : str
+        file path ofproject INI file
+    log_level :
+        logging.lvl
+    etcid_to_run : str
+        ET Cell id to run in lieu of 'ALL'
+    debug_flag : boolean
+        True : write debug level comments to debug.txt
+        False : default
+    mp_procs : int
+        number of cores to use for multiprocessing
 
-    aeturns:
-        None
+    Returns
+    -------
+    None
+
     """
-    clock_start = clock()
-    
+
+    clock_start = time.perf_counter()
+
     # Start console logging immediately
-    
+
     logger = aet_utils.console_logger(log_level = log_level)
     logging.warning('\nPython AREAET')
     if debug_flag and mp_procs > 1:
@@ -47,7 +61,7 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
 
     cfg = aet_config.AreaETConfig()
     cfg.read_aet_ini(ini_path, debug_flag)
- 
+
     # Start file logging once INI file has been read in
 
     if debug_flag: logger = aet_utils.file_logger(logger, log_level = logging.DEBUG, output_ws = cfg.project_ws)
@@ -79,20 +93,20 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                         logging.warning("Multiprocessing can only be used for multiple cells.")
                         mp_procs = 1
                 else:
-                    logging.warning("Area CET data structure type " + cfg.output_cet['data_structure_type'] + 
+                    logging.warning("Area CET data structure type " + cfg.output_cet['data_structure_type'] +
                                     " can not yet be created using multiple processing.")
                     mp_procs = 1
             else:
-                logging.warning("Area CIR data structure type " + cfg.output_cir['data_structure_type'] + 
+                logging.warning("Area CIR data structure type " + cfg.output_cir['data_structure_type'] +
                                 " can not yet be created using multiple processing.")
                 mp_procs = 1
         else:
-            logging.warning("Area ET data structure type " + cfg.output_aet['data_structure_type'] + 
+            logging.warning("Area ET data structure type " + cfg.output_aet['data_structure_type'] +
                             " can not yet be created using multiple processing.")
             mp_procs = 1
 
     # loop thru et cells
-    
+
     logging.warning("\n")
     cell_count = 0
     for cell_id, cell in sorted(cells.et_cells_data.items()):
@@ -102,7 +116,7 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
             if cell_mp_flag and cfg.output_aet['data_structure_type'].upper() == 'SF P' and cell_count > 1:
                 cell_mp_list.append([cell_count, cfg, cell, cells])
             else:
-                if not cell.crop_types_cycle(cell_count, cfg, cells): 
+                if not cell.crop_types_cycle(cell_count, cfg, cells):
                     sys.exit()
                 if cell_count == 1:
                     cfg.number_days = int(cfg.end_dt.to_julian_date() - cfg.start_dt.to_julian_date() + 1)
@@ -123,10 +137,10 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
         del pool, results
 
     # post output with parameter orientation
-    
-    if cfg.output_aet_flag and cfg.output_aet['data_structure_type'].upper() <> 'SF P':
+
+    if cfg.output_aet_flag and cfg.output_aet['data_structure_type'].upper() != 'SF P':
         # post aet output data
-        
+
         logging.info("\nPosting non 'SF P' output aet data")
         if 'date' in cfg.output_aet['fields'] and cfg.output_aet['fields'] is not None:
             date_is_posted = True
@@ -143,17 +157,17 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if field_key is None:
                         logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily aet output')
                         sys.exit()
-                    file_path = os.path.join(cfg.daily_output_aet_ws, 
+                    file_path = os.path.join(cfg.daily_output_aet_ws,
                         cfg.output_aet['name_format'].replace('%p', cfg.output_aet['fnspec'][field_key]))
                     logging.debug('  Daily output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['daily_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['daily_float_format'],
                             cfg.output_aet['daily_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['daily_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['daily_float_format'],
                             cfg.output_aet['daily_date_format'], date_is_posted):
                             sys.exit()
                     elif cfg.output_aet['file_type'].lower() == 'xls' or cfg.output_aet['file_type'].lower() == 'wb':
@@ -164,9 +178,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                         ws_names = []
                         ws_names.append(cfg.output_aet['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                                file_path, ws_names, params_dict, 
-                                cfg.output_aet['daily_float_format'], 
-                                cfg.output_aet['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                                file_path, ws_names, params_dict,
+                                cfg.output_aet['daily_float_format'],
+                                cfg.output_aet['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                         del params_dict
@@ -190,9 +204,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, cells.cell_daily_output_aet_data, 
-                            cfg.output_aet['daily_float_format'], 
-                            cfg.output_aet['daily_date_format'], 
+                            file_path, ws_names, cells.cell_daily_output_aet_data,
+                            cfg.output_aet['daily_float_format'],
+                            cfg.output_aet['daily_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
@@ -203,14 +217,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                             params_df = param_df.copy()
                         else:
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['daily_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['daily_float_format'],
                             cfg.output_aet['daily_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['daily_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['daily_float_format'],
                             cfg.output_aet['daily_date_format'], date_is_posted):
                             sys.exit()
                     else:
@@ -228,17 +242,17 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if field_key is None:
                         logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily aet output')
                         sys.exit()
-                    file_path = os.path.join(cfg.monthly_output_aet_ws, 
+                    file_path = os.path.join(cfg.monthly_output_aet_ws,
                         cfg.output_aet['name_format'].replace('%p', cfg.output_aet['fnspec'][field_key]))
                     logging.debug('  monthly output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['monthly_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['monthly_float_format'],
                             cfg.output_aet['monthly_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['monthly_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['monthly_float_format'],
                             cfg.output_aet['monthly_date_format'], date_is_posted):
                             sys.exit()
                     elif cfg.output_aet['file_type'].lower() == 'xls' or cfg.output_aet['file_type'].lower() == 'wb':
@@ -250,8 +264,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                         ws_names.append(cfg.output_aet['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
                                 file_path, ws_names, params_dict,
-                                cfg.output_aet['monthly_float_format'], 
-                                cfg.output_aet['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                                cfg.output_aet['monthly_float_format'],
+                                cfg.output_aet['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                         del params_dict
@@ -275,9 +289,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, cells.cell_monthly_output_aet_data, 
-                            cfg.output_aet['monthly_float_format'], 
-                            cfg.output_aet['monthly_date_format'], 
+                            file_path, ws_names, cells.cell_monthly_output_aet_data,
+                            cfg.output_aet['monthly_float_format'],
+                            cfg.output_aet['monthly_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
@@ -288,14 +302,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                             params_df = param_df.copy()
                         else:
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['monthly_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['monthly_float_format'],
                             cfg.output_aet['monthly_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['monthly_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['monthly_float_format'],
                             cfg.output_aet['monthly_date_format'], date_is_posted):
                             sys.exit()
                     else:
@@ -313,17 +327,17 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if field_key is None:
                         logging.error('ERROR:  Unable to determine key for ' + field_name + ' posting daily aet output')
                         sys.exit()
-                    file_path = os.path.join(cfg.annual_output_aet_ws, 
+                    file_path = os.path.join(cfg.annual_output_aet_ws,
                         cfg.output_aet['name_format'].replace('%p', cfg.output_aet['fnspec'][field_key]))
                     logging.debug('  annual output path for {0} is {1}'.format(field_name, file_path))
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['annual_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['annual_float_format'],
                             cfg.output_aet['annual_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            param_df, cfg.output_aet['annual_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            param_df, cfg.output_aet['annual_float_format'],
                             cfg.output_aet['annual_date_format'], date_is_posted):
                             sys.exit()
                     elif cfg.output_aet['file_type'].lower() == 'xls' or cfg.output_aet['file_type'].lower() == 'wb':
@@ -335,8 +349,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                         ws_names.append(cfg.output_aet['wsspec'][field_key])
                         if not mod_dmis.wb_output_via_df_dict_openpyxl(
                                 file_path, ws_names, params_dict,
-                                cfg.output_aet['annual_float_format'], 
-                                cfg.output_aet['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                                cfg.output_aet['annual_float_format'],
+                                cfg.output_aet['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                                 cfg.time_step, cfg.ts_quantity):
                             sys.exit()
                         del params_dict
@@ -360,9 +374,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     if os.path.isfile(file_path):
                         shutil.copyfile(file_path, file_path.replace('.xls', '_bu.xls'))
                     if not mod_dmis.wb_output_via_df_dict_openpyxl(
-                            file_path, ws_names, cells.cell_annual_output_aet_data, 
-                            cfg.output_aet['annual_float_format'], 
-                            cfg.output_aet['annual_date_format'], 
+                            file_path, ws_names, cells.cell_annual_output_aet_data,
+                            cfg.output_aet['annual_float_format'],
+                            cfg.output_aet['annual_date_format'],
                             cfg.time_step, cfg.ts_quantity):
                         sys.exit()
                 else:    # text output
@@ -373,14 +387,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                             params_df = param_df.copy()
                         else:
                             params_df = params_df.merge(param_df, left_index = True, right_index = True)
-                    if cfg.output_aet['file_type'].lower() == 'csf': 
-                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['annual_float_format'], 
+                    if cfg.output_aet['file_type'].lower() == 'csf':
+                         if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['annual_float_format'],
                             cfg.output_aet['annual_date_format'], date_is_posted):
                             sys.exit()
-                    elif cfg.output_aet['file_type'].lower() == 'rdb': 
-                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'], 
-                            params_df, cfg.output_aet['annual_float_format'], 
+                    elif cfg.output_aet['file_type'].lower() == 'rdb':
+                         if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_aet['delimiter'],
+                            params_df, cfg.output_aet['annual_float_format'],
                             cfg.output_aet['annual_date_format'], date_is_posted):
                             sys.exit()
                     else:
@@ -388,9 +402,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                         sys.exit()
             del cells.cell_annual_output_aet_data
 
-    if cfg.output_cir_flag and cfg.output_cir['data_structure_type'].upper() <> 'SF P':
+    if cfg.output_cir_flag and cfg.output_cir['data_structure_type'].upper() != 'SF P':
         # post cir output data
-        
+
         logging.info("\nPosting non 'SF P' output cir data")
         if 'date' in cfg.output_cir['fields'] and cfg.output_cir['fields'] is not None:
             date_is_posted = True
@@ -402,14 +416,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.daily_output_cir_ws, cfg.output_cir['name_format'])
-            if cfg.output_cir['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcDailyCropIRs_df, cfg.output_cir['daily_float_format'], 
+            if cfg.output_cir['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcDailyCropIRs_df, cfg.output_cir['daily_float_format'],
                     cfg.output_cir['daily_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cir['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcDailyCropIRs_df, cfg.output_cir['daily_float_format'], 
+            elif cfg.output_cir['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcDailyCropIRs_df, cfg.output_cir['daily_float_format'],
                     cfg.output_cir['daily_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cir['file_type'].lower() == 'xls' or cfg.output_cir['file_type'].lower() == 'wb':
@@ -421,8 +435,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cir['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cir['daily_float_format'], 
-                        cfg.output_cir['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cir['daily_float_format'],
+                        cfg.output_cir['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -436,14 +450,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.monthly_output_cir_ws, cfg.output_cir['name_format'])
-            if cfg.output_cir['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcMonthlyCropIRs_df, cfg.output_cir['monthly_float_format'], 
+            if cfg.output_cir['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcMonthlyCropIRs_df, cfg.output_cir['monthly_float_format'],
                     cfg.output_cir['monthly_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cir['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcMonthlyCropIRs_df, cfg.output_cir['monthly_float_format'], 
+            elif cfg.output_cir['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcMonthlyCropIRs_df, cfg.output_cir['monthly_float_format'],
                     cfg.output_cir['monthly_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cir['file_type'].lower() == 'xls' or cfg.output_cir['file_type'].lower() == 'wb':
@@ -455,8 +469,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cir['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cir['monthly_float_format'], 
-                        cfg.output_cir['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cir['monthly_float_format'],
+                        cfg.output_cir['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -470,14 +484,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.annual_output_cir_ws, cfg.output_cir['name_format'])
-            if cfg.output_cir['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcAnnualCropIRs_df, cfg.output_cir['annual_float_format'], 
+            if cfg.output_cir['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcAnnualCropIRs_df, cfg.output_cir['annual_float_format'],
                     cfg.output_cir['annual_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cir['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'], 
-                    cells.etcAnnualCropIRs_df, cfg.output_cir['annual_float_format'], 
+            elif cfg.output_cir['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cir['delimiter'],
+                    cells.etcAnnualCropIRs_df, cfg.output_cir['annual_float_format'],
                     cfg.output_cir['annual_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cir['file_type'].lower() == 'xls' or cfg.output_cir['file_type'].lower() == 'wb':
@@ -489,8 +503,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cir['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cir['annual_float_format'], 
-                        cfg.output_cir['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cir['annual_float_format'],
+                        cfg.output_cir['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -499,9 +513,9 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 sys.exit()
             del cells.etcAnnualCropIRs_df
 
-    if cfg.output_cet_flag and cfg.output_cet['data_structure_type'].upper() <> 'SF P':
+    if cfg.output_cet_flag and cfg.output_cet['data_structure_type'].upper() != 'SF P':
         # post cet output data
-        
+
         logging.info("\nPosting non 'SF P' output cet data")
         if 'date' in cfg.output_cet['fields'] and cfg.output_cet['fields'] is not None:
             date_is_posted = True
@@ -513,14 +527,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.daily_output_cet_ws, cfg.output_cet['name_format'])
-            if cfg.output_cet['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcDailyCropETs_df, cfg.output_cet['daily_float_format'], 
+            if cfg.output_cet['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcDailyCropETs_df, cfg.output_cet['daily_float_format'],
                     cfg.output_cet['daily_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cet['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcDailyCropETs_df, cfg.output_cet['daily_float_format'], 
+            elif cfg.output_cet['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcDailyCropETs_df, cfg.output_cet['daily_float_format'],
                     cfg.output_cet['daily_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cet['file_type'].lower() == 'xls' or cfg.output_cet['file_type'].lower() == 'wb':
@@ -532,8 +546,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cet['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cet['daily_float_format'], 
-                        cfg.output_cet['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cet['daily_float_format'],
+                        cfg.output_cet['daily_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -547,14 +561,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.monthly_output_cet_ws, cfg.output_cet['name_format'])
-            if cfg.output_cet['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcMonthlyCropETs_df, cfg.output_cet['monthly_float_format'], 
+            if cfg.output_cet['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcMonthlyCropETs_df, cfg.output_cet['monthly_float_format'],
                     cfg.output_cet['monthly_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cet['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcMonthlyCropETs_df, cfg.output_cet['monthly_float_format'], 
+            elif cfg.output_cet['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcMonthlyCropETs_df, cfg.output_cet['monthly_float_format'],
                     cfg.output_cet['monthly_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cet['file_type'].lower() == 'xls' or cfg.output_cet['file_type'].lower() == 'wb':
@@ -566,8 +580,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cet['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cet['monthly_float_format'], 
-                        cfg.output_cet['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cet['monthly_float_format'],
+                        cfg.output_cet['monthly_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -581,14 +595,14 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                sys.exit()
             else:
                 file_path = os.path.join(cfg.annual_output_cet_ws, cfg.output_cet['name_format'])
-            if cfg.output_cet['file_type'].lower() == 'csf': 
-                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcAnnualCropETs_df, cfg.output_cet['annual_float_format'], 
+            if cfg.output_cet['file_type'].lower() == 'csf':
+                 if not mod_dmis.csf_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcAnnualCropETs_df, cfg.output_cet['annual_float_format'],
                     cfg.output_cet['annual_date_format'], date_is_posted):
                     sys.exit()
-            elif cfg.output_cet['file_type'].lower() == 'rdb': 
-                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'], 
-                    cells.etcAnnualCropETs_df, cfg.output_cet['annual_float_format'], 
+            elif cfg.output_cet['file_type'].lower() == 'rdb':
+                 if not mod_dmis.rdb_output_by_dataframe(file_path, cfg.output_cet['delimiter'],
+                    cells.etcAnnualCropETs_df, cfg.output_cet['annual_float_format'],
                     cfg.output_cet['annual_date_format'], date_is_posted):
                     sys.exit()
             elif cfg.output_cet['file_type'].lower() == 'xls' or cfg.output_cet['file_type'].lower() == 'wb':
@@ -600,8 +614,8 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 ws_names.append(cfg.output_cet['wsspec'][field_key])
                 if not mod_dmis.wb_output_via_df_dict_openpyxl(
                         file_path, ws_names, params_dict,
-                        cfg.output_cet['annual_float_format'], 
-                        cfg.output_cet['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'), 
+                        cfg.output_cet['annual_float_format'],
+                        cfg.output_cet['annual_date_format'].replace('%Y','yyyy').replace('%m', 'mm').replace('%d', 'dd'),
                         cfg.time_step, cfg.ts_quantity):
                     sys.exit()
                 del params_dict
@@ -610,7 +624,7 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                 sys.exit()
             del cells.etcAnnualCropETs_df
     logging.warning('\nAREAET Run Completed')
-    logging.info('\n{} seconds'.format(clock()-clock_start))
+    logging.info('\n{} seconds'.format(time.perf_counter()-clock_start))
 
 def cell_mp(tup):
     """Pool multiprocessing friendly function
@@ -629,7 +643,7 @@ def cell_sp(cell_count, cfg, cell, cells):
         cell (): ETCell instance
         cells (): AETCellsData instance
     """
-    if not cell.crop_types_cycle(cell_count, cfg, cells): 
+    if not cell.crop_types_cycle(cell_count, cfg, cells):
         sys.exit()
     if cell_count == 1:
         cfg.number_days = cfg.end_dt.to_julian_date() - cfg.start_dt.to_julian_date() + 1
@@ -639,7 +653,7 @@ def cell_sp(cell_count, cfg, cell, cells):
     if not cell.compute_area_requirements(cell_count, cfg, cells):
         sys.exit()
 
-def parse_args():  
+def parse_args():
     parser = argparse.ArgumentParser(
         description = 'Area ET',
         formatter_class = argparse.ArgumentDefaultsHelpFormatter)
@@ -657,15 +671,15 @@ def parse_args():
         dest = 'log_level', const = logging.INFO, default = logging.WARNING,
         help = "Print info level comments")
     parser.add_argument(
-        '-mp', '--multiprocessing', default = 1, type = int, 
+        '-mp', '--multiprocessing', default = 1, type = int,
         metavar = 'N', nargs = '?', const = mp.cpu_count(),
         help = 'Number of processers to use')
     args = parser.parse_args()
-    
+
     # Convert INI path to an absolute path if necessary
-    
+
     if args.ini and os.path.isfile(os.path.abspath(args.ini)):
-        args.ini = os.path.abspath(args.ini)    
+        args.ini = os.path.abspath(args.ini)
     return args
 
 def is_valid_file(parser, arg):
@@ -679,9 +693,9 @@ def is_valid_directory(parser, arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:
         return arg
-    
+
 if __name__ == '__main__':
     args = parse_args()
 
-    main(ini_path=args.ini, log_level = args.log_level, etcid_to_run = args.etcid, 
+    main(ini_path=args.ini, log_level = args.log_level, etcid_to_run = args.etcid,
          debug_flag = args.debug, mp_procs = args.multiprocessing)

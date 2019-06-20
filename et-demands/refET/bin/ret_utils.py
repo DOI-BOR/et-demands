@@ -3,6 +3,7 @@ Defines meteorology, date, and logger functions
 Called by met_nodes.py
 
 """
+
 import sys
 import os
 import datetime
@@ -317,6 +318,7 @@ def rs_daily(doy, tmax, tmin, tdew, elev, latitude, montmax, montmin, TR_b0, TR_
 
 def tdew_from_avg_monthly_Ko(daily_tdew, daily_tmin, avg_monthly_Ko):
     """Computes dewpoint temperature from daily minimum temperature and average monthly Ko (dew point depression)
+
     Parameters
     ---------
     daily_tdew :

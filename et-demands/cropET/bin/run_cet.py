@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+"""run_cet.py
+wrapper for running crop et model
+called by user from command line
+
+"""
 
 import argparse
 import logging
