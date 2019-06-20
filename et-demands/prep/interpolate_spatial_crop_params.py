@@ -164,10 +164,10 @@ def main(ini_path):
         logging.info('\nInterpolating Crop: {:02d}'.format(crop_num))
 
         # Params to Interpolate
-        param_list = ['T30_CGDD', 'CGDD_EFC', 'CGDD_TERM', 'KillFrostC']
-        # param_list = ['MAD_Init', 'MAD_Mid', 'T30_CGDD',
-        #     'PL_GU_Date', 'CGDD_Tbase', 'CGDD_EFC',
-        #     'CGDD_Term', 'Time_EFC', 'Time_Harv', 'KillFrostC']
+        # param_list = ['T30_CGDD', 'CGDD_EFC', 'CGDD_TERM', 'KillFrostC']
+        param_list = ['MAD_Init', 'MAD_Mid', 'T30_CGDD',
+            'PL_GU_Date', 'CGDD_Tbase', 'CGDD_EFC',
+            'CGDD_Term', 'Time_EFC', 'Time_Harv', 'KillFrostC']
 
         # Read in the calibration locations and values
         subset_cal_data = defaultdict(dict)

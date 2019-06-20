@@ -197,12 +197,12 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
 
         # Read data from file into record array (structured array)
 
-        daily_df = pd.read_csvfile_path, header = 0, comment = '#',
-                                 sep = sep)
+        daily_df = pd.read_csv(file_path, header=0, comment='#',
+                               sep=sep)
         logging.debug('    Fields: {0}'.format(
             ', '.join(daily_df.columns.values)))
         daily_df[date_field] = pd.to_datetime(daily_df[date_field])
-        daily_df.set_index(date_field, inplace = True)
+        daily_df.set_index(date_field, inplace=True)
         daily_df[year_field] = daily_df.index.year
         # daily_df[year_field] = daily_df[date_field].map(lambda x: x.year)
 

@@ -1042,7 +1042,6 @@ class CropETData:
                 sys.exit()
 
         # Read historic max and min temperatures to support constant phenology
-        print(self.phenology_option)
         """
         INI [HIST] Section
 

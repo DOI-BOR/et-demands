@@ -45,7 +45,8 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # Don't compute cropET for open water
     # open_water_evap() was called in kcb_daily()
 
-    if crop.class_number in [55, 56, 57]: return
+    if crop.class_number in [55, 56, 57]:
+        return
 
     # Maximum Kc when soil is wet.  For grass reference, kc_max = 1.2 plus climatic adj.
     # For alfalfa reference, kc_max = 1.0, with no climatic adj.
