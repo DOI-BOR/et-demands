@@ -48,7 +48,6 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
     clock_start = time.perf_counter()
 
     # Start console logging immediately
-
     logger = aet_utils.console_logger(log_level = log_level)
     logging.warning('\nPython AREAET')
     if debug_flag and mp_procs > 1:
@@ -58,25 +57,20 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
         logging.warning('  Multiprocessing mode, {0} cores'.format(mp_procs))
 
     # Read INI file
-
     cfg = aet_config.AreaETConfig()
     cfg.read_aet_ini(ini_path, debug_flag)
 
     # Start file logging once INI file has been read in
-
     if debug_flag: logger = aet_utils.file_logger(logger, log_level = logging.DEBUG, output_ws = cfg.project_ws)
 
     # Read crop parameters needed for area calculations
-
     cfg.set_crop_params()
 
     # Read et cell properties and crop types
-
     cells = aet_cells.AETCellsData()
     cells.set_cell_crops(cfg)
 
     # Multiprocessing set up
-
     cell_mp_list =  []
     cell_mp_flag = False
     if mp_procs > 1:
@@ -105,8 +99,7 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                             " can not yet be created using multiple processing.")
             mp_procs = 1
 
-    # loop thru et cells
-
+    # loop through et cells
     logging.warning("\n")
     cell_count = 0
     for cell_id, cell in sorted(cells.et_cells_data.items()):
@@ -127,7 +120,6 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
                     sys.exit()
 
     # Multiprocess all cells
-
     results = []
     if cell_mp_list:
         pool = mp.Pool(mp_procs)
@@ -137,7 +129,6 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
         del pool, results
 
     # post output with parameter orientation
-
     if cfg.output_aet_flag and cfg.output_aet['data_structure_type'].upper() != 'SF P':
         # post aet output data
 
