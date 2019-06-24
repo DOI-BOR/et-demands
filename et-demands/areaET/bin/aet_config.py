@@ -769,7 +769,7 @@ class AreaETConfig():
             self.output_cet['name_format'] = config.get(output_cet_sec, 'name_format')
             self.output_cet['header_lines'] = config.getint(output_cet_sec, 'header_lines')
             if self.output_cet['header_lines'] > 2:
-                logging.warning('\nReferemce ET ouput can have maximum of two header lines.')
+                logging.warning('\nReference ET ouput can have maximum of two header lines.')
                 self.output_cet['header_lines'] = 2
             self.output_cet['names_line'] = config.getint(output_cet_sec, 'names_line')
             try:
@@ -998,7 +998,7 @@ class AreaETConfig():
             self.output_cir['name_format'] = config.get(output_cir_sec, 'name_format')
             self.output_cir['header_lines'] = config.getint(output_cir_sec, 'header_lines')
             if self.output_cir['header_lines'] > 2:
-                logging.warning('\nReferemce ET ouput can have maximum of two header lines.')
+                logging.warning('\nReference ET ouput can have maximum of two header lines.')
                 self.output_cir['header_lines'] = 2
             self.output_cir['names_line'] = config.getint(output_cir_sec, 'names_line')
             try:

@@ -62,7 +62,7 @@ def main(ini_path, verbose_flag = False, mnid_to_run = 'ALL',
         print('Code workspace does not exist\n  %s' % (bin_ws))
         sys.exit()
     elif not os.path.isfile(script_path):
-        print('Referemce ET main script does not exist\n  %s' % (script_path))
+        print('Reference ET main script does not exist\n  %s' % (script_path))
         sys.exit()
 
     # Run Area ET Demands Model

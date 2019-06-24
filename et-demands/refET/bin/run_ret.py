@@ -54,7 +54,7 @@ def main(ini_path, bin_ws = '', verbose_flag = False, mnid_to_run = 'ALL',
         print('Source code directory path (-b) not provided')
         sys.exit()
     else:
-        script_path = os.path.join(bin_ws, 'mod_crop_et.py')
+        script_path = os.path.join(bin_ws, 'mod_ref_et.py')
 
     # Check input folder/path
     if not os.path.isfile(ini_path):
@@ -64,7 +64,7 @@ def main(ini_path, bin_ws = '', verbose_flag = False, mnid_to_run = 'ALL',
         print('Code workspace does not exist\n  %s' % (bin_ws))
         sys.exit()
     elif not os.path.isfile(script_path):
-        print('Referemce ET main script does not exist\n  %s' % (script_path))
+        print('Reference ET main script does not exist\n  %s' % (script_path))
         sys.exit()
 
     # Run Area ET Demands Model

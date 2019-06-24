@@ -786,7 +786,7 @@ class RefETConfig():
         self.refet_out['name_format'] = config.get(output_ret_sec, 'name_format')
         self.refet_out['header_lines'] = config.getint(output_ret_sec, 'header_lines')
         if self.refet_out['header_lines'] > 2:
-            logging.warning('\nReferemce ET ouput can have maximum of two header lines.')
+            logging.warning('\nReference ET ouput can have maximum of two header lines.')
             self.refet_out['header_lines'] = 2
         self.refet_out['names_line'] = config.getint(output_ret_sec, 'names_line')
         try:
