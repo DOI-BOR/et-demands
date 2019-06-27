@@ -83,14 +83,14 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     if cfg.avg_monthly_flag:
         avg_monthly_header = 'Met Node ID,Met Node Name,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'
         if "xls" in cfg.input_met['avgm_tmax_path'].lower():
-            avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".xlsx", "avgTMaxMon.txt.").replace(".xls", "avgTMaxMon.txt.")
+            avgTMaxRev_path = cfg.input_met['avgm_tmax_path'].replace(".xlsx", "avgTMaxMonRev.txt.").replace(".xls", "avgTMaxMonRev.txt.")
         else:
             avgTMaxRev_path = cfg.input_met['avgm_tmax_path']
         avgTMaxRev_hand = open(avgTMaxRev_path, 'w')
         avgTMaxRev_hand.write(avg_monthly_header + "\n")
         if "xls" in cfg.input_met['avgm_tmin_path'].lower():
             avgTMinRev_path = cfg.input_met['avgm_tmin_path'].replace(
-                ".xlsx", "avgTMinMon.txt.").replace(".xls", "avgTMinMon.txt.")
+                ".xlsx", "avgTMinMonRev.txt.").replace(".xls", "avgTMinMonRev.txt.")
         else:
             avgTMinRev_path = cfg.input_met['avgm_tmin_path']
         avgTMinRev_hand = open(avgTMinRev_path, 'w')

@@ -1136,7 +1136,7 @@ class ETCell():
 
                     daily_output_aet_path = os.path.join(cfg.daily_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(daily_output_aet_path))
-                    with open(daily_output_aet_path, 'w') as daily_output_aet_f:
+                    with open(daily_output_aet_path, 'w', newline='') as daily_output_aet_f:
                         daily_output_aet_f.write(cfg.output_aet['daily_header1'] + '\n')
                         if cfg.output_aet['header_lines'] == 2:
                             daily_output_aet_f.write(cfg.output_aet['daily_header2'] + '\n')
@@ -1166,7 +1166,7 @@ class ETCell():
 
                     monthly_output_aet_path = os.path.join(cfg.monthly_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(monthly_output_aet_path))
-                    with open(monthly_output_aet_path, 'w') as monthly_output_aet_f:
+                    with open(monthly_output_aet_path, 'w', newline='') as monthly_output_aet_f:
                         monthly_output_aet_f.write(cfg.output_aet['monthly_header1'] + '\n')
                         if cfg.output_aet['header_lines'] == 2:
                             monthly_output_aet_f.write(cfg.output_aet['monthly_header2'] + '\n')
@@ -1191,7 +1191,7 @@ class ETCell():
                     # post annual output
                     annual_output_aet_path = os.path.join(cfg.annual_output_aet_ws, cfg.output_aet['name_format'] % self.cell_id)
                     logging.debug('  {0}'.format(annual_output_aet_path))
-                    with open(annual_output_aet_path, 'w') as annual_output_aet_f:
+                    with open(annual_output_aet_path, 'w', newline='') as annual_output_aet_f:
                         annual_output_aet_f.write(cfg.output_aet['annual_header1'] + '\n')
                         if cfg.output_aet['header_lines'] == 2:
                             annual_output_aet_f.write(cfg.output_aet['annual_header2'] + '\n')
@@ -1427,7 +1427,7 @@ class ETCell():
 
                     daily_output_cir_path = os.path.join(cfg.daily_output_cir_ws, cfg.output_cir['name_format'] % self.cell_id)
                     logging.debug('  Daily CIR output path is {0}'.format(daily_output_cir_path))
-                    with open(daily_output_cir_path, 'w') as daily_output_cir_f:
+                    with open(daily_output_cir_path, 'w', newline='') as daily_output_cir_f:
                         daily_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             daily_output_cir_f.write(header2 + '\n')
@@ -1450,7 +1450,7 @@ class ETCell():
 
                     monthly_output_cir_path = os.path.join(cfg.monthly_output_cir_ws, cfg.output_cir['name_format'] % self.cell_id)
                     logging.debug('  Monthly CIR output path is {0}'.format(monthly_output_cir_path))
-                    with open(monthly_output_cir_path, 'w') as monthly_output_cir_f:
+                    with open(monthly_output_cir_path, 'w', newline='') as monthly_output_cir_f:
                         monthly_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             monthly_output_cir_f.write(header2 + '\n')
@@ -1473,7 +1473,7 @@ class ETCell():
 
                     annual_output_cir_path = os.path.join(cfg.annual_output_cir_ws, cfg.output_cir['name_format'] % self.cell_id)
                     logging.debug('  Annual CIR output path is {0}'.format(annual_output_cir_path))
-                    with open(annual_output_cir_path, 'w') as annual_output_cir_f:
+                    with open(annual_output_cir_path, 'w', newline='') as annual_output_cir_f:
                         annual_output_cir_f.write(header1 + '\n')
                         if cfg.output_cir['header_lines'] == 2:
                             annual_output_cir_f.write(header2 + '\n')
@@ -1662,7 +1662,7 @@ class ETCell():
 
                     daily_output_cet_path = os.path.join(cfg.daily_output_cet_ws, cfg.output_cet['name_format'] % self.cell_id)
                     logging.debug('  Daily CET output path is {0}'.format(daily_output_cet_path))
-                    with open(daily_output_cet_path, 'w') as daily_output_cet_f:
+                    with open(daily_output_cet_path, 'w', newline='') as daily_output_cet_f:
                         daily_output_cet_f.write(header1 + '\n')
                         if cfg.output_cet['header_lines'] == 2:
                             daily_output_cet_f.write(header2 + '\n')
@@ -1685,7 +1685,7 @@ class ETCell():
 
                     monthly_output_cet_path = os.path.join(cfg.monthly_output_cet_ws, cfg.output_cet['name_format'] % self.cell_id)
                     logging.debug('  Monthly CET output path is {0}'.format(monthly_output_cet_path))
-                    with open(monthly_output_cet_path, 'w') as monthly_output_cet_f:
+                    with open(monthly_output_cet_path, 'w', newline='') as monthly_output_cet_f:
                         monthly_output_cet_f.write(header1 + '\n')
                         if cfg.output_cet['header_lines'] == 2:
                             monthly_output_cet_f.write(header2 + '\n')
@@ -1717,7 +1717,7 @@ class ETCell():
 
                     annual_output_cet_path = os.path.join(cfg.annual_output_cet_ws, cfg.output_cet['name_format'] % self.cell_id)
                     logging.debug('  Annual CET output path is {0}'.format(annual_output_cet_path))
-                    with open(annual_output_cet_path, 'w') as annual_output_cet_f:
+                    with open(annual_output_cet_path, 'w', newline='') as annual_output_cet_f:
                         annual_output_cet_f.write(header1 + '\n')
                         if cfg.output_cet['header_lines'] == 2:
                             annual_output_cet_f.write(header2 + '\n')

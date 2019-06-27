@@ -486,7 +486,6 @@ class MetNode():
             logging.error('ERROR:  input met file {} does not exist'.format(input_met_path))
             return False
         logging.debug('  {0}'.format(input_met_path))
-
         # Get list of 0 based line numbers to skip
         # Ignore header but assume header was set as 1's based index
         data_skip = [i for i in range(cfg.input_met['header_lines']) if i + 1 != cfg.input_met['names_line']]
@@ -613,7 +612,6 @@ class MetNode():
                     return False
 
             # Check/modify units
-
             for field_key, field_units in cfg.refet_out['units'].items():
                 if field_units is None: continue
                 elif field_units.lower() in ['c', 'mm', 'mm/d', 'mm/day',
@@ -732,7 +730,7 @@ class MetNode():
 
                 daily_refet_path = os.path.join(cfg.daily_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(daily_refet_path))
-                with open(daily_refet_path, 'w') as daily_refet_f:
+                with open(daily_refet_path, 'w', newline='') as daily_refet_f:
                     daily_refet_f.write(cfg.refet_out['daily_header1'] + '\n')
                     if cfg.refet_out['header_lines'] == 2:
                         daily_refet_f.write(cfg.refet_out['daily_header2'] + '\n')
@@ -767,7 +765,7 @@ class MetNode():
                 # post monthly output
                 monthly_refet_path = os.path.join(cfg.monthly_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(monthly_refet_path))
-                with open(monthly_refet_path, 'w') as monthly_refet_f:
+                with open(monthly_refet_path, 'w', newline='') as monthly_refet_f:
                     monthly_refet_f.write(cfg.refet_out['monthly_header1'] + '\n')
                     if cfg.refet_out['header_lines'] == 2:
                         monthly_refet_f.write(cfg.refet_out['monthly_header2'] + '\n')
@@ -801,7 +799,7 @@ class MetNode():
                 # post annual output
                 annual_refet_path = os.path.join(cfg.annual_refet_ws, cfg.refet_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(annual_refet_path))
-                with open(annual_refet_path, 'w') as annual_refet_f:
+                with open(annual_refet_path, 'w', newline='') as annual_refet_f:
                     annual_refet_f.write(cfg.refet_out['annual_header1'] + '\n')
                     if cfg.refet_out['header_lines'] == 2:
                         annual_refet_f.write(cfg.refet_out['annual_header2'] + '\n')
@@ -948,7 +946,7 @@ class MetNode():
 
                 daily_refetalt_path = os.path.join(cfg.daily_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(daily_refetalt_path))
-                with open(daily_refetalt_path, 'w') as daily_refetalt_f:
+                with open(daily_refetalt_path, 'w', newline='') as daily_refetalt_f:
                     daily_refetalt_f.write(cfg.refetalt_out['daily_header1'] + '\n')
                     if cfg.refetalt_out['header_lines'] == 2:
                         daily_refetalt_f.write(cfg.refetalt_out['daily_header2'] + '\n')
@@ -984,7 +982,7 @@ class MetNode():
 
                 monthly_refetalt_path = os.path.join(cfg.monthly_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(monthly_refetalt_path))
-                with open(monthly_refetalt_path, 'w') as monthly_refetalt_f:
+                with open(monthly_refetalt_path, 'w', newline='') as monthly_refetalt_f:
                     monthly_refetalt_f.write(cfg.refetalt_out['monthly_header1'] + '\n')
                     if cfg.refetalt_out['header_lines'] == 2:
                         monthly_refetalt_f.write(cfg.refetalt_out['monthly_header2'] + '\n')
@@ -1019,7 +1017,7 @@ class MetNode():
 
                 annual_refetalt_path = os.path.join(cfg.annual_refetalt_ws, cfg.refetalt_out['name_format'] % self.met_node_id)
                 logging.debug('  {0}'.format(annual_refetalt_path))
-                with open(annual_refetalt_path, 'w') as annual_refetalt_f:
+                with open(annual_refetalt_path, 'w', newline='') as annual_refetalt_f:
                     annual_refetalt_f.write(cfg.refetalt_out['annual_header1'] + '\n')
                     if cfg.refetalt_out['header_lines'] == 2:
                         annual_refetalt_f.write(cfg.refetalt_out['annual_header2'] + '\n')
