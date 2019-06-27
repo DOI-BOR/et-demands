@@ -267,11 +267,10 @@ class ETCellData():
             cell_col = columns.index('et cell id')
             dairy_col = columns.index('number dairy')
             beef_col = columns.index('number beef')
-
             # parse et cells cuttings for each cell
             for rc, row in df.iterrows():
                 row_list = row.tolist()
-                cell_id = str(int(row[cell_col]))
+                cell_id = row[cell_col]
                 if cell_id not in self.et_cells_dict.keys():
                     logging.error('crop_et_data.static_mean_cuttings(), cell'
                                   '_id %s not found' % cell_id)
