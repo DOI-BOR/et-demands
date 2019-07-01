@@ -56,19 +56,19 @@ python ..\et-demands\et-demands\prep\interpolate_spatial_crop_params.py --ini UC
 Notes on Model Calibration:
 Calibration of the ETDemands Models requires both time and experience. Users are encouraged to experiement with smaller models (limited cell/crop combinations) to build familiarity with each of the paramters before attempting calibartion over large areas with multiple crops. Each crop utilizes specific information related to its curve type and growth cycle. Curve type assignments for each crop are found within the CropParams.txt along with inital parameter values.   
 
-Crops are assigned one of four differenct curve types:
-1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
-1 = normalized cumulative growing degree days (NCGDD)
-2 = percent of time from planting (or greenup) to effective full cover, applied all season
-3 = percent of time from planting (or greenup) to effective full cover, then days after effective full cover
-4 = percent of time from planting (or greenup) until termination 
+Crops are assigned one of four differenct curve types: 1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
+  
+  - 1 = normalized cumulative growing degree days (NCGDD)
+  - 2 = percent of time from planting (or greenup) to effective full cover, applied all season
+  - 3 = percent of time from planting (or greenup) to effective full cover, then days after effective full cover
+  - 4 = percent of time from planting (or greenup) until termination 
 
-In addition to curve type, each crop also recieves a flag for estimating planting or greenup:
-1=CGDD, 2=T30, 3=date, 4 is on all the time
-1 = Indicates that cumulative growing degree days from January is used 
-2 = Indicates that 30 day mean air temperature is used
-3 = Indicates a specific date
-4 = Crop growth is always on. 
+In addition to curve type, each crop also recieves a flag for estimating planting or greenup: 1=CGDD, 2=T30, 3=date, 4 is on all the time
+
+  - 1 = Indicates that cumulative growing degree days from January is used
+  - 2 = Indicates that 30 day mean air temperature is used
+  - 3 = Indicates a specific date
+  - 4 = Crop growth is always on
 
 Depending on the assignments above, the crop will utilize different values to determine the start, greenup, effective full cover, harvest, and termination dates. 
 
