@@ -47,12 +47,33 @@ Calibrating the ETDemands model is an iterative process that requires users to p
 
 Interpolation of Spatial Crop Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-For model runs with a large number of ETZones, users may prefer to spatially interpolate crop parameters from a set of preliminary calibration zones. To set-up and interpolate crop parameters from a set of preliminary zones, users should first run the ETDemands model with a subset of cells that are representative of spatial extent and crops selection throughout the larger study area. Once you've finalized the crop parameter .shp for the subset run, you will copy the crop specific .shp to the "preliminary_calibration" folder in the calibration folder of your complete model. Users should run the build_spatial_crop_params.py script to create the calibration folder and crop specific .shp before building the preliminary calibration folder. Note that if the "preliminary_calibration" folder will need to be created if it doesn't already exist. 
+For model runs with a large number of ETZones, users may prefer to spatially interpolate crop parameters from a set of preliminary calibration zones. To set-up and interpolate crop parameters from a set of preliminary zones, users should first run the ETDemands model with a subset of cells that are representative of spatial extent and crops selection throughout the larger study area. Once you've finalized the crop parameter .shp for the subset run, you will copy the crop specific .shp to the "preliminary_calibration" folder in the calibration folder of your complete model. Spatial interpolation will only occur for crops with crop parameter .shp located in teh preliminary calibration folder. Note that if the "preliminary_calibration" folder will need to be created if it doesn't already exist.
+
+Users should run the build_spatial_crop_params.py script to create the calibration folder and crop specific .shp before building the preliminary calibration folder.  
 
 python ..\et-demands\et-demands\prep\interpolate_spatial_crop_params.py --ini UC_2018.ini
 
+Notes on Model Calibration:
+Calibration of the ETDemands Models requires both time and experience. Users are encouraged to experiement with smaller models (limited cell/crop combinations) to build familiarity with each of the paramters before attempting calibartion over large areas with multiple crops. Each crop utilizes specific information related to its curve type and growth cycle. Curve type assignments for each crop are found within the CropParams.txt along with inital parameter values.   
 
+Crops are assigned one of four differenct curve types:
+1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
+1 = normalized cumulative growing degree days (NCGDD)
+2 = percent of time from planting (or greenup) to effective full cover, applied all season
+3 = percent of time from planting (or greenup) to effective full cover, then days after effective full cover
+4 = percent of time from planting (or greenup) until termination 
 
+In addition to curve type, each crop also recieves a flag for estimating planting or greenup:
+1=CGDD, 2=T30, 3=date, 4 is on all the time
+1 = Indicates that cumulative growing degree days from January is used 
+2 = Indicates that 30 day mean air temperature is used
+3 = Indicates a specific date
+4 = Crop growth is always on. 
+
+Depending on the assignments above, the crop will utilize different values to determine the start, greenup, effective full cover, harvest, and termination dates. 
+
+Tips:
+In general, it is easier to make small changes to one crop/parameter combination at a time. Large changes to multiple paramters can be difficult to track. Utilize the crop and cell test list varibles to limit your model run and speed up output results. Examining both the daily time series plots and summary .shp created with the postprocessing "tools" scripts will help identify problematic crops/cells. 
 
 
 
