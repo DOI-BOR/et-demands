@@ -665,7 +665,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         gs_output_columns = [
             year_field, gs_start_doy_field, gs_end_doy_field,
             gs_start_date_field, gs_end_date_field, gs_length_field]
-        with open(gs_output_path, 'w') as gs_output_f:
+        with open(gs_output_path, open_mode, newline='') as gs_output_f:
             gs_output_f.write(
                 '# {0:2d} - {1}\n'.format(crop.class_number, crop.name))
             try:
