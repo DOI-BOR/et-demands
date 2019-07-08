@@ -145,6 +145,7 @@ def main(ini_path, area_threshold=10,
     crop_coefs_eto = 'CropCoefs_eto.txt'
     crop_coefs_etr = 'CropCoefs_etr.txt'
     eto_ratio_name = 'EToRatiosMon.txt'
+    etr_ratio_name = 'ETrRatiosMon.txt'
     static_list = [crop_params_name, crop_coefs_name, crop_coefs_eto,
                    crop_coefs_etr, cell_props_name, cell_crops_name,
                    cell_cuttings_name, eto_ratio_name]
@@ -252,6 +253,7 @@ def main(ini_path, area_threshold=10,
     # crop_params_path = os.path.join(static_ws, crop_params_name)
     # crop_coefs_path = os.path.join(static_ws, crop_coefs_name)
     eto_ratio_path = os.path.join(static_ws, eto_ratio_name)
+    etr_ratio_path = os.path.join(static_ws, etr_ratio_name)
 
     # Write cell properties
     logging.debug('  {}'.format(cell_props_path))
@@ -327,6 +329,22 @@ def main(ini_path, area_threshold=10,
     # Write monthly ETo ratios
     logging.debug('  {}'.format(eto_ratio_path))
     with open(eto_ratio_path, 'a') as output_f:
+        for cell_id, cell_data in sorted(cell_data_dict.items()):
+            try:
+                station_id = cell_data[station_id_field]
+            except KeyError:
+                logging.info(
+                    '    {} field was not found in the cell data, '
+                    'skipping'.format(station_id_field))
+                # station_id = ''
+                continue
+
+            output_f.write(
+                '\t'.join(map(str, [station_id, ''] + [1.0] * 12)) + '\n')
+
+    # Write monthly ETr ratios
+    logging.debug('  {}'.format(etr_ratio_path))
+    with open(etr_ratio_path, 'a') as output_f:
         for cell_id, cell_data in sorted(cell_data_dict.items()):
             try:
                 station_id = cell_data[station_id_field]

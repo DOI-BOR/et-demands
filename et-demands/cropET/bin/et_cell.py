@@ -274,6 +274,7 @@ class ETCellData():
                 # cell_id = row[cell_col]
                 # cell_id = str(int(row[cell_col]))
                 # Handle both str and float/int inputs and remove .0 decimal
+                # https://docs.python.org/release/2.7.3/library/stdtypes.html#boolean-operations-and-or-not
                 cell_id = (str(row[cell_col])[-2:] == '.0' and
                         str(row[cell_col])[:-2] or str(row[cell_col]))
 
