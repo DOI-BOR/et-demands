@@ -134,10 +134,14 @@ def main(ini_path, start_yr=None, end_yr=None):
                 stat_df = stat_df.loc[(stat_df.Year >= year_start) &
                                       (stat_df.Year <= year_end)]
 
-            avg_cutting = stat_df.Cutting.mean()
-            # avg_cutting = 9999
-
+            # take average of all years (round down to nearest int)
+            avg_cutting = int(stat_df.Cutting.mean())
+            # round up to 1 if avg is < 1
+            if avg_cutting < 1:
+                avg_cutting = 1
+            # set cuttings value in output df
             mean_cutting_df.at[cell_id, cuttingname] = avg_cutting
+            # print(mean_cutting_df.head())
     logging.info('\nUpdating MeanCuttings File: {}'.format(mean_cuttings_path))
     mean_cutting_df.to_csv(mean_cuttings_path, sep='\t')
     header_line = 'This file contains first (temporary) numbers of cutting ' \
@@ -152,7 +156,7 @@ def main(ini_path, start_yr=None, end_yr=None):
 def parse_args():
     """"""
     parser = argparse.ArgumentParser(
-        description='Compute Growing Season Statistics',
+        description='Update MeanCuttings.txt',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-i', '--ini', metavar='PATH',
