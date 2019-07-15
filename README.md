@@ -1,7 +1,6 @@
 [![Docs Status](https://readthedocs.org/projects/et-demands/badge/?version=latest)]( https://readthedocs.org/projects/et-demands/?badge=latest)
 [![Build Status](https://travis-ci.org/usbr/et-demands.svg?branch=master)](https://travis-ci.org/usbr/et-demands)
 [![Coverage Status](https://coveralls.io/repos/github/usbr/et-demands/badge.svg?branch=master)](https://coveralls.io/github/usbr/et-demands?branch=master)
-[![Code Health](https://landscape.io/github/usbr/et-demands/master/landscape.svg?style=flat)](https://landscape.io/github/usbr/et-demands/master)
 
 # CropET
 Crop ET Demands Model
