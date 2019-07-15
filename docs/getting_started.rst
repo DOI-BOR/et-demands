@@ -62,38 +62,78 @@ is to install the required Python packages manually using the following:
 ``
 conda install bokeh=0.13.0 gdal=2.3.1  numpy=1.15.0 pandas=0.23.4 openpyxl=2.5.5
 ``
+
 Model Inputs
 ------------
 ET-Demands requires
+
 Model Control Files
 -------------------
 
 Model Structure
 ---------------
 
-ET-Demands is comprised of several modules.
+ET-Demands is comprised of several modules with *prep* and *refET* containing
+pre-processing tools, *cropET* containing the crop irrigation water requirement
+calculations, and *areaET* and *tools* containing post-processing tools. The
+source code model structure is shown below::
 
-|--- prep
-|    |--- download_cdl_raster.py
-|    |--- clip_cdl_raster.py
-|    |--- build_ag_cdl_shapefile.py
-|    |--- download_statsgo_shapefiles.py
-|    |--- et_demands_zonal_stats.py
-|    |--- build_static_files.py
-|--- refET
-|
-|--- cropET
-|
-|--- areaET
-|
-|--- tools
-|    |--- compute_growing_season.py
-|    |--- cropweighted_shapefiles_gpd.py
-|    |--- plot_crop_daily_groupstats.py
-|    |--- plot_crop_daily_timeseries.py
-|    |--- plot_crop_summary_maps.py
-|    |--- summary_shapefiles_gpd.py
-
+  et-demands
+   |--- prep
+   |    |--- download_cdl_raster.py
+   |    |--- clip_cdl_raster.py
+   |    |--- build_ag_cdl_shapefile.py
+   |    |--- download_statsgo_shapefiles.py
+   |    |--- et_demands_zonal_stats.py
+   |    |--- build_static_files.py
+   |    |--- interpolate_spatial_crop_params.py
+   |
+   |--- refET
+   |    |--- run_ret.py
+   |    |    |--- mod_ref_et.py
+   |    |         |--- ret_config.py
+   |    |         |--- met_nodes.py
+   |    |              |--- ref_et_data.py
+   |    |              |--- ret_utils.py
+   |    |--- ret_utils.py
+   |
+   |--- cropET
+   |    |--- run_cet.py
+   |    |    |--- mod_crop_et.py
+   |    |         |--- crop_et_data.py
+   |    |         |    |--- crop_parameters.py
+   |    |         |    |--- crop_coefficients.py
+   |    |         |--- et_cell.py
+   |    |         |    |--- shapefile.py
+   |    |         |--- crop_cycle.py
+   |    |         |    |--- initialize_crop_cycle.py
+   |    |         |    |--- compute_crop_gdd.py
+   |    |         |    |    |--- open_water_evap.py
+   |    |         |    |--- calculate_height.py
+   |    |         |    |--- kcb_daily.py
+   |    |         |    |    |--- runoff.py
+   |    |         |    |--- compute_crop_et.py
+   |    |         |    |    |--- grow_root.py
+   |    |--- util.py
+   |
+   |--- areaET
+   |    |--- run_aet.py
+   |    |    |--- mod_area_et.py
+   |    |         |--- aet_config.py
+   |    |         |--- aet_cells.py
+   |    |         |    |--- ref_et_.py
+   |    |--- aet_utils.py
+   |
+   |--- tools
+   |    |--- compute_growing_season.py
+   |    |--- cropweighted_shapefiles_gpd.py
+   |    |--- example_check.py
+   |    |--- indicatormethod_restructure.py
+   |    |--- plot_crop_daily_groupstats.py
+   |    |--- plot_crop_daily_timeseries.py
+   |    |--- plot_crop_summary_maps.py
+   |    |--- summary_shapefiles_gpd.py
+   |    |--- util.py
 
 Running the Model
 -----------------
