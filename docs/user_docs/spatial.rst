@@ -1,2 +1,0 @@
-Spatially Varying Calibration
-=============================
