@@ -68,6 +68,10 @@ For this example each weather station data file follows the format:
 In the REFET section of the model .INI file, name_format = gridmet_historical_%s.csv.
 A similar ID/Filenaming structure should be used to link each 'STATION_ID' with its corresponding timeseries file.
 
+Historical gridMET time series supplied with this repor wer acquired using the download_gridmet_opendap.py tool
+found in the `gridwxcomp repository <https://github.com/WSWUP/gridwxcomp/>`_. The climate folder contains a .txt list of gridMET stations (gridmet_huc8_stations.csv). This can be used with download_gridmet_opendap.py to download station
+data. Output format from the download_gridmet_opendap.py script is ready for the INI supplied with this example.
+
 Crop Shapefile
 --------------
 For this example, the crop shapefile will be built from the 2015 Cropland Data Layer (CDL) raster.

@@ -406,7 +406,8 @@ def main(ini_path, overwrite_flag=False):
     crop_field_list = sorted(list(set([
         crop_field for zone_crop_dict in crop_stats.values()
         for crop_field in zone_crop_dict.keys()])))
-    logging.info('\nCrops Fields: {}'.format(', '.join(map(str, etd_crops))))
+    logging.info('\nCrop Fields: {}'.format(', '.join(map(str, etd_crops))))
+
 
     logging.debug('\nAdding crop fields to zones shapefile')
     for crop_field in crop_field_list:
