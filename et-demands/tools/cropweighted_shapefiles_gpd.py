@@ -48,6 +48,14 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             'et_cells_path parameter must be set in the INI file, exiting')
         return False
 
+    try:
+        daily_output_path = config.get(crop_et_sec, 'daily_output_folder')
+    except:
+        logging.error(
+            'ERROR: daily_output_folder ' +
+            'parameter is not set inINI file')
+        sys.exit()
+
     # Year Filter
     year_list = None
     if year_filter:
@@ -57,7 +65,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             pass
 
     # Sub folder names
-    daily_ws = os.path.join(project_ws, 'daily_stats')
+    daily_ws = os.path.join(project_ws, daily_output_path)
     output_ws = os.path.join(project_ws, 'cropweighted_shapefiles')
     if not os.path.exists(output_ws):
         os.makedirs(output_ws)
