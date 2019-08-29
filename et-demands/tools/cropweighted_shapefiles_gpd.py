@@ -49,7 +49,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         return False
 
     try:
-        daily_output_path = config.get(crop_et_sec, 'daily_output_folder')
+        daily_output_path = config.get('CROP_ET', 'daily_output_folder')
     except:
         logging.error(
             'ERROR: daily_output_folder ' +
