@@ -464,8 +464,11 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                     #     group.index[0], gs_start_doy_field,
                     #     int(group.ix[start_i, doy_field]))
                     # Replacement for set_value Future Warning
+                    # gs_output_df.at[group.index[0], gs_start_doy_field] = int(
+                    #     group.ix[start_i, doy_field])
+                    # .ix deprecated replaced with .loc
                     gs_output_df.at[group.index[0], gs_start_doy_field] = int(
-                        group.ix[start_i, doy_field])
+                        group.loc[start_i, doy_field])
                 except:
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_start_doy_field,
@@ -479,8 +482,11 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                     #     group.index[0], gs_end_doy_field,
                     #     int(group.ix[end_i, doy_field]))
                     # Replacement for set_value Future Warning
+                    # gs_output_df.at[group.index[0], gs_end_doy_field] = int(
+                    #     group.ix[end_i, doy_field])
+                    # .ix deprecated replaced with .loc
                     gs_output_df.at[group.index[0], gs_end_doy_field] = int(
-                        group.ix[end_i, doy_field])
+                        group.loc[end_i, doy_field])
                 except:
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_end_doy_field,
