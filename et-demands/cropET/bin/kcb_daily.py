@@ -819,7 +819,8 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 # Note that these values are substantially different from FAO56
                 foo.kc_bas = 1.05
             elif data.refet['type'] == 'etr':
-                foo.kc_bas = 0.6
+                # etr kc_bas is eto_kc_bas / 1.2 [1.05/1.2 = 0.875]
+                foo.kc_bas = 0.875
         elif crop.class_number == 56:
             # This is a place holder, since an aerodynamic function is used
             # foo.kc_bas = 0.3

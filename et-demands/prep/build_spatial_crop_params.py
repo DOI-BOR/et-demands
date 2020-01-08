@@ -36,7 +36,7 @@ def main(ini_path, area_threshold=10,
     beef_cuttings : int
         Initial number of beef hay cuttings.
     crop_str : str
-        Comma separated list or range of crops to compare.
+        Comma separated list or range of crops to compare (no spaces, ex: 1,2,4-6)
     overwrite_flag : bool
         If True, overwrite existing output rasters.
 
