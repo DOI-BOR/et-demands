@@ -197,7 +197,7 @@ class CropETData:
             # test if fully specified path
             if not os.path.isfile(self.cell_properties_path):
                 logging.error('ERROR:  ET Cells properties file {} does not'
-                              ' exist'.format(self.self.cell_properties_path))
+                              ' exist'.format(self.cell_properties_path))
                 sys.exit()
         logging.info('  ET Cell Properties file: {}'
                      .format(self.cell_properties_path))
