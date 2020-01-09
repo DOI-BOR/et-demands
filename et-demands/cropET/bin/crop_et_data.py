@@ -275,7 +275,7 @@ class CropETData:
             self.crop_params_path = crop_params_name
             if not os.path.isfile(self.crop_params_path):
                 logging.error('ERROR:  crop parameters file {} does not exist'
-                              .format(self.self.crop_params_path))
+                              .format(self.crop_params_path))
                 sys.exit()
         logging.info('  Crop parameters file: {}'.format(self.crop_params_path))
         if original:
@@ -1209,6 +1209,7 @@ class CropETData:
         """
 
         logging.info('  Reading crop parameters from\n' + self.crop_params_path)
+
         params_df = pd.read_csv(self.crop_params_path,
                                   delimiter=self.crop_params_delimiter,
                                   header=None,
