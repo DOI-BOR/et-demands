@@ -586,6 +586,8 @@ class ETCellData():
                             setattr(
                                 self.et_cells_dict[cell_id].crop_params[
                                     crop_num], param_name, float(row_value))
+                            # print(self.et_cells_dict[cell_id].crop_params[
+                            #         crop_num], param_name, float(row_value))
 
                         except:
                             logging.warning(
