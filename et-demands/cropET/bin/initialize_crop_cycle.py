@@ -64,6 +64,8 @@ class InitializeCropCycle:
         self.n_cgdd = 0.
         self.n_pl_ec = 0.
         self.niwr = 0.
+        self.p_rz = 0.
+        self.p_eft = 0.
         self.ppt_inf = 0.
         self.ppt_inf_prev = 0.
         self.rew = 0.

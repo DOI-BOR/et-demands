@@ -225,6 +225,7 @@ def main(ini_path, area_threshold=10,
     fields = fields + crop_field_list
     logging.debug('  Fields: {}'.format(fields))
     cell_data_dict = defaultdict(dict)
+
     for fid, row in _arcpy.search_cursor(et_cells_path, fields).items():
         # Switch to cell_id_field as index (instead of FID)
         for f in fields[1:]:

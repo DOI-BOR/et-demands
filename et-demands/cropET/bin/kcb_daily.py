@@ -232,10 +232,45 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     # Flag_for_means_to_estimate_pl_or_gu Case 3
 
     elif crop.flag_for_means_to_estimate_pl_or_gu == 3:
+
+
+#######################################################
+# Added for testing of spatial varying calibration Case 3
+#         print(crop.date_of_pl_or_gu)
+#         print(crop.month_of_pl_or_gu)
+#         print(crop.day_of_pl_or_gu)
+        # sys.exit()
+
+        # Compute planting or green-up date from fractional month
+        # Putting in a date_of_pl_or_gu of "1" will return Jan. 15th
+        # Putting in a date_of_pl_or_gu of "10" will return Oct. 15th
+        # Putting in a date_of_pl_or_gu of "4.8333" will return Apr. 25th
+        month_of_pl_or_gu = int(crop.date_of_pl_or_gu)
+        day_of_pl_or_gu = int(round(
+            (crop.date_of_pl_or_gu - month_of_pl_or_gu) * 30.4))
+        if day_of_pl_or_gu < 0.5:
+            day_of_pl_or_gu = 15
+        if month_of_pl_or_gu == 0:
+            # vb code (DateSerial) apparently resolves Mo=0 to 12
+            date_of_pl_or_gu = 12
+            logging.info('  Changing date_of_pl_or_gu from 0 to 12')
+        # self.doy_of_pl_or_gu = datetime.datetime(
+        #     _day.year, self.month_of_pl_or_gu,
+        #     .day_of_pl_or_gu).timetuple().tm_yday
+
         # Planting or greenup day of year
         doy = datetime.datetime(
-            foo_day.year, crop.month_of_pl_or_gu,
-            crop.day_of_pl_or_gu).timetuple().tm_yday
+            foo_day.year, month_of_pl_or_gu,
+            day_of_pl_or_gu).timetuple().tm_yday
+        # print(doy)
+####################################################
+
+        # # Planting or greenup day of year
+        # doy = datetime.datetime(
+        #     foo_day.year, crop.month_of_pl_or_gu,
+        #     crop.day_of_pl_or_gu).timetuple().tm_yday
+        # print(doy)
+
 
         # Modified next statement to get winter grain to et
         # and irrigate in first year of run.  dlk  08/16/2012
@@ -819,7 +854,8 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 # Note that these values are substantially different from FAO56
                 foo.kc_bas = 1.05
             elif data.refet['type'] == 'etr':
-                foo.kc_bas = 0.6
+                # etr kc_bas is eto_kc_bas / 1.2 [1.05/1.2 = 0.875]
+                foo.kc_bas = 0.875
         elif crop.class_number == 56:
             # This is a place holder, since an aerodynamic function is used
             # foo.kc_bas = 0.3

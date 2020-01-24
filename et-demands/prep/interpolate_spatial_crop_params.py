@@ -57,9 +57,16 @@ def main(ini_path):
     except:
         calibration_ws = os.path.join(project_ws, 'calibration')
 
+    try:
+        crop_params_name = config.get(crop_et_sec, 'crop_params_name')
+    except:
+        logging.error('crop_params_name parameter must be set in the INI file, '
+                      'exiting')
+        return False
+
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
-    crop_params_path = os.path.join(static_ws, 'CropParams.txt')
+    crop_params_path = os.path.join(static_ws, crop_params_name)
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 

@@ -76,6 +76,8 @@ def main(ini_path, bin_ws = '', verbose_flag = False,
         args_list.append('-d')
     if verbose_flag:
         args_list.append('-v')
+    if cal_flag:
+        args_list.append('--cal')
     if mp_procs > 1:
         args_list.extend(['-mp', str(mp_procs)])
     subprocess.call(args_list)

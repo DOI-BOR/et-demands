@@ -36,7 +36,7 @@ def main(ini_path, area_threshold=10,
     beef_cuttings : int
         Initial number of beef hay cuttings.
     crop_str : str
-        Comma separated list or range of crops to compare.
+        Comma separated list or range of crops to compare (no spaces, ex: 1,2,4-6)
     overwrite_flag : bool
         If True, overwrite existing output rasters.
 
@@ -81,6 +81,13 @@ def main(ini_path, area_threshold=10,
                       'exiting')
         return False
 
+    try:
+        crop_params_name = config.get(crop_et_sec, 'crop_params_name')
+    except:
+        logging.error('crop_params_name parameter must be set in the INI file, '
+                      'exiting')
+        return False
+
     crop_et_ws = config.get(crop_et_sec, 'crop_et_folder')
     bin_ws = os.path.join(crop_et_ws, 'bin')
 
@@ -91,7 +98,7 @@ def main(ini_path, area_threshold=10,
 
     # Sub folder names
     static_ws = os.path.join(project_ws, 'static')
-    crop_params_path = os.path.join(static_ws, 'CropParams.txt')
+    crop_params_path = os.path.join(static_ws, crop_params_name)
 
     # ET cells field names
     cell_id_field = 'CELL_ID'

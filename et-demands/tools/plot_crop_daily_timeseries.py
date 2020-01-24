@@ -361,9 +361,9 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
             tools=TOOLS, toolbar_location="right",
             active_scroll="xwheel_zoom")
             # title='Evapotranspiration', x_axis_type='datetime',
-        f1.line(dt_array, etact_array, color='blue', legend='ETact')
-        f1.line(dt_array, etbas_array, color='green', legend='ETbas')
-        f1.line(dt_array, pmet_array, color='black', legend=PMET_str,
+        f1.line(dt_array, etact_array, color='blue', legend_label='ETact')
+        f1.line(dt_array, etbas_array, color='green', legend_label='ETbas')
+        f1.line(dt_array, pmet_array, color='black', legend_label=PMET_str,
                 line_dash="dotted")
                 # line_dash="dashdot")
         # f1.title = 'Evapotranspiration [mm]'
@@ -372,36 +372,36 @@ def main(ini_path, figure_show_flag=False, figure_save_flag=True,
         f1.yaxis.axis_label_text_font_size = figure_ylabel_size
 
         f2 = figure(
-            x_axis_type = "datetime", x_range = f1.x_range,
-            width = figure_size[0], height = figure_size[1],
-            tools = TOOLS, toolbar_location = "right",
-            active_scroll = "xwheel_zoom")
-        f2.line(dt_array, kc_array, color = 'blue', legend = 'Kc')
-        f2.line(dt_array, kcb_array, color = 'green', legend = 'Kcb')
-        f2.line(dt_array, season_array, color = 'black', legend = 'Season',
-                line_dash = "dashed")
-        f2.grid.grid_line_alpha = 0.3
+            x_axis_type = "datetime", x_range=f1.x_range,
+            width = figure_size[0], height=figure_size[1],
+            tools = TOOLS, toolbar_location="right",
+            active_scroll="xwheel_zoom")
+        f2.line(dt_array, kc_array, color='blue', legend_label='Kc')
+        f2.line(dt_array, kcb_array, color='green', legend_label='Kcb')
+        f2.line(dt_array, season_array, color='black', legend_label='Season',
+                line_dash="dashed")
+        f2.grid.grid_line_alpha= 0.3
         f2.yaxis.axis_label = 'Kc and Kcb (dimensionless)'
         f2.yaxis.axis_label_text_font_size = figure_ylabel_size
 
         f3 = figure(
-            x_axis_type = "datetime", x_range = f1.x_range,
-            width = figure_size[0], height = figure_size[1],
-            tools = TOOLS, toolbar_location = "right",
-            active_scroll = "xwheel_zoom")
-        f3.line(dt_array, precip_array, color = 'blue', legend = 'PPT')
-        f3.line(dt_array, irrig_array, color = 'black', legend = 'Irrigation',
-                line_dash = "dotted")
+            x_axis_type="datetime", x_range=f1.x_range,
+            width=figure_size[0], height=figure_size[1],
+            tools=TOOLS, toolbar_location="right",
+            active_scroll="xwheel_zoom")
+        f3.line(dt_array, precip_array, color='blue', legend_label='PPT')
+        f3.line(dt_array, irrig_array, color='black', legend_label='Irrigation',
+                line_dash="dotted")
         f3.grid.grid_line_alpha = 0.3
         f3.yaxis.axis_label = 'PPT and Irrigation [mm]'
         f3.yaxis.axis_label_text_font_size = figure_ylabel_size
 
         if figure_save_flag:
             # save(column([f1, f2, f3], sizing_mode = 'stretch_both'))
-            save(column([f1, f2, f3], sizing_mode = 'stretch_both'), validate = True)
+            save(column([f1, f2, f3], sizing_mode='stretch_both'), validate=True)
         if figure_show_flag:
             # Open in browser
-            show(column([f1, f2, f3], sizing_mode = 'stretch_both'))
+            show(column([f1, f2, f3], sizing_mode='stretch_both'))
 
         # Cleanup
 

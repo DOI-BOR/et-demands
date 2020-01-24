@@ -110,6 +110,10 @@ def main(ini_path, log_level=logging.WARNING,
     if data.spatial_cal_flag:
         cells.set_spatial_crop_params(data.spatial_cal_ws)
 
+    # print(cells.et_cells_dict['1067'])
+    # print(cells.et_cells_dict['1067'].crop_params)
+    # print(cells.et_cells_dict['1067'].crop_params[40])
+    # sys.exit()
     # Multiprocessing logic
     # If cell count is low, process crops in parallel
     # If cell count is high, process cells in parallel (crops in serial)
