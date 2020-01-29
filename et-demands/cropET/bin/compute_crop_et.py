@@ -902,7 +902,8 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
 
         foo.aw3 = 0
 
-    # Compute NIWR (ET - precip + runoff + deep percolation)
+    # Compute NIWR
+    # NIWR = ETact – (precip – runoff – deep percolation)
     # Don't include deep percolation when irrigating
     # Irrigation ON conditional accounts for assumption that 10% of irrigation goes to
     # deep percolation.
