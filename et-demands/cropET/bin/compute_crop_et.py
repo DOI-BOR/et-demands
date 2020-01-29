@@ -904,7 +904,8 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
 
     # Compute NIWR (ET - precip + runoff + deep percolation)
     # Don't include deep percolation when irrigating
-
+    # Irrigation ON conditional accounts for assumption that 10% of irrigation goes to
+    # deep percolation.
     if foo.irr_sim > 0:
         foo.niwr = foo.etc_act - (foo_day.precip - foo.sro)
     else:
@@ -913,7 +914,10 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # Effective Precipitation Calcs
     # p_rz = Precipitation residing in the root zone
     # p_rz = P - Runoff - DPerc, where P is gross reported precip
-    foo.p_rz = foo_day.precip - foo.sro - foo.dperc
+    if foo.irr_sim > 0:
+        foo.p_rz = foo_day.precip - foo.sro
+    else:
+        foo.p_rz = foo_day.precip - foo.sro - foo.dperc
     if foo.p_rz <= 0:
         foo.p_rz = 0
 
@@ -921,7 +925,10 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # p_eft = p_rz - surface evaporation losses
     # p_eft = P - Runoff - DPerc - surface evaporation losses
     # e_ppt = ke_ppt*foo_day.etref (evap component of prcp only)
-    foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e_ppt
+    if foo.irr_sim > 0:
+        foo.p_eft = foo_day.precip - foo.sro - e_ppt
+    else:
+        foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e_ppt
     if foo.p_eft <= 0:
         foo.p_eft = 0
 
