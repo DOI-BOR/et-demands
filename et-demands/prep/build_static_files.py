@@ -148,7 +148,7 @@ def main(ini_path, area_threshold=10,
     etr_ratio_name = 'ETrRatiosMon.txt'
     static_list = [crop_params_name, crop_coefs_name, crop_coefs_eto,
                    crop_coefs_etr, cell_props_name, cell_crops_name,
-                   cell_cuttings_name, eto_ratio_name]
+                   cell_cuttings_name, eto_ratio_name, etr_ratio_name]
 
     # Check input folders
     if not os.path.isdir(crop_et_ws):
@@ -275,7 +275,6 @@ def main(ini_path, area_threshold=10,
                 station_elev = '{:.2f}'.format(station_data[station_elev_field])
             else:
                 station_lat, station_lon, station_elev = '', '', ''
-
             # There is an extra/unused column in the template and excel files
             output_list = [
                 cell_id, cell_data[cell_name_field],
