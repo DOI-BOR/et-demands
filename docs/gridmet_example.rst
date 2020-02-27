@@ -77,9 +77,9 @@ The historical weather data file naming format is specific using the
 
 Historical gridMET time series was acquired using the download_gridmet_opendap.py tool
 found in the `gridwxcomp repository <https://github.com/WSWUP/gridwxcomp/>`_. The climate folder contains a .txt list of gridMET stations. This can be used with download_gridmet_opendap.py to download station
-data. Output format from the download_gridmet_opendap.py script is ready for the INI supplied with this example.
+data. Output format from the download_gridmet_opendap.py script is ready for the INI supplied with this example::
 
-python download_gridmet_opendap.py -i D:\et-demands\examples\gridmet\climate\upperCarson_agpts.txt -o D:\et-demands\examples\gridmet\climate -y 2017-2018
+    > python download_gridmet_opendap.py -i D:\et-demands\examples\gridmet\climate\upperCarson_agpts.txt -o D:\et-demands\examples\gridmet\climate -y 2017-2018
 
 For this example each weather station data file follows the format:
 'gridmet_historical_XXXXXX.csv' where XXXXXX represents a 6-digit gridMET cell identifier.
