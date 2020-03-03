@@ -18,6 +18,7 @@ Table of Contents:
    model_description
    data_sources
    appendix
+   huc_example
 Indices and tables
 ==================
 
