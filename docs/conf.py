@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'et-demands'
+project = u'ET-Demands'
 copyright = u'2019'
 author = u' Bureau of Reclamation and Desert Research Institute'
 
