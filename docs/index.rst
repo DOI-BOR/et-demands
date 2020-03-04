@@ -16,8 +16,12 @@ Table of Contents:
    model_outputs
    model_run
    model_description
+   tools
    data_sources
    appendix
+   huc_example
+   gridmet_example
+   
 Indices and tables
 ==================
 

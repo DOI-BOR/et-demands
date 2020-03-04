@@ -27,8 +27,9 @@
 ----
 * [Model Calibration](calibration.md)
   * [Spatially Varying Calibration](spatial_calibration.md)
-  *
-* [Example]
+* Examples
+  * [Huc Example](huc_example.md)
+  * [gridMET Example](gridmet_example.md) 
 
 
 -----
