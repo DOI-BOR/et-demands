@@ -19,6 +19,7 @@ Table of Contents:
    data_sources
    appendix
    huc_example
+   gridmet_example
    
 Indices and tables
 ==================
