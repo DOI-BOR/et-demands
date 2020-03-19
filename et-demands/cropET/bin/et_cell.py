@@ -1031,7 +1031,7 @@ class ETCell():
         # Input climate files have Year, Month, Day.
         # add 'month' column if not in df for ratio join
         if 'month' not in self.refet_df:
-            logging.info('month field not specified in REFET section of .ini and default "month" column not found.'
+            logging.info('month_field not specified in REFET section of .ini and default "month" column not found.'
                           ' Creating month column from date/index for refet data/ratio join.')
             self.refet_df['month'] = self.refet_df.index.month
         self.refet_df = self.refet_df.join(refet_ratios_df, 'month')
@@ -1040,6 +1040,7 @@ class ETCell():
         del self.refet_df[data.et_ratios_month_field]
         del self.refet_df[data.et_ratios_id_field]
         return True
+
 
     def set_weather_data(self, cell_count, data, cells):
         """Read meteorological data for single station and fill missing
