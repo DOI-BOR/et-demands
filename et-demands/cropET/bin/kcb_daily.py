@@ -663,7 +663,6 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             #   and symmetry around July 15 to estimate total season length.
 
             # Estimate end of season
-
             if foo.doy_start_cycle < (crop.gdd_trigger_doy + 195):
                 # CGM - end_of_season is not used anywhere else?
                 # end_of_season = (
@@ -675,7 +674,8 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             else:
                 logging.error(
                     ('kc_daily.kcb_daily(): Problem with estimated season ' +
-                     'length, crop_curve_type_4, crop {}').format(
+                     'length, crop_curve_type_4, crop {}.' +
+                     ' Check if T30 is too low.').format(
                         crop.class_number))
                 sys.exit()
 

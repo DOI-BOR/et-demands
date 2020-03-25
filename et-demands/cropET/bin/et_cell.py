@@ -16,7 +16,6 @@ import sys
 import copy
 import numpy as np
 import pandas as pd
-import xlrd
 import shapefile
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -127,10 +126,7 @@ class ETCellData():
 
         """
 
-        if ".xls" in data.cell_crops_path.lower():
-            self.read_cell_crops_xls_xlrd(data)
-        else:
-            self.read_cell_crops_txt(data)
+        self.read_cell_crops_txt(data)
 
     def read_cell_crops_txt(self, data):
         """Extract et cell crop data from text file
@@ -175,54 +171,6 @@ class ETCellData():
 
         self.crop_num_list = sorted(list(set(self.crop_num_list)))
 
-    def read_cell_crops_xls_xlrd(self, data):
-        """Extract et cell crop data from Excel using xlrd
-
-        Parameters
-        ---------
-        data : dict
-            configuration data from INI file
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-
-        """
-
-        logging.info('\nReading cell crop flags from\n' +
-                     data.cell_crops_path)
-        wb = xlrd.open_workbook(data.cell_crops_path)
-        ws = wb.sheet_by_name(data.cell_crops_ws)
-        num_crops = int(ws.cell_value(data.cell_crops_names_line - 1, 1))
-        crop_names = []
-        crop_numbers = []
-        for col_index in range(4, num_crops + 4):
-            crop_type_number = int(ws.cell_value(data.cell_crops_names_line - 1,
-                                                 col_index))
-            crop_numbers.append(crop_type_number)
-            crop_type_name = str(ws.cell_value(data.cell_crops_names_line,
-                                               col_index)).replace(
-                '"', '').split("-")[0].strip()
-            crop_names.append(crop_type_name)
-        crop_numbers = np.asarray(crop_numbers)
-        crop_names = np.asarray(crop_names)
-        for row_index in range(data.cell_crops_header_lines, ws.nrows):
-            row = np.asarray(ws.row_values(row_index), dtype=np.str)
-            for col_index in range(3, num_crops + 4):
-                row[col_index] = row[col_index].replace(".0", "")
-            cell_id = row[0]
-            cell = self.et_cells_dict[cell_id]
-            cell.init_crops_from_row(row, crop_numbers)
-            cell.crop_numbers = crop_numbers
-            cell.crop_names = crop_names
-
-            # make List of active crop numbers (i.e. flag is True) in cell
-            cell.crop_num_list = sorted(
-                [k for k,v in cell.crop_flags.items() if v])
-            self.crop_num_list.extend(cell.crop_num_list)
 
     def set_cell_cuttings(self, data):
         """Extract mean cutting data from specified file
