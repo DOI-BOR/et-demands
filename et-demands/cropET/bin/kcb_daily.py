@@ -206,16 +206,6 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                     if foo.doy_start_cycle < 1:
                         foo.doy_start_cycle += 365
 
-                # Some range grasses require backing up 10 days
-                # Note that following logic will cause first 10 days to not
-                #   be assigned to range grasses, but to winter cover
-                #   but this code needs to be here because process (or DoY)
-                #   can not go back in time
-
-                if crop.date_of_pl_or_gu < 0.0:
-                    foo.doy_start_cycle += int(crop.date_of_pl_or_gu)
-                    if foo.doy_start_cycle < 1:
-                        foo.doy_start_cycle = foo.doy_start_cycle + 365
             if debug_flag:
                 logging.debug(
                     'kcb_daily(): longterm_pl %d' % (foo.longterm_pl))
@@ -663,6 +653,10 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             #   and symmetry around July 15 to estimate total season length.
 
             # Estimate end of season
+            print(foo.doy_start_cycle)
+            print(crop.gdd_trigger_doy)
+            print(crop.gdd_trigger_doy + 195)
+            # sys.exit()
             if foo.doy_start_cycle < (crop.gdd_trigger_doy + 195):
                 # CGM - end_of_season is not used anywhere else?
                 # end_of_season = (
@@ -675,7 +669,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 logging.error(
                     ('kc_daily.kcb_daily(): Problem with estimated season ' +
                      'length, crop_curve_type_4, crop {}.' +
-                     ' Check if T30 is too low.').format(
+                     ' Check T30 (too low) or PL_GU_Date Negative Offset.').format(
                         crop.class_number))
                 sys.exit()
 
