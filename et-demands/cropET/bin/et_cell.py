@@ -1376,11 +1376,15 @@ class ETCell():
         Cumulative variables use 'hist' in lieu of 'main'
 
         """
-
-        # Initialize climate dataframe
-        self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
-                                           'tdew', 'wind', 'rh_min', 'snow',
-                                           'snow_depth']].copy()
+        # Copy CO2 data to climate_df if co2 flag set True else do not copy
+        if data.co2_flag:
+            self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
+                                               'tdew', 'wind', 'rh_min', 'snow',
+                                               'snow_depth', 'co2_grass', 'co2_tree', 'co2_c4']].copy()
+        else:
+            self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
+                                               'tdew', 'wind', 'rh_min', 'snow',
+                                               'snow_depth']].copy()
 
         # Extend to support historic (constant) phenology
         if data.phenology_option > 0:

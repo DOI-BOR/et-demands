@@ -6,6 +6,7 @@ Called by crop_cycle.py
 
 import logging
 import numpy as np
+import sys
 
 # from modCropET.vb
 
@@ -622,11 +623,10 @@ class InitializeCropCycle:
         -----
 
         """
-
         if crop.co2_type == 'GRASS':
-            self.co2 = et_cell.weather_pd['co2_grass']
+            self.co2 = et_cell.climate_df['co2_grass']
         elif crop.co2_type == 'TREE':
-            self.co2 = et_cell.weather_pd['co2_tree']
+            self.co2 = et_cell.climate_df['co2_tree']
         elif crop.co2_type == 'C4':
-            self.co2 = et_cell.weather_pd['co2_c4']
+            self.co2 = et_cell.climate_df['co2_c4']
         return True
