@@ -139,10 +139,10 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     # Flag_for_means_to_estimate_pl_or_gu Case 2
 
     elif crop.flag_for_means_to_estimate_pl_or_gu == 2:
+        # print(foo_day.doy)
         # Use T30 for startup
         # Caution - need some constraints for oscillating T30 and for late summer
         # Use first occurrence
-
         if foo_day.doy < (crop.gdd_trigger_doy + 195):
             # Only allow start flag to begin if < July 15 to prevent GU
             #   in fall after freeze down before finding date of startup
@@ -306,6 +306,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
 
     # InSeason
     if foo.in_season:
+        # print('In-Season')
         # <------This kcb loop only conducted if inside growing season
         # crop curve type:
         # 1 = NcumGDD, 2 = %PL-EC, 3 = %PL-EC, daysafter, 4 = %PL-Term
@@ -648,21 +649,20 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         # crop.curve_type Case 4
 
         elif crop.curve_type == 4:
+            # print('CURVE TYPE 4')
             # Percent of time from PL to end of season
             # Note that type 4 kcb curve uses T30 to estimate GU
             #   and symmetry around July 15 to estimate total season length.
-
+            # print(foo.doy_start_cycle)
+            # print(crop.gdd_trigger_doy)
             # Estimate end of season
-            print(foo.doy_start_cycle)
-            print(crop.gdd_trigger_doy)
-            print(crop.gdd_trigger_doy + 195)
-            # sys.exit()
             if foo.doy_start_cycle < (crop.gdd_trigger_doy + 195):
                 # CGM - end_of_season is not used anywhere else?
                 # end_of_season = (
                 #     .gdd_trigger_doy  + 195 +
                 #     .gdd_trigger_doy  + 195 - foo.doy_start_cycle))
                 length_of_season = 2 * (crop.gdd_trigger_doy + 195 - foo.doy_start_cycle)
+                # print(length_of_season)
                 # end_of_season = 196 + (196 - foo.doy_start_cycle)
                 # length_of_season = 2 * (196 - foo.doy_start_cycle)
             else:
@@ -672,6 +672,10 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                      ' Check T30 (too low) or PL_GU_Date Negative Offset.').format(
                         crop.class_number))
                 sys.exit()
+            # Limit growing season length to 366 days
+            if length_of_season > 366:
+                logging.info('ADJUSTING GROWING SEASON (NOT CENTERING ON JULY 15)')
+                length_of_season = 366
 
             # Put a minimum and maximum length on season for cheat grass (i= 47)
             # Was 38, should have been 42   'corr. Jan 07
@@ -682,11 +686,13 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                     length_of_season = 100
 
             days_into_season = foo_day.doy - foo.doy_start_cycle
-            if days_into_season < 1:
+            # changed from 1 to Zero on 4/8/2020
+            if days_into_season < 0:
+                # print('days_into_season adjustment')
                 days_into_season += 365
 
             foo.n_pl_ec = float(days_into_season) / length_of_season
-
+            # print(foo.n_pl_ec)
             # Assume season is split 50/50 for stress sensitivities for type 4
 
             if foo.n_pl_ec < 0.5:
@@ -697,7 +703,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 int_pl_ec = min(
                     foo.max_lines_in_crop_curve_table - 1,
                     int(foo.n_pl_ec * 10))
-                et_cell.crop_coeffs[curve_number].data[int_pl_ec]
+                # et_cell.crop_coeffs[curve_number].data[int_pl_ec]
                 foo.kc_bas = (
                     et_cell.crop_coeffs[curve_number].data[int_pl_ec] +
                     (foo.n_pl_ec * 10 - int_pl_ec) *
@@ -867,7 +873,6 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         foo.kc_pot = foo.kc_bas
 
         # ETr changed to ETref 12/26/2007
-
         foo.etc_act = foo.kc_act * foo_day.etref
         foo.etc_pot = foo.kc_pot * foo_day.etref
         foo.etc_bas = foo.kc_bas * foo_day.etref
