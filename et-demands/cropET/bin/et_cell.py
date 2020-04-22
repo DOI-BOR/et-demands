@@ -68,18 +68,12 @@ class ETCellData():
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_properties_header_lines)
                         if (i + 1) != data.cell_properties_names_line]
-            if '.xls' in data.cell_properties_path.lower():
-                df = pd.read_excel(data.cell_properties_path,
-                                   sheetname=data.cell_properties_ws,
-                                   header=data.cell_properties_names_line -
-                                   len(skiprows) - 1,
-                                   skiprows=skiprows, na_values=['NaN'])
-            else:
-                df = pd.read_csv(data.cell_properties_path, engine='python',
-                                   header=data.cell_properties_names_line -
-                                   len(skiprows) - 1,
-                                   skiprows=skiprows,
-                                   sep=data.cell_properties_delimiter)
+
+            df = pd.read_csv(data.cell_properties_path, engine='python',
+                               header=data.cell_properties_names_line -
+                               len(skiprows) - 1,
+                               skiprows=skiprows,
+                               sep=data.cell_properties_delimiter)
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
 
@@ -195,20 +189,13 @@ class ETCellData():
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_cuttings_header_lines)
                         if i + 1 != data.cell_cuttings_names_line]
-            if '.xls' in data.cell_cuttings_path.lower():
-                df = pd.read_excel(data.cell_cuttings_path,
-                                   sheetname=data.cell_cuttings_ws,
-                        header=data.cell_cuttings_names_line -
-                               len(skiprows) - 1,
-                        skiprows=skiprows, na_values=['NaN'],
-                                   parse_cols=[0, 1, 2, 3, 4])
-            else:
-                df = pd.read_csv(data.cell_cuttings_path, engine='python',
-                                   na_values=['NaN'],
-                        header=data.cell_cuttings_names_line -
-                               len(skiprows) - 1,
-                        skiprows =skiprows, sep=data.cell_cuttings_delimiter,
-                        usecols=[0, 1, 2, 3, 4])
+
+            df = pd.read_csv(data.cell_cuttings_path, engine='python',
+                               na_values=['NaN'],
+                    header=data.cell_cuttings_names_line -
+                           len(skiprows) - 1,
+                    skiprows =skiprows, sep=data.cell_cuttings_delimiter,
+                    usecols=[0, 1, 2, 3, 4])
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
             cell_col = columns.index('et cell id')
@@ -910,21 +897,13 @@ class ETCell():
 
         logging.info('  Reading ETo/ETr ratios')
         try:
-            if ".xls" in data.refet_ratios_path.lower():
-                refet_ratios_df = pd.read_excel(data.refet_ratios_path,
-                                                sheetname=data.et_ratios_ws,
-                                                header=None,
-                                                skiprows=
-                                                data.et_ratios_header_lines - 1,
-                                                na_values=['NaN'])
-            else:
-                refet_ratios_df = pd.read_csv(data.refet_ratios_path,
-                                                delimiter=
-                                                data.et_ratios_delimiter,
-                                                header='infer',
-                                                skiprows=
-                                                data.et_ratios_header_lines - 1,
-                                                na_values=['NaN'])
+            refet_ratios_df = pd.read_csv(data.refet_ratios_path,
+                                            delimiter=
+                                            data.et_ratios_delimiter,
+                                            header='infer',
+                                            skiprows=
+                                            data.et_ratios_header_lines - 1,
+                                            na_values=['NaN'])
             del refet_ratios_df[data.et_ratios_name_field]
         except IOError:
             logging.error(
