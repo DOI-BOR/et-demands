@@ -1438,19 +1438,18 @@ class ETCell():
             self.climate_df[['30t', 'doy']].groupby('doy').mean()['30t'])
 
         # Compute GDD for each day
-
-        self.climate_df['main_cgdd'] = self.climate_df['tmean']
-        self.climate_df.ix[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
-        self.climate_df['hist_cgdd'] = self.climate_df['meant']
-        self.climate_df.ix[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
-
         # self.climate_df['main_cgdd'] = self.climate_df['tmean']
-        # self.climate_df.loc[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
+        # self.climate_df.ix[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
         # self.climate_df['hist_cgdd'] = self.climate_df['meant']
-        # self.climate_df.loc[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
+        # self.climate_df.ix[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
+
+        # Replacement for .ix deprecation above 4/22/2020
+        self.climate_df['main_cgdd'] = self.climate_df['tmean']
+        self.climate_df.loc[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
+        self.climate_df['hist_cgdd'] = self.climate_df['meant']
+        self.climate_df.loc[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
 
         # Compute cumulative GDD for each year
-
         self.climate_df['main_cgdd'] = self.climate_df[['doy',
                                                         'main_cgdd']].groupby(
             self.climate_df.index.map(lambda x: x.year)).main_cgdd.cumsum()
