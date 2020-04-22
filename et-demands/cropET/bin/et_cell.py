@@ -22,7 +22,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              '../../lib')))
 import crop_et_data
 import util
-import mod_dmis
 
 mpdToMps = 3.2808399 * 5280 / 86400
 
