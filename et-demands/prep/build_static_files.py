@@ -50,7 +50,7 @@ def main(ini_path, area_threshold=10,
     aridity = 50
     irrigation = 1
     # DEADBEEF - The number of crops should not be hardcoded here
-    crops = 88
+    crops = 89
 
     # Input paths
     # DEADBEEF - For now, get cropET folder from INI file
