@@ -10,6 +10,21 @@ RefET
 
 CropETPrep
 ----------
+The CropET Prep workflow is designed to build input files for the Crop ET module based on user specified files and needs. Many of the prepration scripts are helper functions to download and calculate zonal statistic information for the study area of interest. The preperation workflow requires users to set-up an intial study domain shapefile. The Crop ET module of ETDemands utilizes project specific static files for input and does not rely on .shp generated throughout the preparation workflow. It is recommended to build study area shpaefile and utilize the prepration workflow. Only advanced users should manually modify static files.
+
+The descriptions below give a brief overview of the output from each preperation workflow script:
+
+:download_cdl_raster.py: Downloads CONUS wide Crop Data Layer (CDL) raster for study crop identifcation and acreage estimates
+:clip_cdl_raster.py:  Generates study area clipped version of CDL raster
+:build_ag_cdl_shapefile.py: Build CDL shapefile for agricultural crop pixels only
+:download_statsgo_shapefiles.py: Download statsgo soil available water capacity (AWC), Clay and Sand shapefiles
+:et_demands_zonal_stats.py: Calculates zonal statistics needed to run Crop ET module
+:build_static_files.py: Builds static files for Crop ET analysis
+
+Optional (Spatially Varying Calibration Scripts):
+
+:build_spatial_crop_params.py: Builds spatial parameter shapefiles for ET-Demands
+:interpolate_spatial_crop_params.py: Interpolate spatial parameter files for ET-Demands (modifies spatial parameter shapefiles)
 
 CropET
 ------
