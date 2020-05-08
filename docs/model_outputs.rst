@@ -39,71 +39,39 @@ Statistic subfolders are created for each of the enabled stat flags above and wi
 
 In addition to date information, each stat file contains the following results:
 
-PMeto/PMetr
-        Input reference evapotranspiration (ET)
-ETact
-        Actual Crop ET including stress adjustments
-ETpot
-        Crop Specific Potential ET 
-ETbas
-        Basal evaporation component of ET
-Kc
-        Crop Coefficient  
-Kcb
-        Basal crop coefficient
-PPT
-        Precipitation
-Irrigation
-        Irrigation
-Runoff
-        Runoff
-DPerc
-        Deep Percolation from the root zone
-P_rz
-        Precipitation residing in the root zone
-P_eft
-        Effective Precipitation (precipitation residing in the root zone available for transpiration)
-NIWR
-        Net Irrigation Water Requirement
-Season
-        Growing Season Flag (1 = True, 0 = False)
-Cutting
-        Cutting Flag (applies to crops that harvested via cutting cycles (e.g. alfalfa))
+:PMeto/PMetr: Input reference evapotranspiration (ET)
+:ETact: Actual Crop ET including stress adjustments
+:ETpot: Crop Specific Potential ET 
+:ETbas: Basal evaporation component of ET
+:Kc:  Crop Coefficient  
+:Kcb: Basal crop coefficient
+:PPT: Precipitation
+:Irrigation:  Irrigation
+:Runoff:  Runoff
+:DPerc: Deep Percolation from the root zone
+:P_rz:  Precipitation residing in the root zone
+:P_eft: Effective Precipitation (precipitation residing in the root zone available for transpiration)
+:NIWR:  Net Irrigation Water Requirement
+:Season:  Growing Season Flag (1 = True, 0 = False)
+:Cutting: Cutting Flag (applies to crops that harvested via cutting cycles (e.g. alfalfa))
   
+Monthly, annual, and growing season statistics are aggregated from the daily output files according to the statistics in the list below:
 
-Monthly, annual, and growing season statistics are aggregated from the daily output files according to the statistics in the table listed below:
-
-  PMeto/PMetr
-          sum
-  ETact
-          sum
-  ETpot
-          sum
-  ETbas
-          sum
-  Kc
-          mean
-  Kcb
-          mean
-  PPT
-          sum
-  Irrigation
-          sum
-  Runoff
-          sum
-  DPerc
-          sum
-  P_rz
-          sum
-  P_eft
-          sum
-  NIWR
-          sum
-  Season
-          sum
-  Cutting
-          sum
-
+:PMeto/PMetr:    sum
+:ETact:          sum
+:ETpot:          sum
+:ETbas:          sum
+:Kc:             mean
+:Kcb:            mean
+:PPT:           sum
+:Irrigation:     sum
+:Runoff:         sum
+:DPerc:          sum
+:P_rz:          sum
+:P_eft:          sum
+:NIWR:           sum
+:Season:         sum
+:Cutting:        sum
 
 AreaET
 ------
