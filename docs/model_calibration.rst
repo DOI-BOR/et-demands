@@ -16,7 +16,7 @@ Thornton and Running Coefficients
 .. _model-calibration-cropet:
 
 CropET
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------
 ETDemands utlizes crop specific parameters to determine crop growth and timing including growing season start and end dates, crop development rates, effective full cover, harvest timings, and killing frosts. Initial values for each of the control parameters are provided, however, users should customize these values for their input meterological data source and study area. Inherent bias in temperature data can lead to incorrect timing of the season start, effective full cover, and termination dates. A detailed decsiption of the various crop parameters can be found here: http://data.kimberly.uidaho.edu/ETIdaho/ETIdaho_Report_April_2007_with_supplement.pdf
 
 The initial control parameters are located in the CropParams.txt file contained in the static folder. Note: Users should NOT modify the statics files found in the etemands model folder. Running the initial prep steps will build project specific static files that can be changed accordingly. ETDemands can be run with either spatially consistent or spatially varying calibration parameters. This mode is set in the model INI file via the spatial_cal_flag and spatial_cal_folder inputs.
