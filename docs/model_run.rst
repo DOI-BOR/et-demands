@@ -6,7 +6,9 @@ RefET
 
 CropETPrep
 ----------
-The CropET Prep workflow is designed to help users assemble ancillary data and create static files for input and running of the CropET module. Ancillary data includes crop type and coverage data as well as soil data including available water capacity (AWC) and percent clay and sand. By default, the preperation workflow utilizes the USDA Cropland Data Layer (CDL) and the NRCS STATSGO soils dataset. Use of other crop and soil datasets is possible, but should only be implemented by advanced users. An example preperation workflow is shown below: 
+The CropET Prep workflow is designed to help users assemble ancillary data and create static files for input and running of the CropET module. Ancillary data includes crop type and coverage data as well as soil data including available water capacity (AWC) and percent clay and sand. By default, the preperation workflow utilizes the USDA Cropland Data Layer (CDL) and the NRCS STATSGO soils dataset. Use of other crop and soil datasets is possible, but should only be implemented by advanced users. Scripts run throughout the prep workflow utilized the prep .ini file to for directroy and path information as well as the crop field names and crosswalk information. See the template prep.ini file included in the et-demands\prep folder for specific formating and variable options. 
+
+An example preperation workflow is shown below: 
 
 Run Prep
   Scripts A1-A3 are only needed if user does not have a crop shapefile. The CDL clip script is only needed if storage space is an issue.
@@ -47,10 +49,29 @@ NOTE: Interpolate spatial crop parameters is utilized for large study areas that
 crop parameter information from a few calibration cells to the entire study domain.
 
 
-
-
 CropET
 ------
+The CropET module is the core of the ETDemands model. The CropET modules takes input weather, soil, and crop data to estimate consumptive use and net irrigation water requirements for each unique ETZone/crop combination. At this point, users should have run through the neccesary steps in the prep workflow and have generated project specific static files. Crop ET is controlled using a project specific CET .ini file. See the template cet.ini file included in the et-demands\cropET\bin folder for specific formating and variable options. 
+
+The Crop ET module is run using the run_cet.py script. An example command is shown below. Users can include -h argument to see various input argumnet options. -i (-ini) and -b (-bin) are required arguments. 
+
+Run CET
+python C:\et-demands\et-demands\cropET\bin\run_cet.py -i example.ini -b C:\et-demands\et-demands\cropET\bin -h
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i PATH, --ini PATH   Input file (default: None)
+  -b DIR, --bin DIR     Source code directory path (default: None)
+  -d, --debug           Save debug level comments to debug.txt (default:
+                        False)
+  -c etcid_to_run, --etcid etcid_to_run
+                        User specified et cell id to run (default: ALL)
+  -v, --verbose         Print info level comments (default: False)
+  -mp [N], --multiprocessing [N]
+                        Number of processers to use (default: 1)
+  --cal                 Display mean annual start/end dates to screen
+                        (default: False)
+
 
 AreaET
 ------
