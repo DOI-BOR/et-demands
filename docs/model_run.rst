@@ -56,22 +56,29 @@ The template files should not be modified directly.  Instead, the prep tools wor
 
 Crop Coefficients
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+The crop coefficient .txt files contain summary basal crop coefficient curves for all crops available within ET-Demands. Both alfalfa reference (ETr; CropCoefs_etr.txt) and grass reference (ETo; CropCoefs_eto.txt) versions are available. Users specify the crop coefficient file using the 'crop_coefs_name' parameter in the model .ini file.
 
 Crop Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+The crop parameters contains default control paramaters for each crop within ET-Demands. This includes data to specify curve number, irrigation type, winter surface class, and many other soil and growing season control variables. The default values included with each crop are general starting parameters and should be adjusting according to specific study area and needs. 
+
+During calibration, users will modify and adjust growth parameters such as T30, CGDD for EFC, CGDD for termination, and Killing Frost temperature to control growiing season time and curve shape. See the model calibration documentation section for more information.
 
 ET Cell Crops
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+ETCellsCrops.txt is generatred during the perparation steps and includes a table of all unique ETCell/Crop combinations to be included in the ET-Demands analysis. ETCell/Crop combinations are denoted using a binary style classification system with 1=True and 0=False.
 
-ET CEll Properties
+ET Cell Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+ETCellsPRoperties.txt contains ETCell information related to location, permeadbility, soil depth, hydrologic group, and ariditiy rating.
 
 ET Monthly Ratios
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+When using gridded climate products, reference ET data is not always representative of irrigation conditions due to microclimate condition effects. ET-Demands allows users to apply monthly scaling factors to input RefET datasets in order to account for model bias related to scale and irrigtation practices. Users should modify either EToRatiosMon.txt (grass reference) or ETrRatiosMon.txt (alfalfa reference) according to their input dataset. Users specify the ratio file using teh crop_coefs_name parameter in the model .ini file. By default, the static file is orginially built with ratios equal to 1 (i.e. no scaling). Users can manualy adjust scaling factors or apply more advanced workflows to identify bias correction factors (https://github.com/WSWUP/gridwxcomp).
 
 Mean Cuttings
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-
+For crops that experience cutting cycles (.e.g Alfalfa Hay), ET-Demands allows users to optimize the number of cuttings based on study area and local practices. The MeanCuttings.txt file is initially populated with temporary cutting estimates. After a calibration run. User can repopulate the cutting numbers based on output from ET-Demands. Iteration may be required to optimize cutting numbers and timing. 
 
 
 CropET
