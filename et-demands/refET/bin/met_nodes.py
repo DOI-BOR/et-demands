@@ -14,7 +14,7 @@ import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../lib')))
 import ref_et_data
 import ret_utils
-import mod_dmis # NO LONGER USED - REMOVE CALLS IN CODE
+
 
 # MOVE TO UNIT CONVERSION SCRIPT / SECTION
 mpdToMps = 3.2808399 * 5280 / 86400

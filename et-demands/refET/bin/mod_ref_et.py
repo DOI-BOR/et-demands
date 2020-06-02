@@ -19,7 +19,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
 import ret_utils
 import ret_config
 import met_nodes
-import mod_dmis
 
 def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
         debug_flag = False, mp_procs = 1):

@@ -460,12 +460,16 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                 season_diff = np.diff(group[season_field].values)
                 try:
                     start_i = np.where(season_diff == 1)[0][0] + 1
+
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_start_doy_field,
                     #     int(group.ix[start_i, doy_field]))
                     # Replacement for set_value Future Warning
+                    # gs_output_df.at[group.index[0], gs_start_doy_field] = int(
+                    #     group.ix[start_i, doy_field])
+                    # Replacement for .ix deprecation 4/22/2020
                     gs_output_df.at[group.index[0], gs_start_doy_field] = int(
-                        group.ix[start_i, doy_field])
+                        group.loc[group.index[start_i], doy_field])
                 except:
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_start_doy_field,
@@ -473,14 +477,18 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                     # Replacement for set_value Future Warning
                     gs_output_df.at[group.index[0], gs_start_doy_field] = int(
                         min(group[doy_field].values))
+
                 try:
                     end_i = np.where(season_diff == -1)[0][0] + 1
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_end_doy_field,
                     #     int(group.ix[end_i, doy_field]))
                     # Replacement for set_value Future Warning
+                    # gs_output_df.at[group.index[0], gs_end_doy_field] = int(
+                    #     group.ix[end_i, doy_field])
+                    # Replacement for .ix deprecation 4/22/2020
                     gs_output_df.at[group.index[0], gs_end_doy_field] = int(
-                        group.ix[end_i, doy_field])
+                        group.loc[group.index[end_i], doy_field])
                 except:
                     # gs_output_pd.set_value(
                     #     group.index[0], gs_end_doy_field,

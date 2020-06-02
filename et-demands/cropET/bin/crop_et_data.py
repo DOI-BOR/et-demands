@@ -317,14 +317,12 @@ class CropETData:
             self.refet_ratios_path = os.path.join(self.static_folder,
                                                   et_ratios_name)
         except configparser.NoOptionError:
-            logging.info('\net_ratios_name not found in INI.'
-                         'Setting to None.')
+            logging.info('\net_ratios_name not found in INI. Setting to None.')
             self.refet_ratios_path = None
 
         if self.refet_ratios_path and not os.path.isfile(
                 self.refet_ratios_path):
-            logging.error('Warning:  ET Ratios file not found.'
-                          ' ET scaling will not be applied.')
+            logging.error('Warning:  ET Ratios file not found. ET scaling will not be applied.')
             self.refet_ratios_path = None
 
         # Default et_ratios file format

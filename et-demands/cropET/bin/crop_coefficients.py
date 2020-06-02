@@ -7,7 +7,6 @@ Called by crop_et_data.py
 """
 
 import numpy as np
-import xlrd
 
 """
 curve_descs : dict
@@ -113,39 +112,6 @@ def read_crop_coefs_txt(data):
     for i, num in enumerate(curve_type_numbs):
         data_col = a[6:, 2 + i]
         if not curve_numbers[0]: continue
-        coeff_obj = CropCoeff()
-        coeff_obj.init_from_column(curve_numbers[i], curve_type_numbs[i], curve_names[i], data_col)
-        coeffs_dict[int(coeff_obj.curve_no)] = coeff_obj
-    return coeffs_dict
-
-# FUNCTION NO LONGER CALLED IN CODE, REMOVE? - DB 5/20/2019
-def read_crop_coefs_xls_xlrd(data):
-    """ Read crop coefficients from workbook using xlrd
-    Parameters
-    ---------
-    data :
-
-    Returns
-    -------
-    coeffs_dict : dict
-        Dictionary of crop coefficients
-
-    Notes
-    -----
-    See comments in code
-
-    """
-    coeffs_dict = {}
-    wb = xlrd.open_workbook(data.crop_coefs_path)
-    ws = wb.sheet_by_name(data.crop_coefs_ws)
-    curve_numbers= np.asarray(ws.row_values(data.crop_coefs_names_line - 2, 2), dtype = np.str)
-    curve_type_numbs = np.asarray(ws.row_values(data.crop_coefs_names_line - 1, 2), dtype = np.str)
-    curve_names= np.asarray(ws.row_values(data.crop_coefs_names_line, 2), dtype = np.str)
-    for i, num in enumerate(curve_type_numbs):
-        if curve_type_numbs[i] == '3':
-            data_col = np.asarray(ws.col_values(i + 2, data.crop_coefs_header_lines, data.crop_coefs_header_lines + 31), dtype = np.str)
-        else:
-            data_col = np.asarray(ws.col_values(i + 2, data.crop_coefs_header_lines, data.crop_coefs_header_lines  + 35), dtype = np.str)
         coeff_obj = CropCoeff()
         coeff_obj.init_from_column(curve_numbers[i], curve_type_numbs[i], curve_names[i], data_col)
         coeffs_dict[int(coeff_obj.curve_no)] = coeff_obj

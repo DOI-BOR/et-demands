@@ -222,7 +222,7 @@ def main(ini_path, overwrite_flag=False):
                       'projected coordinate system, exiting')
         sys.exit()
     zone_full_unit = zone_full_osr.GetLinearUnitsName()
-    if zone_full_unit.upper() not in ['METER', 'METRE']:
+    if zone_full_unit.upper() not in ['METER', 'METERS','METRE']:
         logging.error('\nERROR: Unsupported unit type: {}'.format(
             zone_full_unit))
         sys.exit()
@@ -420,7 +420,7 @@ def main(ini_path, overwrite_flag=False):
     zone_lyr = zone_ds.GetLayer()
     zone_osr = zone_lyr.GetSpatialRef()
     zone_unit = zone_osr.GetLinearUnitsName()
-    if zone_unit.upper() not in ['METER', 'METRE']:
+    if zone_unit.upper() not in ['METER', 'METERS', 'METRE']:
         raise ValueError('Unsupported unit type: {}'.format(zone_unit))
     for zone_fid, crop_stat_dict in crop_stats.items():
         for crop_field, crop_area in crop_stat_dict.items():
@@ -428,7 +428,7 @@ def main(ini_path, overwrite_flag=False):
                 continue
             elif crop_field not in crop_field_list:
                 continue
-            elif zone_unit.upper() in ['METER', 'METRE']:
+            elif zone_unit.upper() in ['METER', 'METERS', 'METRE']:
                 crop_stats[zone_fid][crop_field] = crop_area * sqm_2_acres
             # elif zone_unit in ['Feet']:
             #     crop_stats[zone_fid][crop_field] = crop_area * sqft_2_acres

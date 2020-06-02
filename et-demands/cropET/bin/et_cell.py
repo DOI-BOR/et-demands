@@ -16,14 +16,12 @@ import sys
 import copy
 import numpy as np
 import pandas as pd
-import xlrd
 import shapefile
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                              '../../lib')))
 import crop_et_data
 import util
-import mod_dmis
 
 mpdToMps = 3.2808399 * 5280 / 86400
 
@@ -70,18 +68,12 @@ class ETCellData():
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_properties_header_lines)
                         if (i + 1) != data.cell_properties_names_line]
-            if '.xls' in data.cell_properties_path.lower():
-                df = pd.read_excel(data.cell_properties_path,
-                                   sheetname=data.cell_properties_ws,
-                                   header=data.cell_properties_names_line -
-                                   len(skiprows) - 1,
-                                   skiprows=skiprows, na_values=['NaN'])
-            else:
-                df = pd.read_csv(data.cell_properties_path, engine='python',
-                                   header=data.cell_properties_names_line -
-                                   len(skiprows) - 1,
-                                   skiprows=skiprows,
-                                   sep=data.cell_properties_delimiter)
+
+            df = pd.read_csv(data.cell_properties_path, engine='python',
+                               header=data.cell_properties_names_line -
+                               len(skiprows) - 1,
+                               skiprows=skiprows,
+                               sep=data.cell_properties_delimiter)
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
 
@@ -127,10 +119,7 @@ class ETCellData():
 
         """
 
-        if ".xls" in data.cell_crops_path.lower():
-            self.read_cell_crops_xls_xlrd(data)
-        else:
-            self.read_cell_crops_txt(data)
+        self.read_cell_crops_txt(data)
 
     def read_cell_crops_txt(self, data):
         """Extract et cell crop data from text file
@@ -175,54 +164,6 @@ class ETCellData():
 
         self.crop_num_list = sorted(list(set(self.crop_num_list)))
 
-    def read_cell_crops_xls_xlrd(self, data):
-        """Extract et cell crop data from Excel using xlrd
-
-        Parameters
-        ---------
-        data : dict
-            configuration data from INI file
-
-        Returns
-        -------
-        None
-
-        Notes
-        -----
-
-        """
-
-        logging.info('\nReading cell crop flags from\n' +
-                     data.cell_crops_path)
-        wb = xlrd.open_workbook(data.cell_crops_path)
-        ws = wb.sheet_by_name(data.cell_crops_ws)
-        num_crops = int(ws.cell_value(data.cell_crops_names_line - 1, 1))
-        crop_names = []
-        crop_numbers = []
-        for col_index in range(4, num_crops + 4):
-            crop_type_number = int(ws.cell_value(data.cell_crops_names_line - 1,
-                                                 col_index))
-            crop_numbers.append(crop_type_number)
-            crop_type_name = str(ws.cell_value(data.cell_crops_names_line,
-                                               col_index)).replace(
-                '"', '').split("-")[0].strip()
-            crop_names.append(crop_type_name)
-        crop_numbers = np.asarray(crop_numbers)
-        crop_names = np.asarray(crop_names)
-        for row_index in range(data.cell_crops_header_lines, ws.nrows):
-            row = np.asarray(ws.row_values(row_index), dtype=np.str)
-            for col_index in range(3, num_crops + 4):
-                row[col_index] = row[col_index].replace(".0", "")
-            cell_id = row[0]
-            cell = self.et_cells_dict[cell_id]
-            cell.init_crops_from_row(row, crop_numbers)
-            cell.crop_numbers = crop_numbers
-            cell.crop_names = crop_names
-
-            # make List of active crop numbers (i.e. flag is True) in cell
-            cell.crop_num_list = sorted(
-                [k for k,v in cell.crop_flags.items() if v])
-            self.crop_num_list.extend(cell.crop_num_list)
 
     def set_cell_cuttings(self, data):
         """Extract mean cutting data from specified file
@@ -248,20 +189,13 @@ class ETCellData():
             # Ignore header but assume header was set as 1's based index
             skiprows = [i for i in range(data.cell_cuttings_header_lines)
                         if i + 1 != data.cell_cuttings_names_line]
-            if '.xls' in data.cell_cuttings_path.lower():
-                df = pd.read_excel(data.cell_cuttings_path,
-                                   sheetname=data.cell_cuttings_ws,
-                        header=data.cell_cuttings_names_line -
-                               len(skiprows) - 1,
-                        skiprows=skiprows, na_values=['NaN'],
-                                   parse_cols=[0, 1, 2, 3, 4])
-            else:
-                df = pd.read_csv(data.cell_cuttings_path, engine='python',
-                                   na_values=['NaN'],
-                        header=data.cell_cuttings_names_line -
-                               len(skiprows) - 1,
-                        skiprows =skiprows, sep=data.cell_cuttings_delimiter,
-                        usecols=[0, 1, 2, 3, 4])
+
+            df = pd.read_csv(data.cell_cuttings_path, engine='python',
+                               na_values=['NaN'],
+                    header=data.cell_cuttings_names_line -
+                           len(skiprows) - 1,
+                    skiprows =skiprows, sep=data.cell_cuttings_delimiter,
+                    usecols=[0, 1, 2, 3, 4])
             uc_columns = list(df.columns)
             columns = [x.lower() for x in uc_columns]
             cell_col = columns.index('et cell id')
@@ -963,21 +897,13 @@ class ETCell():
 
         logging.info('  Reading ETo/ETr ratios')
         try:
-            if ".xls" in data.refet_ratios_path.lower():
-                refet_ratios_df = pd.read_excel(data.refet_ratios_path,
-                                                sheetname=data.et_ratios_ws,
-                                                header=None,
-                                                skiprows=
-                                                data.et_ratios_header_lines - 1,
-                                                na_values=['NaN'])
-            else:
-                refet_ratios_df = pd.read_csv(data.refet_ratios_path,
-                                                delimiter=
-                                                data.et_ratios_delimiter,
-                                                header='infer',
-                                                skiprows=
-                                                data.et_ratios_header_lines - 1,
-                                                na_values=['NaN'])
+            refet_ratios_df = pd.read_csv(data.refet_ratios_path,
+                                            delimiter=
+                                            data.et_ratios_delimiter,
+                                            header='infer',
+                                            skiprows=
+                                            data.et_ratios_header_lines - 1,
+                                            na_values=['NaN'])
             del refet_ratios_df[data.et_ratios_name_field]
         except IOError:
             logging.error(
@@ -1029,12 +955,18 @@ class ETCell():
         # Scale ETo/ETr values
         # Is 'Month' vs 'month' change needed?
         # Input climate files have Year, Month, Day.
+        # add 'month' column if not in df for ratio join
+        if 'month' not in self.refet_df:
+            logging.info('month_field not specified in REFET section of .ini and default "month" column not found.'
+                          ' Creating month column from date/index for refet data/ratio join.')
+            self.refet_df['month'] = self.refet_df.index.month
         self.refet_df = self.refet_df.join(refet_ratios_df, 'month')
         self.refet_df['etref'] *= self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_ratio_field]
         del self.refet_df[data.et_ratios_month_field]
         del self.refet_df[data.et_ratios_id_field]
         return True
+
 
     def set_weather_data(self, cell_count, data, cells):
         """Read meteorological data for single station and fill missing
@@ -1422,11 +1354,15 @@ class ETCell():
         Cumulative variables use 'hist' in lieu of 'main'
 
         """
-
-        # Initialize climate dataframe
-        self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
-                                           'tdew', 'wind', 'rh_min', 'snow',
-                                           'snow_depth']].copy()
+        # Copy CO2 data to climate_df if co2 flag set True else do not copy
+        if data.co2_flag:
+            self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
+                                               'tdew', 'wind', 'rh_min', 'snow',
+                                               'snow_depth', 'co2_grass', 'co2_tree', 'co2_c4']].copy()
+        else:
+            self.climate_df = self.weather_df[['doy', 'ppt', 'tmax', 'tmin',
+                                               'tdew', 'wind', 'rh_min', 'snow',
+                                               'snow_depth']].copy()
 
         # Extend to support historic (constant) phenology
         if data.phenology_option > 0:
@@ -1480,14 +1416,18 @@ class ETCell():
             self.climate_df[['30t', 'doy']].groupby('doy').mean()['30t'])
 
         # Compute GDD for each day
+        # self.climate_df['main_cgdd'] = self.climate_df['tmean']
+        # self.climate_df.ix[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
+        # self.climate_df['hist_cgdd'] = self.climate_df['meant']
+        # self.climate_df.ix[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
 
+        # Replacement for .ix deprecation above 4/22/2020
         self.climate_df['main_cgdd'] = self.climate_df['tmean']
-        self.climate_df.ix[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
+        self.climate_df.loc[self.climate_df['tmean'] <= 0, 'main_cgdd'] = 0
         self.climate_df['hist_cgdd'] = self.climate_df['meant']
-        self.climate_df.ix[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
+        self.climate_df.loc[self.climate_df['tmean'] <= 0, 'hist_cgdd'] = 0
 
         # Compute cumulative GDD for each year
-
         self.climate_df['main_cgdd'] = self.climate_df[['doy',
                                                         'main_cgdd']].groupby(
             self.climate_df.index.map(lambda x: x.year)).main_cgdd.cumsum()

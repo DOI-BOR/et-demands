@@ -6,6 +6,7 @@ Called by crop_cycle.py
 
 import logging
 import numpy as np
+import sys
 
 # from modCropET.vb
 
@@ -294,9 +295,16 @@ class InitializeCropCycle:
             else:    # both annual and perennial
                 t30_col = 'hist_t30_lt'
             try:
+                # print(int(np.where(np.diff(np.array(
+                #     et_cell.climate[t30_col] > crop.t30_for_pl_or_gu_or_cgdd,
+                #     dtype = np.int8)) > 0)[0][0]) + 1)
+
+                # This logic fails when the T30 never goes below t30_for_pl_or_gu_or_cgdd
+                # Report wrong error message
                 self.longterm_pl = int(np.where(np.diff(np.array(
                     et_cell.climate[t30_col] > crop.t30_for_pl_or_gu_or_cgdd,
                     dtype = np.int8)) > 0)[0][0]) + 1
+
             except IndexError:
                 self.longterm_pl = 0
                 logging.error(
@@ -615,11 +623,10 @@ class InitializeCropCycle:
         -----
 
         """
-
         if crop.co2_type == 'GRASS':
-            self.co2 = et_cell.weather_pd['co2_grass']
+            self.co2 = et_cell.climate_df['co2_grass']
         elif crop.co2_type == 'TREE':
-            self.co2 = et_cell.weather_pd['co2_tree']
+            self.co2 = et_cell.climate_df['co2_tree']
         elif crop.co2_type == 'C4':
-            self.co2 = et_cell.weather_pd['co2_c4']
+            self.co2 = et_cell.climate_df['co2_c4']
         return True
