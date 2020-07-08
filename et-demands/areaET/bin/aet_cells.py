@@ -273,15 +273,16 @@ class ETCell():
                         crop_df['date'] = crop_df[['year', 'month', 'day', 'hour']].apply(
                         lambda s : datetime.datetime(*s),axis = 1)
                 crop_df.set_index('date', inplace = True)
-                if cell_count == 0 and ctCount == 0:
+
+                # if cell_count == 0 and ctCount == 0:
                     # verify period
 
-                    if cfg.start_dt is None:
-                        pydt = crop_df.index[0]
-                        cfg.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
-                    if cfg.end_dt is None:
-                        pydt = crop_df.index[len(crop_df) - 1]
-                        cfg.end_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
+                if cfg.start_dt is None:
+                    pydt = crop_df.index[0]
+                    cfg.start_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
+                if cfg.end_dt is None:
+                    pydt = crop_df.index[len(crop_df) - 1]
+                    cfg.end_dt = pd.to_datetime(datetime.datetime(pydt.year, pydt.month, pydt.day, pydt.hour, pydt.minute))
 
                 # truncate period
 
@@ -306,7 +307,6 @@ class ETCell():
 
                 if ctCount == 0:
                     # store ET Cell reference ET and precip if first crop
-
                     self.etcData_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                     self.etcData_df['refet'] = crop_df['refet']
                     self.etcData_df['ppt'] = crop_df['ppt']
@@ -318,7 +318,6 @@ class ETCell():
                         crop_df.drop(fn, axis = 1, inplace = True)
 
                 # add crop number column
-
                 crop_df['Crop Num'] = self.usedCropTypes[ctCount]
                 crop_df.reset_index(inplace = True)
                 crops_dict[self.usedCropTypes[ctCount]] = crop_df
