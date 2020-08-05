@@ -63,12 +63,25 @@ is to install the required Python packages manually using the following:
 conda install bokeh=0.13.0 gdal=2.3.1  numpy=1.15.0 pandas=0.23.4 openpyxl=2.5.5
 ``
 
+The following packages are not included within the environment.yml file, but are required to use some of the post-processing tools:
+Matplotlib
+Fiona
+Descartes
+
+The following command line call will download the packages above (make sure to download these after activating the etdemands environment):
+
+''
+conda install matplotlib fiona descartes
+''
+
 Model Inputs
 ------------
 ET-Demands requires
 
 Model Control Files
 -------------------
+
+ETDemands is controlled using two initialization (.INI) files. The model prep .INI file is used to run the *cropET* prep tools. Users must change the default paths to their system’s relative paths in order to prep/analyze input datasets correctly. The *cropET* .INI file is used to run the ETDemands model. Similar to the model prep .INI file, users must define their relative paths in the CropET .INI file in order to run the ETDemands model correctly. 
 
 Model Structure
 ---------------
@@ -137,3 +150,4 @@ source code model structure is shown below::
 
 Running the Model
 -----------------
+
