@@ -114,21 +114,21 @@ PostProcessing
 ETDemands offers some post-processing tools (Timeseries tools, Shapefile tools, etc.) that may be used to analyze the model outputs. More detailed descriptions of these tools and optional command line arguments are available in the Analysis Tools section of the Read the Docs. The following command line calls will use the output stats to produce timeseries plots, summary shapefiles, and other supplemental information.
 
 To develop timeseries plots of Crop ET-Demands parameters ET, ETo, Kc, growing season, irrigation, precipitation, and NIWR, the following command line call can be used:
-> python ..\..\et-demands\tools\plot_crop_daily_timeseries.py --ini huc_example_cet.ini
+  > python ..\..\et-demands\tools\plot_crop_daily_timeseries.py --ini huc_example_cet.ini
 
 
 To develop timeseries plots of average Crop ET-Demands parameters ET, ETo, Kc, growing season, irrigation, precipitation, and NIWR, the following command line call can be used:
-> python ..\..\et-demands\tools\plot_crop_daily_groupstats.py --ini huc_example_cet.ini
+  > python ..\..\et-demands\tools\plot_crop_daily_groupstats.py --ini huc_example_cet.ini
 
 
 To convert the daily output files into crop specific summary shapefiles the following command line call can be used:
-> python ..\..\et-demands\tools\summary_shapefiles_gpd.py --ini huc_example_cet.ini
+  > python ..\..\et-demands\tools\summary_shapefiles_gpd.py --ini huc_example_cet.ini
 
 
 To convert the daily output files into crop weighted summary shapefiles the following command line call can be used:
-> python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py --ini huc_example_cet.ini
+  > python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py --ini huc_example_cet.ini
  
 
 The final post-processing command line call can be used to summarize growing season length and cutting information for each ETZone/crop combination:
-> python ..\..\et-demands\tools\compute_growing_season.py --ini huc_example_cet.ini
+  > python ..\..\et-demands\tools\compute_growing_season.py --ini huc_example_cet.ini
 
