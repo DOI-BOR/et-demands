@@ -1,5 +1,6 @@
 Running the Model
 =================
+The ETDemands model should be run from the windows command prompt (or Linux terminal) so that configuration files can be passed as an argument directly to the script. Ensure that both of the example template .INI files are populated with the user’s relative file paths to folder locations for the current project, static text file specifications, and time series data specifications. The .INI files are currently set up to run the example workflows, however, the user can change these to meet their needs for their own analysis as long as all of the necessary changes to the .INI files and relative paths are made. The following command line call examples are set up as if the user has already navigated to the location of their local .INI file(s) being passed as an argument (e.g. using the command “cd” followed by the local path to the .INI file(s) location is a common way to navigate through the user’s file system). There are optional arguments provided at the bottom of each section that can be used if wanted.
 
 RefET
 -----
@@ -110,3 +111,24 @@ AreaET
 
 PostProcessing
 --------------
+ETDemands offers some post-processing tools (Timeseries tools, Shapefile tools, etc.) that may be used to analyze the model outputs. More detailed descriptions of these tools and optional command line arguments are available in the Analysis Tools section of the Read the Docs. The following command line calls will use the output stats to produce timeseries plots, summary shapefiles, and other supplemental information.
+
+To develop timeseries plots of Crop ET-Demands parameters ET, ETo, Kc, growing season, irrigation, precipitation, and NIWR, the following command line call can be used:
+> python ..\..\et-demands\tools\plot_crop_daily_timeseries.py --ini huc_example_cet.ini
+
+
+To develop timeseries plots of average Crop ET-Demands parameters ET, ETo, Kc, growing season, irrigation, precipitation, and NIWR, the following command line call can be used:
+> python ..\..\et-demands\tools\plot_crop_daily_groupstats.py --ini huc_example_cet.ini
+
+
+To convert the daily output files into crop specific summary shapefiles the following command line call can be used:
+> python ..\..\et-demands\tools\summary_shapefiles_gpd.py --ini huc_example_cet.ini
+
+
+To convert the daily output files into crop weighted summary shapefiles the following command line call can be used:
+> python ..\..\et-demands\tools\cropweighted_shapefiles_gpd.py --ini huc_example_cet.ini
+ 
+
+The final post-processing command line call can be used to summarize growing season length and cutting information for each ETZone/crop combination:
+> python ..\..\et-demands\tools\compute_growing_season.py --ini huc_example_cet.ini
+
