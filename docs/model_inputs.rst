@@ -260,10 +260,40 @@ The user must provide a study area polygon shapefile with at least one feature. 
 
 Soils Data
 ^^^^^^^^^^
+Shapefiles containing features (polygons) attributed with AWC and hydrologic soils group information are required for running zonal statistics on the  soil properties for each of the ETZones in the cell shapefile. The following attributes are required/used in the examples:
+
+Available Water Capacity  Shapefile (AWC_WTA_0to152cm_statsgo.shp is the example)
+
+* AWC = available water capacity (in/in)
+
+Percent Clay  Shapefile (Clay_WTA_0to152cm_statsgo.shp is the example)
+	
+* Clay = percent clay (decimal)
+
+Percent Sand Shapefile (Sand_WTA_0to152cm_statsgo.shp is the example)
+
+* Sand = percent sand (decimal)
+
+File Formats
+
+* Format: .shp
+* Attribute Table Structure (examples’ file structures shown):
+
+  AREA SYMBOL, SPATIALVER, MUSYM, MUKEY, MUKEY_1, AWC (or Clay or Sand depending on which shapefile)
 
 
 Crop Type Data
 ^^^^^^^^^^^^^^
+Shapefiles containing features (polygons) attributed with a CDL code are required  for ETDemands. The features should only include agricultural areas within the ETZones; the example CDL shapefile has removed all non-agricultural areas within the respective ETZones. The shapefile should have the following field:
+
+* CDL (Int)
+
+File Formats
+
+* Format: .shp
+* Attribute Table Structure:
+	
+  CDL
 
 
 Static Inputs
