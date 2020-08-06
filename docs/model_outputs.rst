@@ -13,15 +13,15 @@ Outputs from the RefET module include daily or hourly reference ET (grass and al
 
 Daily Variables
 
-* etr_mm = daily alfalfa reference ET [mm]
-* eto_mm = daily grass reference ET [mm]
+	:etr_mm: Daily alfalfa reference ET [mm]
+	:eto_mm: Daily grass reference ET [mm]
 
 * Format: **.csv**
 
 Hourly Variables
 
-* etr_mm = hourly alfalfa reference ET [mm]
-* eto_mm = hourly grass reference ET [mm]
+	:etr_mm: Hourly alfalfa reference ET [mm]
+	:eto_mm: Hourly grass reference ET [mm]
 
 * Format : **.csv**
 
@@ -49,8 +49,7 @@ Optional (Spatially Varying Calibration Scripts):
 CDL Shapefile
 
 * Format: **.shp**
-
-          CDL - cropland data layer code
+  :CDL: Cropland data layer code
 
 
 Soils Shapefiles (3)
@@ -59,33 +58,33 @@ AWC_WTA_0to152cm_statsgo
 
 * Format: **.shp**
 
-  AREASYMBOL - US
-  SPATIALVER - version
-  MUSYM - symbol
-  MUKEY - key
-  AWC - available water capacity (in/in)
+	:AREASYMBOL: US
+	:SPATIALVER: Version
+	:MUSYM: Symbol
+	:MUKEY: Key
+	:AWC: Available water capacity (in/in)
 
 
 Clay_WTA_0to152cm_statsgo
 
 * Format: **.shp**
 
-  AREASYMBOL - US
-  SPATIALVER - version
-  MUSYM - symbol
-  MUKEY - key
-  Clay - percent clay (decimal)
+	:AREASYMBOL: US
+	:SPATIALVER: Version
+	:MUSYM: Symbol
+	:MUKEY: Key
+	:Clay: Percent clay (decimal)
 
 
 Sand_WTA_0to152cm_statsgo
 
 * Format: **.shp**
 
-  AREASYMBOL - US
-  SPATIALVER - version
-  MUSYM - symbol
-  MUKEY - key
-  Sand - percent sand (decimal)
+	:AREASYMBOL: US
+	:SPATIALVER: Version
+	:MUSYM: Symbol
+	:MUKEY: Key
+	:Sand: Percent sand (decimal)
 
 
 Static Input Files (descriptions in previous section)
@@ -290,39 +289,39 @@ Summary Shapefiles
 
 * Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
 
-	CELL_ID - gridMET cell ID (example problem identifier)
-	LAT - Latitude [dd]
-	LON - Longitude [dd]
-	AG_ACRES - Agriculture area [acres]
-	CROP_03 - Specific crop acreage (example is shown for CDL crop type 03)
-	ET_mn - Mean annual ET [mm]
-	ETact_mn - Mean annual actual ET [mm]
-	ETpot_mn - Mean annual potential ET [mm]
-	ETbas_mn - Mean annual basal ET [mm]
-	Kc_mn - Mean annual crop coefficient [mm/mm]
-	Kcb_mn - Mean annual basal crop coefficient [mm/mm]
-	PPT_mn - Mean annual precipitation [mm]
-	Irr_mn - Mean annual irrigation application amount [mm]
-	Runoff_mn - Mean annual runoff [mm]
-	DPerc_mn - Mean annual deep percolation past root zone [mm]
-	NIWR_mn - Mean annual net irrigation water requirement [mm]
-	Season_mn - Mean annual count of days within the growing season 
-	Start_mn - Mean annual growing season start day
-	End_mn - Mean annual growing season end day
-	ET_mdn - Median annual ET [mm]
-	ETact_mdn - Median annual actual ET [mm]
-	ETpot_mdn - Median annual potential ET [mm]
-	ETbas_mdn - Median annual basal ET [mm]
-	Kc_mdn - Median annual crop coefficient [mm/mm]
-	Kcb_mdn - Median annual basal crop coefficient [mm/mm]
-	PPT_mdn - Median annual precipitation [mm]
-	Irr_mdn - Median annual irrigation application amount [mm]
-	Runoff_mdn - Median annual runoff [mm]
-	DPerc_mdn - Median annual deep percolation past root zone [mm]
-	NIWR_mdn - Median annual net irrigation water requirement [mm]
-	Season_mdn - Median annual count of days within the growing season 
-	Start_mdn - Median annual growing season start day
-	End_mdn - Median annual growing season end day
+	:CELL_ID: GridMET cell ID (example problem identifier)
+	:LAT: Latitude [dd]
+	:LON: Longitude [dd]
+	:AG_ACRES: Agriculture area [acres]
+	:CROP_03: Specific crop acreage (example is shown for CDL crop type 03)
+	:ET_mn: Mean annual ET [mm]
+	:ETact_mn: Mean annual actual ET [mm]
+	:ETpot_mn: Mean annual potential ET [mm]
+	:ETbas_mn: Mean annual basal ET [mm]
+	:Kc_mn: Mean annual crop coefficient [mm/mm]
+	:Kcb_mn: Mean annual basal crop coefficient [mm/mm]
+	:PPT_mn: Mean annual precipitation [mm]
+	:Irr_mn: Mean annual irrigation application amount [mm]
+	:Runoff_mn: Mean annual runoff [mm]
+	:DPerc_mn: Mean annual deep percolation past root zone [mm]
+	:NIWR_mn: Mean annual net irrigation water requirement [mm]
+	:Season_mn: Mean annual count of days within the growing season 
+	:Start_mn: Mean annual growing season start day
+	:End_mn: Mean annual growing season end day
+	:ET_mdn: Median annual ET [mm]
+	:ETact_mdn: Median annual actual ET [mm]
+	:ETpot_mdn: Median annual potential ET [mm]
+	:ETbas_mdn: Median annual basal ET [mm]
+	:Kc_mdn: Median annual crop coefficient [mm/mm]
+	:Kcb_mdn: Median annual basal crop coefficient [mm/mm]
+	:PPT_mdn: Median annual precipitation [mm]
+	:Irr_mdn: Median annual irrigation application amount [mm]
+	:Runoff_mdn: Median annual runoff [mm]
+	:DPerc_mdn: Median annual deep percolation past root zone [mm]
+	:NIWR_mdn: Median annual net irrigation water requirement [mm]
+	:Season_mdn: Median annual count of days within the growing season 
+	:Start_mdn: Median annual growing season start day
+	:End_mdn: Median annual growing season end day
 	
 
 Cropweighted Summary Shapefiles
@@ -331,32 +330,32 @@ Cropweighted Summary Shapefiles
 
 * Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
 	
-	GRIDMET_ID - gridMET ID code (6 digit code)
-	LAT - Latitude [dd]
-	LON - Longitude [dd]
-	ELEV_M - Elevation [m]
-	ELEV_FT - Elevation [ft]
-	FIPS_C - County level federal information processing system code (5 digit code)
-	STPO - State abbreviation
-	COUNTYNAME - County name
-	CNTYCATEGO - County/city category
-	STATENAME - State name
-	HUC8 - Hydrologic unit code 8
-	AWC - Mean annual available water capacity(in/in)
-	CLAY - Mean annual percent clay [decimal]
-	SAND - Mean annual percent sand [decimal]
-	AWC_IN_FT - Mean annual available water capacity [in/ft]
-	HYDGRP_NUM - Hydrologic group number
-	HYDGRP - Hydrologic group
-	AG_ACRES - Agriculture area [acres]
-	CROP_XX - Specific crop type area [acres]
-	CELL_ID - Unique ID code (6 digits; matches gridMET code in example)
-	STATION_ID - Unique ID code (6 digits; matches gridMET code in example)
-	CELL_NAME - Unique ID name (6 digits; matches gridMET code in example)
-	CWETact_mn - Mean annual cropweighted actual ET [mm]
-	CWNIWR_mn - Mean annual cropweighted net irrigation water requirement [mm]
-	CWETact_md - Median annual cropweighted actual ET [mm]
-	CWNIWR_md - Median annual cropweighted net irrigation water requirement [mm]
+	:GRIDMET_ID: gridMET ID code (6 digit code)
+	:LAT: Latitude [dd]
+	:LON: Longitude [dd]
+	:ELEV_M: Elevation [m]
+	:ELEV_FT: Elevation [ft]
+	:FIPS_C: County level federal information processing system code (5 digit code)
+	:STPO: State abbreviation
+	:COUNTYNAME: County name
+	:CNTYCATEGO: County/city category
+	:STATENAME: State name
+	:HUC8: Hydrologic unit code 8
+	:AWC: Mean annual available water capacity(in/in)
+	:CLAY: Mean annual percent clay [decimal]
+	:SAND: Mean annual percent sand [decimal]
+	:AWC_IN_FT: Mean annual available water capacity [in/ft]
+	:HYDGRP_NUM: Hydrologic group number
+	:HYDGRP: Hydrologic group
+	:AG_ACRES: Agriculture area [acres]
+	:CROP_XX: Specific crop type area [acres]
+	:CELL_ID: Unique ID code (6 digits; matches gridMET code in example)
+	:STATION_ID: Unique ID code (6 digits; matches gridMET code in example)
+	:CELL_NAME: Unique ID name (6 digits; matches gridMET code in example)
+	:CWETact_mn: Mean annual cropweighted actual ET [mm]
+	:CWNIWR_mn: Mean annual cropweighted net irrigation water requirement [mm]
+	:CWETact_md: Median annual cropweighted actual ET [mm]
+	:CWNIWR_md: Median annual cropweighted net irrigation water requirement [mm]
 
 
 
@@ -366,14 +365,14 @@ Growing Season Full Summary
 
 * Structure:
 
-	CROP_NAME - Crop type name
-	YEAR - Year [YYYY]
-	START_DOY - Growing season start day of year
-	END_DOY - Growing season end day of year
-	START_DATE - Growing season start date
-	END_DATE - Growing season end date
-	GS_LENGTH - Growing season length [count of days]
-	CUTTING_X - Dates of 1st, 2nd, etc. cuttings
+	:CROP_NAME: Crop type name
+	:YEAR: Year [YYYY]
+	:START_DOY: Growing season start day of year
+	:END_DOY: Growing season end day of year
+	:START_DATE: Growing season start date
+	:END_DATE: Growing season end date
+	:GS_LENGTH: Growing season length [count of days]
+	:CUTTING_X: Dates of 1st, 2nd, etc. cuttings
 
 
 Growing Season Mean Annual Summary
@@ -382,14 +381,14 @@ Growing Season Mean Annual Summary
 
 * Structure:
 
-	STATION - Station ID code (6 digits; matches gridMET code in example)
-	CROP_NUM - Crop identifier corresponding to CDL code
-	CROP_NAME - Crop type name
-	MEAN_START_DOY - Growing season mean annual start day of year
-	MEAN_END_DOY - Growing season mean annual end day of year
-	MEAN_START_DATE - Growing season mean annual start date
-	MEAN_END_DATE - Growing season mean annual end date
-	MEAN_GS_LENGTH - Growing season mean annual length
-	MEAN_CUTTING_X - Mean annual cutting day of year
+	:STATION: Station ID code (6 digits; matches gridMET code in example)
+	:CROP_NUM: Crop identifier corresponding to CDL code
+	:CROP_NAME: Crop type name
+	:MEAN_START_DOY: Growing season mean annual start day of year
+	:MEAN_END_DOY: Growing season mean annual end day of year
+	:MEAN_START_DATE: Growing season mean annual start date
+	:MEAN_END_DATE: Growing season mean annual end date
+	:MEAN_GS_LENGTH: Growing season mean annual length
+	:MEAN_CUTTING_X: Mean annual cutting day of year
 
 
