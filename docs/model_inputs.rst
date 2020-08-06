@@ -312,8 +312,8 @@ Crop coefficient curves for each crop. Generally, these values should not be mod
 
 **File Format:**
 
-*Format: **.txt**
-*Structure: 
+* Format: **.txt**
+* Structure: 
 
 Curve no.: 1-60
 Curve type: ‘1=NCGDD: 2=%PL-EC: 3=%PL-EC+daysafter: 4=%PL-Term
@@ -374,7 +374,6 @@ ETCellsCrops
 Flags controlling which crops to simulate.  If using the prep workflow, the flags will initially be set based on the CDL acreage.
 
 * Format: **.txt**
-
 * Structure:
 Number of Crops: XX,	Crop Number (CDL): XX...
 ET Cell ID/ET Index,	ET Cell Name,	Ref ET ID/Met Node Id,	ET Cell Irrigation (0 is off; 1 is on)
@@ -385,7 +384,6 @@ EToRatiosMon
 Reference ET scale factors by month for each ET cell.  This file could be used to account for a seasonal bias in the input weather data.  This file is optional.
 
 * Format: **.txt**
-
 * Structure:
 Met Node ID, Met Node, Month….
 
@@ -394,9 +392,7 @@ ETCellsProperties
 Soil properties and weather station data for each ET cell.  This file links the stations and the ET cells.
 
 * Format: **.txt**
-
 * Structure:
-
 
 +--------------+--------------+-----------------+----------------+-----------------+--------------------+--------------------------------------------+------------------------------------+-------------------------------------------------------------------------+-------------------------------------------------+----------------+------------------+
 | ET Zone ID   | ET Zone Name | Ref ET MET ID   | Met Latitude   | Met Longitude   | Met Elevation (ft) | Area weighted average Permeability - in/hr |	Area weighted average WHC - in/ft |	Average soil depth - in	Hydrologic Group (A-C) (A='coarse'  B='medium') |	Hydrologic Group  (1-3) (1='coarse' 2='medium') |	Aridity Rating | Ref ET Data Path |
