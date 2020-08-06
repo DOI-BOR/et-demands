@@ -276,7 +276,7 @@ Percent Sand Shapefile (Sand_WTA_0to152cm_statsgo.shp is the example)
 
 File Formats
 
-* Format: .shp
+* Format: **.shp**
 * Attribute Table Structure (examples’ file structures shown):
 
   AREA SYMBOL, SPATIALVER, MUSYM, MUKEY, MUKEY_1, AWC (or Clay or Sand depending on which shapefile)
@@ -290,7 +290,7 @@ Shapefiles containing features (polygons) attributed with a CDL code are require
 
 File Formats
 
-* Format: .shp
+* Format: **.shp**
 * Attribute Table Structure:
 	
   CDL
