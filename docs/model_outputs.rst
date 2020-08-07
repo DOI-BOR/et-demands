@@ -7,7 +7,9 @@ Model Outputs
 
 RefET
 -----
+
 Outputs from the RefET module include daily or hourly reference ET (grass and alfalfa) calculated following the approach in ASCE-EWRI  `(2005) <https://ascelibrary.org/doi/book/10.1061/9780784408056>`_. 
+
 
 **Timeseries Data** 
 
@@ -25,9 +27,10 @@ Hourly Variables
 
 - Format : **.csv**
 
-
+|
 CropETPrep
 ----------
+
 The CropET Prep workflow is designed to build input files for the Crop ET module based on user specified files and needs. Many of the prepration scripts are helper functions to download and calculate zonal statistic information for the study area of interest. The preperation workflow requires users to set-up an intial study domain shapefile. The Crop ET module of ETDemands utilizes project specific static files for input and does not rely on .shp generated throughout the preparation workflow. It is recommended to build study area shpaefile and utilize the prepration workflow. Only advanced users should manually modify static files.
 
 The descriptions below give a brief overview of the output from each preperation workflow script:
@@ -46,13 +49,14 @@ Optional (Spatially Varying Calibration Scripts):
 
 **File Formats**
 
+|
 CDL Shapefile
 
 - Format: **.shp**
   
 	:CDL: Cropland data layer code
 
-
+|
 Soils Shapefiles (3)
 
 AWC_WTA_0to152cm_statsgo
@@ -90,6 +94,7 @@ Sand_WTA_0to152cm_statsgo
 
 Static Input Files (descriptions in previous section)
 
+|
 CropCoefs 
 
 - Format: **.txt**
@@ -115,7 +120,7 @@ CropCoefs
   
   + Comment 2:
 
-
+|
 CropParams 
 
 - Format: **.txt**
@@ -183,7 +188,7 @@ CropParams
 	
 	+ Fine soil
 
-
+|
 ETCellsCrops 
 
 - Format: **.txt** 
@@ -194,7 +199,7 @@ ETCellsCrops
 	+ ET Cell ID/ET Index,	ET Cell Name,	Ref ET ID/Met Node Id,	ET Cell Irrigation (0 is off; 1 is on)
 
 
-
+|
 EToRatiosMon 
 
 - Format: **.txt**
@@ -203,7 +208,7 @@ EToRatiosMon
 	+ Met Node ID, Met Node, Month….
 
 
-
+|
 ETCellsProperties 
 
 - Format: **.txt**
@@ -211,7 +216,7 @@ ETCellsProperties
 	
 	+ ET Cell ID, ET Cell Name, RefET MET ID, Met Latitude (DD), Met Longitude (DD), Met Elevation (feet), Area weighted average Permeability - in/hr, Area weighted average WHC - in/ft, Average soil depth - in, Hydrologic Group (A-C (A=’coarse’ B=’medium’,  Hydrologic Group  (1-3)   (1='coarse' 2='medium'), Aridity Rating (fromHuntington plus google), Ref ET Data Path
 	
-
+|
 MeanCuttings 
 
 - Format: **.txt**
@@ -219,8 +224,7 @@ MeanCuttings
 	
 	+ ET Cell ID, ET Cell Name, Lat (DD), Number Dairy, Number Beef
 
-
-
+|
 CropET
 ------
 
@@ -286,12 +290,15 @@ Monthly, annual, and growing season statistics are aggregated from the daily out
 :Season:         sum
 :Cutting:        sum
 
+|
 AreaET
 ------
 
+|
 PostProcessing
 --------------
 
+|
 Timeseries Plots
 
 Daily Timeseries
@@ -315,6 +322,7 @@ Daily Timeseries
 	
 	+ Irrigation - Irrigation application amount [mm]
 
+|
 Daily Groupstats
 
 - Format: **.html** (e.g. 457500_crop_03_avg.html)
@@ -338,7 +346,7 @@ Daily Groupstats
 	
 	+ K\ :sub:`cb`\ 25th percentile - 25th percentile of the median basal crop coefficient [mm/mm]
 	
-
+|
 Summary Shapefiles
 
 - Format: **.shp** (e.g. annual_crop_03.shp)
@@ -378,7 +386,7 @@ Summary Shapefiles
 	:Start_mdn: Median annual growing season start day
 	:End_mdn: Median annual growing season end day
 	
-
+|
 Cropweighted Summary Shapefiles
 
 - Format: **.shp** (e.g. annual_cropweighted.shp)
@@ -412,7 +420,7 @@ Cropweighted Summary Shapefiles
 	:CWNIWR_md: Median annual cropweighted net irrigation water requirement [mm]
 
 
-
+|
 Growing Season Full Summary	
 	
 - Format: **.csv** (e.g. growing_season_full_summary.csv)
@@ -427,7 +435,7 @@ Growing Season Full Summary
 	:GS_LENGTH: Growing season length [count of days]
 	:CUTTING_X: Dates of 1st, 2nd, etc. cuttings
 
-
+|
 Growing Season Mean Annual Summary
 	
 - Format: **.csv** (e.g. growing season_mean_annual.csv)
