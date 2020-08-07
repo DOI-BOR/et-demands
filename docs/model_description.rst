@@ -4,7 +4,7 @@
 Model Description
 =================
 
-The ETDemands model consists of three modules that develop daily estimates of crop irrigation water requirements using daily weather data (including reference evapotranspiration) and crop-specific crop growth curves. The three modules that make up the ETDemands model are RefET, CropET, and AreaET. Currently, only the CropET module is fully functional for ETDemands.
+The ETDemands model consists of three modules that develop daily estimates of crop irrigation water requirements using daily weather data (including reference evapotranspiration) and crop-specific crop growth curves. The three modules that make up the ETDemands model are RefET, CropET, and AreaET. Currently, only the CropET module, prep tools, and the post-processing tools are fully functional for ETDemands.
 
 .. _model-description-refet:
 
@@ -44,9 +44,9 @@ Daily Reference Evapotranspiration
 """"""""""""""""""""""""""""""""""
 
 .. math::
-
-   ET_{sz} =\frac{0.408 \Delta (R_n-G) + \gamma \frac{C_n}{T_{mean} + 273}u_2
-      (e_s-e_a)}{\Delta + \gamma(1+C_d u_2)}
+    
+    ET_{sz} =\frac{0.408 \Delta (R_n-G) + \gamma \frac{C_n}{T_{mean} + 273}u_2
+      (e_s-e_a)}{\Delta + \gamma(1+C_d u_2)} 
 
 where:
 
