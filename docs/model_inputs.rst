@@ -358,7 +358,7 @@ Crop parameters that can/should be modified during calibration.
      
      + Winter surface cover class: 1-bare, 2-mulch, 3-sod
      
-     + K\ :sub:`c`\ max: max of value or K\:sub:`cb`\ + 0.05
+     + K\ :sub:`c`\ max: max of value or K\ :sub:`cb`\ + 0.05
      
      + MAD during initial and development stage: percent
      
@@ -400,7 +400,7 @@ Crop parameters that can/should be modified during calibration.
 	    
      + Killing frost temperature: C
      
-     + Invoke Stress: 1-yes, 0-no, 2-yes and will wake up after severe stress (Ks<0.05)
+     + Invoke Stress: 1-yes, 0-no, 2-yes and will wake up after severe stress (K\ :sub:`s`\ < 0.05)
      
      + Curve number:
 	   + Coarse soil
