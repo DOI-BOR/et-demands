@@ -7,7 +7,7 @@ Model Outputs
 
 RefET
 -----
-Outputs from the RefET module include daily or hourly reference ET (grass and alfalfa) calculated following the approach in ASCE-EWRI  (2005). 
+Outputs from the RefET module include daily or hourly reference ET (grass and alfalfa) calculated following the approach in ASCE-EWRI  `(2005) <https://ascelibrary.org/doi/book/10.1061/9780784408056>`_. 
 
 **Timeseries Data** 
 
@@ -16,14 +16,14 @@ Daily Variables
 	:etr_mm: Daily alfalfa reference ET [mm]
 	:eto_mm: Daily grass reference ET [mm]
 
-* Format: **.csv**
+- Format: **.csv**
 
 Hourly Variables
 
 	:etr_mm: Hourly alfalfa reference ET [mm]
 	:eto_mm: Hourly grass reference ET [mm]
 
-* Format : **.csv**
+- Format : **.csv**
 
 
 CropETPrep
@@ -48,15 +48,16 @@ Optional (Spatially Varying Calibration Scripts):
 
 CDL Shapefile
 
-* Format: **.shp**
-  :CDL: Cropland data layer code
+- Format: **.shp**
+  
+	:CDL: Cropland data layer code
 
 
 Soils Shapefiles (3)
 
 AWC_WTA_0to152cm_statsgo
 
-* Format: **.shp**
+- Format: **.shp**
 
 	:AREASYMBOL: US
 	:SPATIALVER: Version
@@ -67,7 +68,7 @@ AWC_WTA_0to152cm_statsgo
 
 Clay_WTA_0to152cm_statsgo
 
-* Format: **.shp**
+- Format: **.shp**
 
 	:AREASYMBOL: US
 	:SPATIALVER: Version
@@ -78,7 +79,7 @@ Clay_WTA_0to152cm_statsgo
 
 Sand_WTA_0to152cm_statsgo
 
-* Format: **.shp**
+- Format: **.shp**
 
 	:AREASYMBOL: US
 	:SPATIALVER: Version
@@ -91,120 +92,162 @@ Static Input Files (descriptions in previous section)
 
 CropCoefs 
 
-* Format: **.txt**
-* Structure: 
-  Curve no.: 1-60
-  Curve type: ‘1=NCGDD: 2=%PL-EC: 3=%PL-EC+daysafter: 4=%PL-Term
-  Percent PL-EC or PL-TM (type 1-2-4) and/or Percent PL-EC+ days after (type 3)
+- Format: **.txt**
+- Structure: 
 
-  GDD Base C
-  GDD Type
-  CGDD Planting to FC
-  CGDD Planting to Terminate
-  CGDD Planting to Terminate-alt
-  Comment:
-  Comment 2:
+  + Curve no.: 1-60
+  
+  + Curve type: ‘1=NCGDD: 2=%PL-EC: 3=%PL-EC+daysafter: 4=%PL-Term
+  
+  + Percent PL-EC or PL-TM (type 1-2-4) and/or Percent PL-EC+ days after (type 3)
+
+  + GDD Base C
+  
+  + GDD Type
+  
+  + CGDD Planting to FC
+  
+  + CGDD Planting to Terminate
+  
+  + CGDD Planting to Terminate-alt
+  
+  + Comment:
+  
+  + Comment 2:
 
 
 CropParams 
 
-• Format: **.txt**
-• Structure: 
+- Format: **.txt**
+- Structure: 
 	
-  Crop number and flag for crop type: negative is annual; positive in perennial
-  Irrigation flag: 1-yes, 2-reg., 3-required
-  Days after planting/green up for earliest irrigation: days
-  Fw: assume sprinkler
-  Winter surface cover class: 1-bare, 2-mulch, 3-sod
-  Kc max: max of value or Kcb+0.05
-  MAD during initial and development stage: percent
-  MAD during midseason and late season: percent
-  Initial rooting depth, m: On alfalfa, 2nd cycle, start at max
-  Maximum rooting depth, m: mrd
-  End of root growth, as a fraction of time from pl to EFC (or term if type 4)
-  Starting crop height, m: sch
-  Maximum crop height, m: mch
-  Crop curve number: ccn
-  Crop curve name: ccn
-  Crop curve type: 1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
-  Flag for means to estimate pl or gu: 1=CGDD, 2=T30, 3=date, 4 is on all the time
-  T30 for pl or gu or CGDD for pl or gu
-  Date of pl or gu (can be blank): A negative value is an offset to the prior row, pos is months (fraction)
-  For nCGDD based curves: Tbase: Temp Min. C (neg. For spec.)
-	  CGDD for EFC: cgdd efc
-	  CGDD for termination: cgdd term
+  + Crop number and flag for crop type: negative is annual; positive in perennial
+  
+  + Irrigation flag: 1-yes, 2-reg., 3-required
+  
+  + Days after planting/green up for earliest irrigation: days
+  
+  + Fw: assume sprinkler
+  
+  + Winter surface cover class: 1-bare, 2-mulch, 3-sod
+  
+  + Kc max: max of value or Kcb+0.05
+  
+  + MAD during initial and development stage: percent
+  
+  + MAD during midseason and late season: percent
+  
+  + Initial rooting depth, m: On alfalfa, 2nd cycle, start at max
+  
+  + Maximum rooting depth, m: mrd
+  
+  + End of root growth, as a fraction of time from pl to EFC (or term if type 4)
+  
+  + Starting crop height, m: sch
+  
+  + Maximum crop height, m: mch
+  
+  + Crop curve number: ccn
+  
+  + Crop curve name: ccn
+  
+  + Crop curve type: 1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
+  
+  + Flag for means to estimate pl or gu: 1=CGDD, 2=T30, 3=date, 4 is on all the time
+  
+  + T30 for pl or gu or CGDD for pl or gu
+  
+  + Date of pl or gu (can be blank): A negative value is an offset to the prior row, pos is months (fraction)
+  
+  + For nCGDD based curves: Tbase: Temp Min. C (neg. For spec.)
+  	
+	+ CGDD for EFC: cgdd efc
+	
+	+ CGDD for termination: cgdd term
 
-  For time based curves:
-	  Time for EFC: days after pl or gu
-	  Time for harvest (neg to extend until frost): Use as max length for CGDD crops
-  Killing frost temperature: C
-  Invoke Stress: 1-yes, 0-no, 2-yes and will wake up after severe stress (Ks<0.05)
-  Curve number:
-	  Coarse soil
-	  Medium soil
-	  Fine soil
+  + For time based curves:
+	  
+	+ Time for EFC: days after pl or gu
+	
+	+ Time for harvest (neg to extend until frost): Use as max length for CGDD crops
+  
+  + Killing frost temperature: C
+  
+  + Invoke Stress: 1-yes, 0-no, 2-yes and will wake up after severe stress (Ks<0.05)
+  
+  + Curve number:
+  
+	+ Coarse soil
+	
+	+ Medium soil
+	
+	+ Fine soil
 
 
 ETCellsCrops 
 
-• Format: **.txt** 
-• Structure: 
+- Format: **.txt** 
+- Structure: 
 	
-Number of Crops: XX,	Crop Number (CDL): XX…
-ET Cell ID/ET Index,	ET Cell Name,	Ref ET ID/Met Node Id,	ET Cell Irrigation (0 is off; 1 is on)
+	+ Number of Crops: XX,	Crop Number (CDL): XX…
+	
+	+ ET Cell ID/ET Index,	ET Cell Name,	Ref ET ID/Met Node Id,	ET Cell Irrigation (0 is off; 1 is on)
 
 
 
 EToRatiosMon 
 
-• Format: **.txt**
-• Structure: 
+- Format: **.txt**
+- Structure: 
 	
-  Met Node ID, Met Node, Month….
+	+ Met Node ID, Met Node, Month….
 
 
 
 ETCellsProperties 
 
-• Format: **.txt**
-• Structure: 
+- Format: **.txt**
+- Structure: 
 	
-  ET Cell ID, ET Cell Name, RefET MET ID, Met Latitude (DD), Met Longitude (DD), Met Elevation (feet), Area weighted average Permeability -   in/hr, Area weighted average WHC - in/ft, Average soil depth - in, Hydrologic Group (A-C (A=’coarse’ B=’medium’,  Hydrologic Group  (1-3)   (1='coarse' 2='medium'), Aridity Rating (fromHuntington plus google), Ref ET Data Path
+	+ ET Cell ID, ET Cell Name, RefET MET ID, Met Latitude (DD), Met Longitude (DD), Met Elevation (feet), Area weighted average Permeability - in/hr, Area weighted average WHC - in/ft, Average soil depth - in, Hydrologic Group (A-C (A=’coarse’ B=’medium’,  Hydrologic Group  (1-3)   (1='coarse' 2='medium'), Aridity Rating (fromHuntington plus google), Ref ET Data Path
 	
 
 MeanCuttings 
 
-• Format: **.txt**
-• Structure: 
+- Format: **.txt**
+- Structure: 
 	
-  ET Cell ID, ET Cell Name, Lat (DD), Number Dairy, Number Beef
+	+ ET Cell ID, ET Cell Name, Lat (DD), Number Dairy, Number Beef
 
 
 
 CropET
 ------
-ETDemands is capable of outputting both raw daily files as well as monthly, annual, and growing season summary files. All model output files are saved in .csv format. Model output files are controlled by the stat flags and folder names in the [CROP_ET] section of the model .ini file. Output files are enabled by setting the specific stat_flag =True.
 
-  Stats flags
-    daily_stats_flag = True
+ETDemands is capable of outputting both raw daily files as well as monthly, annual, and growing season summary files. All model output files are saved in .csv format. Model output files are controlled by the stat flags and folder names in the [CROP_ET] section of the model .ini file. Output files are enabled by setting the specific stat_flag = True.
+
+- Stats flags
+  
+	+ daily_stats_flag = True
     
-    monthly_stats_flag = False
+    	+ monthly_stats_flag = False
     
-    annual_stats_flag = False
+    	+ annual_stats_flag = False
     
-    growing_season_stats_flag = False
+    	+ growing_season_stats_flag = False
 
 
 Statistic subfolders are created for each of the enabled stat flags above and will be located in the Project Folder
 
-  ET sub-folder names
-    daily_output_folder = daily_stats
+- ET sub-folder names
+
+	+ daily_output_folder = daily_stats
     
-    monthly_output_folder = monthly_stats
+    	+ monthly_output_folder = monthly_stats
     
-    annual_output_folder = annual_stats
+    	+ annual_output_folder = annual_stats
     
-    gs_output_folder = growing_season_stats
+    	+ gs_output_folder = growing_season_stats
 
 
 In addition to date information, each stat file contains the following results:
@@ -253,41 +296,53 @@ Timeseries Plots
 
 Daily Timeseries
 
-* Format: **.html** (e.g. 457500_crop_03_2018-2019.html)
+- Format: **.html** (e.g. 457500_crop_03_2018-2019.html)
+- Structure:
 
-* Structure:
-
-	ETact - Actual daily ET [mm]
-	ETpot - Potential daily ET [mm]
-	ETbas - Basal daily ET [mm]
-	PMetr_mm - Penman Monteith alfalfa reference daily ET [mm]
-	Kc - Crop coefficient [mm/mm]
-	Kcb - Basal crop coefficient [mm/mm]
-	PPT - Daily precipitation [mm]
-	Irrigation - Irrigation application amount [mm]
+	+ ET\ :sub:`act`\ - Actual daily ET [mm]
+	
+	+ ET\ :sub:`pot`\ - Potential daily ET [mm]
+	
+	+ ET\ :sub:`bas`\ - Basal daily ET [mm]
+	
+	+ PMetr_mm - Penman Monteith alfalfa reference daily ET [mm]
+	
+	+ K\ :sub:`c`\ - Crop coefficient [mm/mm]
+	
+	+ K\ :sub:`cb`\ - Basal crop coefficient [mm/mm]
+	
+	+ PPT - Daily precipitation [mm]
+	
+	+ Irrigation - Irrigation application amount [mm]
 
 Daily Groupstats
 
-* Format: **.html** (e.g. 457500_crop_03_avg.html)
+- Format: **.html** (e.g. 457500_crop_03_avg.html)
+- Structure:
 
-* Structure:
-
-	ETact Median - Median actual daily ET [mm]
-	ETact 75th percentile - 75th percentile of the median actual daily ET [mm]
-	ETact 25th percentile - 25th percentile of the median actual daily ET [mm]
-	PMetr_mm Median - Median Penman Monteith alfalfa reference daily ET [mm]
-	Kc Median - median crop coefficient [mm/mm]
-	Kc 75th percentile - 75th percentile of the median crop coefficient [mm/mm]
-	Kcb Median - Median basal crop coefficient [mm/mm]
-	Kcb 75th percentile - 75th percentile of the median basal crop coefficient [mm/mm]
-	Kcb 25th percentile - 25th percentile of the median basal crop coefficient [mm/mm]
+	+ ET\ :sub:`act`\ Median - Median actual daily ET [mm]
+	
+	+ ET\ :sub:`act`\ 75th percentile - 75th percentile of the median actual daily ET [mm]
+	
+	+ ET\ :sub:`act`\ 25th percentile - 25th percentile of the median actual daily ET [mm]
+	
+	+ PMetr_mm Median - Median Penman Monteith alfalfa reference daily ET [mm]
+	
+	+ K\ :sub:`c`\ Median - median crop coefficient [mm/mm]
+	
+	+ K\ :sub:`c`\ 75th percentile - 75th percentile of the median crop coefficient [mm/mm]
+	
+	+ K\ :sub:`cb'\ Median - Median basal crop coefficient [mm/mm]
+	
+	+ K\ :sub:`cb`\ 75th percentile - 75th percentile of the median basal crop coefficient [mm/mm]
+	
+	+ K\ :sub:`cb`\ 25th percentile - 25th percentile of the median basal crop coefficient [mm/mm]
 	
 
 Summary Shapefiles
 
-* Format: **.shp** (e.g. annual_crop_03.shp)
-
-* Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
+- Format: **.shp** (e.g. annual_crop_03.shp)
+- Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
 
 	:CELL_ID: GridMET cell ID (example problem identifier)
 	:LAT: Latitude [dd]
@@ -326,9 +381,8 @@ Summary Shapefiles
 
 Cropweighted Summary Shapefiles
 
-* Format: **.shp** (e.g. annual_cropweighted.shp)
-
-* Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
+- Format: **.shp** (e.g. annual_cropweighted.shp)
+- Attribute table structure (ID may vary depending on user’s input ETZone shapefile):
 	
 	:GRIDMET_ID: gridMET ID code (6 digit code)
 	:LAT: Latitude [dd]
@@ -361,9 +415,8 @@ Cropweighted Summary Shapefiles
 
 Growing Season Full Summary	
 	
-* Format: **.csv** (e.g. growing_season_full_summary.csv)
-
-* Structure:
+- Format: **.csv** (e.g. growing_season_full_summary.csv)
+- Structure:
 
 	:CROP_NAME: Crop type name
 	:YEAR: Year [YYYY]
@@ -377,9 +430,8 @@ Growing Season Full Summary
 
 Growing Season Mean Annual Summary
 	
-* Format: **.csv** (e.g. growing season_mean_annual.csv)
-
-* Structure:
+- Format: **.csv** (e.g. growing season_mean_annual.csv)
+- Structure:
 
 	:STATION: Station ID code (6 digits; matches gridMET code in example)
 	:CROP_NUM: Crop identifier corresponding to CDL code
