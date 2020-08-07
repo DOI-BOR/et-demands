@@ -38,15 +38,13 @@ Miniconda can be installed to any location, but the install location should be
 noted as it will be used later in the setup. This will be referred to in this
 documentation as PYTHONPATH (e.g. C:\Programs\miniconda3\).
 
-Once installed, several f
-GDAL
-~~~~
-The Geospatial Data Abstraction Library (`GDAL <https://www.gdal.org/>`_) is required
+Once installed, several f GDAL ~~~~ The Geospatial Data Abstraction Library (`GDAL <https://www.gdal.org/>`_) is required
 for ET-Demands. The easiest way to install GDAL for Windows is to use the
 `OSGeo4W <https://trac.osgeo.org/osgeo4w/>`_ installer. 
-|
+
 Creating a Python Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 We encourange the use of a project-specific Python environment when running
 ET-Demands. An "etdemands" conda environment can be created using the
 "environment.yml" file in the project main directory.
