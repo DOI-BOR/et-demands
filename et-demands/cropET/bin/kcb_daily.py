@@ -13,6 +13,8 @@ import open_water_evap
 
 def kcb_daily(data, et_cell, crop, foo, foo_day,
               debug_flag = False):
+
+
     """Compute basal ET
 
     Parameters
@@ -23,6 +25,7 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         crop :
         foo :
         foo_day :
+
         debug_flag : boolean
             True : write debug level comments to debug.txt
             False
@@ -35,6 +38,21 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     -----
 
     """
+
+    # Added 8/2020
+    # True: limit gs start to +/-40 days of long term avg (case 1 and 2 only)
+    # False: no limit on gs start
+    # gs_limit sets the threshold for gs start doy relative to long-term avg
+    # flag = True sets gs start doy to +/-40 of long-term avg
+    # flag = False applies no limit to gs start doy
+    if data.gs_limit_flag:
+        # 40 allows start day to be +/-40 days of long-term average
+        # 40 is the threshold from original ET Demands code
+        gs_limit = 40
+    else:
+        # 365 days allow for start day to be any doy
+        gs_limit = 365
+
 
     # Determine if inside or outside growing period
     # Procedure for deciding start and return false of season.
@@ -139,7 +157,6 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     # Flag_for_means_to_estimate_pl_or_gu Case 2
 
     elif crop.flag_for_means_to_estimate_pl_or_gu == 2:
-        # print(foo_day.doy)
         # Use T30 for startup
         # Caution - need some constraints for oscillating T30 and for late summer
         # Use first occurrence
@@ -155,9 +172,15 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
 
             # Check if getting too late in season and season hasn't started yet
 
+            # if (foo.longterm_pl > 0 and
+            #     foo_day.doy > (foo.longterm_pl + 40) and
+            # not foo.real_start):
+
+            # added gs_limit_flag 8/2020 to allow start doy to extend freely
             if (foo.longterm_pl > 0 and
-                foo_day.doy > (foo.longterm_pl + 40) and
+                foo_day.doy > (foo.longterm_pl + gs_limit) and
                 not foo.real_start):
+
                 # longterm_pl + 40 'it is unseasonably warm (too warm).
                 # Delay start ' set to Doy on 4/29/09 (nuts)
                 foo.doy_start_cycle = foo_day.doy
@@ -172,9 +195,16 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             # use +/- 40 days from longterm as constraint
             if not foo.real_start:
                 if foo_day.t30 > crop.t30_for_pl_or_gu_or_cgdd:  # 'JH,RGA 4/13/09
-                    if foo.longterm_pl > 0 and foo_day.doy < (foo.longterm_pl - 40):
+                    # added gs_limit_flag and theshold options to allow for  start dates
+                    # to extend unbounded by long term average
+                    if foo.longterm_pl > 0 and foo_day.doy < (foo.longterm_pl - gs_limit):
                         foo.real_start = False  # too early to start season
-                        foo.doy_start_cycle = foo.longterm_pl - 40
+                        if data.gs_limit_flag:
+                            foo.doy_start_cycle = foo.longterm_pl - 40
+                        else:
+                            # Set start day to 1 if foo_day is negative and gs_limit_flag is False
+                            # Can this be happen?
+                            foo.doy_start_cycle = 1
                         logging.debug(
                             'kcb_daily(): doy_start_cycle %d  Start is too early' %
                             (foo.doy_start_cycle))
@@ -539,15 +569,18 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                 (npl_ec100, crop.time_for_harvest, abs(crop.time_for_harvest)))
             # Reverting code to match VB version.
             # Problem is coming from n_pl_ec and npl_ec100 calculation above
+            # print(npl_ec100)
             if npl_ec100 <= abs(crop.time_for_harvest):
             # if round(npl_ec100, 4) <= abs(crop.time_for_harvest):
                 int_pl_ec = min(
                     foo.max_lines_in_crop_curve_table - 1., int(foo.n_pl_ec * 10.))
+
                 foo.kc_bas = (
                     et_cell.crop_coeffs[curve_number].data[int_pl_ec] +
                     (foo.n_pl_ec * 10. - int_pl_ec) *
                     (et_cell.crop_coeffs[curve_number].data[int_pl_ec + 1] -
                      et_cell.crop_coeffs[curve_number].data[int_pl_ec]))
+
                 if debug_flag:
                     logging.debug(
                         'kcb_daily(): n_pl_ec0 %d  max_lines_in_crop_curve_table %d' %
@@ -558,16 +591,23 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
                     logging.debug(
                         'kcb_daily(): days_into_season %d  time_for_EFC %.6f' %
                         (days_into_season, crop.time_for_efc))
+
+
             else:
                 # beyond stated end of season
                 # ------need provision to extend until frost termination
                 #       if indicated for crop -- added Jan. 2007
 
+
                 if crop.time_for_harvest < -0.5:
+                    # print('HERE')
+                    # sys.exit()
+
                     # negative value is a flag to extend until frost
                     # XXXXXXXXX  Need to set to yesterday's kcb for a standard climate
                     # use yesterday's kcb which should trace back to
                     # last valid day of stated growing season
+
                     foo.kc_bas = foo.kc_bas_prev
                     logging.debug('kcb_daily(): kc_bas %.6f' % foo.kc_bas)
                 else:
@@ -842,6 +882,10 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
             # foo.kc_bas_wscc[3] = foo.kc_bas
         logging.debug('kcb_daily(): kc_bas %.6f' % foo.kc_bas)
 
+        # Save kcb value for use tomorrow in case curve needs to be extended until frost
+        # Save kc_bas_prev prior to CO2 adjustment to avoid double correction
+        foo.kc_bas_prev = foo.kc_bas
+
     # Open water evaporation "crops"
     #   55: Open water shallow systems (large ponds, streams)
     #   56: Open water deep systems (lakes, reservoirs)
@@ -877,19 +921,26 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
         foo.etc_pot = foo.kc_pot * foo_day.etref
         foo.etc_bas = foo.kc_bas * foo_day.etref
 
+        # Save kcb value for use tomorrow in case curve needs to be extended until frost
+        # Save kc_bas_prev prior to CO2 adjustment to avoid double correction
+        foo.kc_bas_prev = foo.kc_bas
+
     # Apply CO2 correction to all crops
     # DEADBEEF - It probably isn't necessary to checkcrop number again
 
     elif (data.co2_flag and
-          crop.class_number not in [44, 45, 46, 55, 56, 57]):
+        crop.class_number not in [44, 45, 46, 55, 56, 57]):
+
+        # Save kcb value for use tomorrow in case curve needs to be extended until frost
+        # Save kc_bas_prev prior to CO2 adjustment to avoid double correction
+        foo.kc_bas_prev = foo.kc_bas
+
         foo.kc_bas *= foo_day.co2
         logging.debug(
             ('compute_crop_et(): co2 %.6f  kc_bas %.6f') %
             (foo_day.co2, foo.kc_bas))
 
-    # Save kcb value for use tomorrow in case curve needs to be extended until frost
 
-    foo.kc_bas_prev = foo.kc_bas
 
     # Adjustment to kcb moved here 2/21/08 to catch when during growing season
     # Limit crop height for numerical stability
