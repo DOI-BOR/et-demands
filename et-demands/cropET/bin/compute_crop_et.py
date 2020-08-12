@@ -176,7 +176,11 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
         logging.debug(
             'compute_crop_et(): kc_bas %.6f  kc_bas_wscc %.6f  wscc %.6f' % (
                 foo.kc_bas, foo.kc_bas_wscc[wscc], wscc))
-        foo.kc_bas = foo.kc_bas_wscc[wscc]
+        # Set higher dormant kc min for warm season turfgrass (Crop 87); added 5/1/2020
+        if crop.class_number in [87]:
+            foo.kc_bas = 0.25
+        else:
+            foo.kc_bas = foo.kc_bas_wscc[wscc]
 
     # limit kc_max to at least Kc_bas + .05
 
