@@ -63,7 +63,8 @@ class CropETData:
         crop_et_sec = 'CROP_ET'  # required
         weather_sec = 'WEATHER'  # required
         refet_sec = 'REFET'  # required
-        # Constant phenology section
+        # What is phenology option
+        # Historical Temps Section (currently set to None and not an option)
         hist_temps_sec = 'HIST'  # optional
 
         cfg_secs = config.sections()
@@ -506,14 +507,6 @@ class CropETData:
             self.co2_flag = config.getboolean(crop_et_sec, 'co2_flag')
         except:
             self.co2_flag = False
-
-
-        # added 8/2020 to allow for growing season start doy to progress unchecked (no limit)
-        try:
-            self.gs_limit_flag = config.getboolean(crop_et_sec, 'gs_limit_flag')
-        except:
-            self.gs_limit_flag = True
-
 
         # Spatially varying calibration
         try: self.spatial_cal_flag = config.getboolean(crop_et_sec,
@@ -1279,7 +1272,7 @@ class CropETData:
                 crop_param.co2_type = None
             elif self.co2_grass_crops and crop_num in self.co2_grass_crops:
                 crop_param.co2_type = 'GRASS'
-            elif self.co2_tree_crops and crop_num in self.co2_tree_crops:
+            elif self.co2_trees_crops and crop_num in self.co2_trees_crops:
                 crop_param.co2_type = 'TREE'
             elif self.co2_c4_crops and crop_num in self.co2_c4_crops:
                 crop_param.co2_type = 'C4'
