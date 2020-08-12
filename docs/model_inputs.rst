@@ -260,10 +260,40 @@ The user must provide a study area polygon shapefile with at least one feature. 
 
 Soils Data
 ^^^^^^^^^^
+Shapefiles containing features (polygons) attributed with AWC and hydrologic soils group information are required for running zonal statistics on the  soil properties for each of the ETZones in the cell shapefile. The following attributes are required/used in the examples:
+
+Available Water Capacity  Shapefile (AWC_WTA_0to152cm_statsgo.shp is the example)
+
+* AWC = available water capacity (in/in)
+
+Percent Clay  Shapefile (Clay_WTA_0to152cm_statsgo.shp is the example)
+	
+* Clay = percent clay (decimal)
+
+Percent Sand Shapefile (Sand_WTA_0to152cm_statsgo.shp is the example)
+
+* Sand = percent sand (decimal)
+
+**File Formats**
+
+* Format: **.shp**
+* Attribute Table Structure (examples’ file structures shown):
+
+  AREA SYMBOL, SPATIALVER, MUSYM, MUKEY, MUKEY_1, AWC (or Clay or Sand depending on which shapefile)
 
 
 Crop Type Data
 ^^^^^^^^^^^^^^
+Shapefiles containing features (polygons) attributed with a CDL code are required  for ETDemands. The features should only include agricultural areas within the ETZones; the example CDL shapefile has removed all non-agricultural areas within the respective ETZones. The shapefile should have the following field:
+
+* CDL (Int)
+
+**File Formats**
+
+* Format: **.shp**
+* Attribute Table Structure:
+	
+ CDL
 
 
 Static Inputs
@@ -274,8 +304,29 @@ These files will be generated automatically by the CropETPrep module
 
 CropCoefs
 """""""""
-Crop coefficient curves for each crop.  Generally, these values should not be modified.
-DESCRIBE CROP COEFFICIENTS -
+Crop coefficient curves for each crop. Generally, these values should not be modified. The crop coefficients are used in ETDemands to reflect changes of vegetation phenology of a particular crop or vegetation type over the growing season. The crop coefficient curves (60 count) represent changes in vegetation phenology, which can vary from year to year depending on the start, duration, and termination of the growing season, all of which are dependent on air temperature conditions during spring, summer, and fall. Three methods were used to define the shape and duration of the crop coefficient curves to allow curves to be scaled differently each year according to weather conditions based on relative time scales or thermal units. These methods are:  
+
+* Normalized cumulative growing degree-days from planting to effective full cover, with this ratio extended until termination (1=NCGDD)
+* Percent time from planting to effective full cover, with this ratio extended until termination (4=%PL-Term)
+* Percent time from planting to effective full cover and then number of days after full cover to termination (3=%PL-EC+daysafter)
+
+**File Format:**
+
+* Format: **.txt**
+* Structure: 
+
+Curve no.: 1-60
+Curve type: ‘1=NCGDD: 2=%PL-EC: 3=%PL-EC+daysafter: 4=%PL-Term
+Percent PL-EC or PL-TM (type 1-2-4) and/or Percent PL-EC+ days after (type 3)
+
+GDD Base C
+GDD Type
+CGDD Planting to FC
+CGDD Planting to Terminate
+CGDD Planting to Terminate-alt
+Comment:
+Comment 2:
+
 
 CropParams
 """"""""""
@@ -284,29 +335,63 @@ Crop parameters that can/should be modified during calibration.
 * Format: **.txt**
 
 * Structure:
+Crop number and flag for crop type: negative is annual; positive in perennial
+Irrigation flag: 1-yes, 2-reg., 3-required
+Days after planting/green up for earliest irrigation: days
+Fw: assume sprinkler
+Winter surface cover class: 1-bare, 2-mulch, 3-sod
+Kc max: max of value or Kcb+0.05
+MAD during initial and development stage: percent
+MAD during midseason and lateseason: percent
+Initial rooting depth, m: On alfalfa, 2nd cycle, start at max
+Maximum rooting depth, m: mrd
+End of root growth, as a fraction of time from pl to EFC (or term if type 4)
+Starting crop height, m: sch
+Maximum crop height, m: mch
+Crop curve number: ccn
+Crop curve name: ccn
+Crop curve type: 1=NCGDD, 2=%PL-EC, 3=%PL-EC,daysafter, 4=%PL-Term
+Flag for means to estimate pl or gu: 1=CGDD, 2=T30, 3=date, 4 is on all the time
+T30 for pl or gu or CGDD for pl or gu
+Date of pl or gu (can be blank): A negative value is an offset to the prior row, pos is months (fraction)
+For nCGDD based curves: Tbase: Temp Min. C (neg. For spec.)
+	CGDD for EFC: cgdd efc
+	CGDD for termination: cgdd term
+	
+For time based curves:
+	Time for EFC: days after pl or gu
+	Time for harvest (neg to extend until frost): Use as max length for CGDD crops
+Killing frost temperature: C
+Invoke Stress: 1-yes, 0-no, 2-yes and will wake up after severe stress (Ks<0.05)
+Curve number:
+	Coarse soil
+	Medium soil
+	Fine soil
+
 
 ETCellsCrops
 """"""""""""
 Flags controlling which crops to simulate.  If using the prep workflow, the flags will initially be set based on the CDL acreage.
 
 * Format: **.txt**
-
 * Structure:
+Number of Crops: XX,	Crop Number (CDL): XX...
+ET Cell ID/ET Index,	ET Cell Name,	Ref ET ID/Met Node Id,	ET Cell Irrigation (0 is off; 1 is on)
+
 
 EToRatiosMon
 """"""""""""
 Reference ET scale factors by month for each ET cell.  This file could be used to account for a seasonal bias in the input weather data.  This file is optional.
 
 * Format: **.txt**
-
 * Structure:
+Met Node ID, Met Node, Month….
 
 ETCellsProperties
 """""""""""""""""
 Soil properties and weather station data for each ET cell.  This file links the stations and the ET cells.
 
 * Format: **.txt**
-
 * Structure:
 
 +--------------+--------------+-----------------+----------------+-----------------+--------------------+--------------------------------------------+------------------------------------+-------------------------------------------------------------------------+-------------------------------------------------+----------------+------------------+
@@ -320,3 +405,4 @@ Sets the assumed number of alfalfa cuttings.  This is important since the CropET
 * Format: **.txt**
 
 * Structure:
+ET Cell ID, ET Cell Name, Lat (DD), Number Dairy, Number Beef
