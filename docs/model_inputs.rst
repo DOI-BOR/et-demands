@@ -234,7 +234,6 @@ Location Shapefile
 A shapefile containing the locations of each weather station is also required and is used to generate the static input files. The shapefile must contain the following attributes:
 
 - STATION_ID - Weather station ID
-- *ETZONE_ID* - Zone ID. This can include HUC8, HUC10, COUNTRYNAME, OR GRIDMET_ID
 - LAT - Weather station latitude
 - LON - Weather station longitude
 - [*optional*] *ELEV* [ELEV_FT; ELEV_M] - Weather station elevation in feet or meters. This field is optional and only required if running the RefET model to estimate reference ET.
@@ -245,14 +244,14 @@ File Format
 - Format: **.shp**
 - Attribute Table Structure:
 
-+--------------+----------------------------------------------------+-------+-------+----------------------------+
-| STATION_ID   | *ZONE_ID* [HUC8; HUC10; COUNTRYNAME; GRIDMET_ID]   | LAT   | LON   | *ELEV* [ELEV_FT; ELEV_M]   |
-+--------------+----------------------------------------------------+-------+-------+----------------------------+
++--------------+-------+-------+----------------------------+
+| STATION_ID   | LAT   | LON   | *ELEV* [ELEV_FT; ELEV_M]   |
++--------------+-------+-------+----------------------------+
 
 
 Study Area
 ^^^^^^^^^^
-The user must provide a study area polygon shapefile with at least one feature.  Each feature in the study area shapefile will become a separate ET cell/unit.  Currently, only HUC8, HUC10, county, and gridmet cell shapefiles are fully supported by the prep tools.
+The user must provide a study area polygon shapefile with at least one feature.  Each feature in the study area shapefile will become a separate ET cell/unit.  Study area .shp must have 'CELL_ID', 'CELL_NAME', and 'STATION_ID' fields. 
 
 
 Soils Data
@@ -277,9 +276,9 @@ Percent Sand Shapefile (Sand_WTA_0to152cm_statsgo.shp is the example)
 - Format: **.shp**
 - Attribute Table Structure (examples’ file structures shown):
 
-+--------------+--------------+---------+--------+----------+-----------------------------------------------------+
-| AREA SYMBOL  | SPATIALVER   | MUSYM   | MUKEY  | MUKEY_1  |  AWC (or Clay or Sand depending on which shapefile) |
-+--------------+--------------+---------+--------+----------+-----------------------------------------------------+
++--------------+--------------+---------+--------+----------+----------------------+
+| AREA SYMBOL  | SPATIALVER   | MUSYM   | MUKEY  | MUKEY_1  |  AWC (or Clay or Sand|
++--------------+--------------+---------+--------+----------+----------------------+
 
 Crop Type Data
 ^^^^^^^^^^^^^^
@@ -293,9 +292,9 @@ Shapefiles containing features (polygons) attributed with a CDL code are require
 - Format: **.shp**
 - Attribute Table Structure:
 
-	+-------+  
-	|  CDL  |
-	+-------+
++-------+  
+|  CDL  |
++-------+
 
 Static Inputs
 ^^^^^^^^^^^^^
