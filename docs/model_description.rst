@@ -909,20 +909,17 @@ Hargreaves-Samani
 Priestley-Taylor
 """"""""""""""""
 
-`(Priestley and Taylor, 1972) <https://doi.org/10.1175/1520-0493(1972)100//<0081:OTAOSH//>2.3.CO;2>`_ .
+`(Priestley and Taylor, 1972) <https://journals.ametsoc.org/mwr/article/100/2/81/60530>`_ .
 
 Blaney-Criddle
 """"""""""""""
-[THIS CURRENTLY ISN'T SUPPORTED]
+[CURRENTLY NOT SUPPORTED]
 
 `(Blaney and Criddle, 1950) <https://archive.org/details/determiningwater96blan>`_.
 
 .. _model-description-cropet:
 
 .. _model-description-cropet:
-
-CropETPrep
-----------
 
 CropET
 ------
@@ -998,14 +995,6 @@ aridity effect.
 | October     | 0.3           | 1.6           | 0.9           | 0.0         |
 +-------------+---------------+---------------+---------------+-------------+
 
-HOW WAS THE ARIDITY EFFECT DETERMINED. ARE THESE DATA GENERAL ENOUGH TO USE
-AT OTHER LOCATIONS IF AN ARIDITY RATING IS DEVELOPED? IF NOT, CAN WE GENERALIZE
-THE APPROACH TO DEVELOPING AN ARIDITY RATING, AND ASSOCIATED ARIDITY EFFECT ADJUSTMENTS?
-ALSO, THE 'CropET' MODULE HAS A WAY OF PULLING IN ARIDITY EFFECT VALUES, HOWEVER,
-THE 'RefET' MODULE DOES NOT. THIS MEANS THAT WHILE TEMPERATURES USED IN THE
-CropET MODULE ARE ADJUSTED, TEMPERATURES USED TO CALCUATE REFERENCE ET ARE NOT.
-IF WE WANT TO CONTINUE TO SUPPORT THE ARIDITY RATING, THIS SHOULD BE ADDRESSED.
-WOULD ALSO REQUIRE PASSING THE MODEL THE ARIDITY EFFECT ADJUSTMENT FACTORS.
 
 AreaET
 ------
