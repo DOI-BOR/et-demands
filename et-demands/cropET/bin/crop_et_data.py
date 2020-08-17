@@ -507,7 +507,6 @@ class CropETData:
         except:
             self.co2_flag = False
 
-
         # added 8/2020 to allow for growing season start doy to progress unchecked (no limit)
         try:
             self.gs_limit_flag = config.getboolean(crop_et_sec, 'gs_limit_flag')

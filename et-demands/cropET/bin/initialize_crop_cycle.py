@@ -508,8 +508,8 @@ class InitializeCropCycle:
 
         ze = 0.1
 
-        # Reduce daw_root by water in evap layer and rest of zr_dormant and then proportion
 
+        # Reduce daw_root by water in evap layer and rest of zr_dormant and then proportion
         if zr_dormant < self.zr:
             # determine water in zr_dormant layer
             # combine water in ze layer (1-fc fraction) to that in balance of zr_dormant depth
