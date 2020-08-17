@@ -276,9 +276,9 @@ Percent Sand Shapefile (Sand_WTA_0to152cm_statsgo.shp is the example)
 - Format: **.shp**
 - Attribute Table Structure (examples’ file structures shown):
 
-+--------------+--------------+---------+--------+----------+----------------------+
-| AREA SYMBOL  | SPATIALVER   | MUSYM   | MUKEY  | MUKEY_1  |  AWC (or Clay or Sand|
-+--------------+--------------+---------+--------+----------+----------------------+
++--------------+--------------+---------+--------+----------+-----------------------+
+| AREA SYMBOL  | SPATIALVER   | MUSYM   | MUKEY  | MUKEY_1  |  AWC (or Clay or Sand)|
++--------------+--------------+---------+--------+----------+-----------------------+
 
 Crop Type Data
 ^^^^^^^^^^^^^^
