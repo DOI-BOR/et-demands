@@ -202,8 +202,11 @@ def main(ini_path, log_level=logging.WARNING,
                         cell_id, int(crop.class_number)))
                 gs_df = pd.read_csv(gs_output_path, header=0, comment='#',
                                       sep=',')
-                gs_start_doy = int(round(gs_df['Start_DOY'].mean()))
-                gs_end_doy = int(round(gs_df['End_DOY'].mean()))
+                # ignore first year to match gs summary output csv (added 8/27/2020)
+
+                # print(gs_df[1:])
+                gs_start_doy = int(round(gs_df[1:]['Start_DOY'].mean()))
+                gs_end_doy = int(round(gs_df[1:]['End_DOY'].mean()))
                 gs_start_dt = datetime.datetime.strptime(
                     '2001_{:03d}'.format(gs_start_doy), '%Y_%j')
                 gs_end_dt = datetime.datetime.strptime(

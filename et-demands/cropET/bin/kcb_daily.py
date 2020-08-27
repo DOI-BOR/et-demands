@@ -870,6 +870,9 @@ def kcb_daily(data, et_cell, crop, foo, foo_day,
     # CGM 9/2/2015 - 44-46 are not run first in Python version of ET-Demands
     #   kc_bas_wscc is set in initialize_crop_cycle(), no reason to set it here
 
+    # Save kc_bas_prev prior to CO2 adjustment to avoid double correction
+    foo.kc_bas_prev = foo.kc_bas
+
     if crop.class_number in [44, 45, 46]:
         if crop.class_number == 44:
             foo.kc_bas = 0.1  # was 0.2
