@@ -42,7 +42,8 @@ def main(ini_path, area_threshold=10,
     logging.info('\nBuilding ET-Demands Static Files')
 
     # Input units
-    station_elev_units = 'FEET'
+    # Why isn't this read from .ini CROP_ET section?
+    # station_elev_units = 'FEET'
 
     # Default values
     permeability = -999
@@ -95,6 +96,15 @@ def main(ini_path, area_threshold=10,
         logging.info(
             '\nStatic text file "template_folder" parameter was not set '
             'in the INI\n  Defaulting to: {}'.format(template_ws))
+
+    # elevation units
+    try:
+        station_elev_units = config.get(crop_et_sec, 'elev_units')
+    except:
+        logging.error('elev_units must be set in crop_et section of INI file, '
+                      'exiting')
+        return False
+
 
     # Read data from geodatabase or shapefile
     # if '.gdb' in et_cells_path and not et_cells_path.endswith('.shp'):
@@ -204,14 +214,18 @@ def main(ini_path, area_threshold=10,
               station_lat_field, station_lon_field]
     logging.debug('  Fields: {}'.format(fields))
     station_data_dict = defaultdict(dict)
-    for fid, row in _arcpy.search_cursor(stations_path, fields).items():
-        # print(fid)
-        # print(row)
-        # Switch to station_id_field as index (instead of FID)
-        for f in fields[1:]:
-            station_data_dict[str(row[station_id_field])][f] = row[f]
-    for k, v in station_data_dict.items():
-        logging.debug('  {}: {}'.format(k, v))
+    try:
+        for fid, row in _arcpy.search_cursor(stations_path, fields).items():
+            # print(fid)
+            # print(row)
+            # Switch to station_id_field as index (instead of FID)
+            for f in fields[1:]:
+                station_data_dict[str(row[station_id_field])][f] = row[f]
+        for k, v in station_data_dict.items():
+            logging.debug('  {}: {}'.format(k, v))
+    except:
+        logging.error('Expected Field Not Found. Check input shapefile : {}'.format(stations_path))
+        return False
 
     # Read ET Cell zonal stats
     logging.info('\nReading ET Cell Zonal Stats')
