@@ -60,6 +60,13 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         logging.error(
             'etref_field parameter must be set in the INI file, exiting')
         return False
+
+    # elevation units (look up elevation field units. include if present in et cell .shp)
+    try:
+        station_elev_units = config.get('CROP_ET', 'elev_units')
+    except:
+        logging.error('elev_units must be set in crop_et section of INI file, '
+                      'exiting')
     
     # Year Filter
     year_list = None
@@ -137,12 +144,12 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     
     # Arc fieldnames can only be 10 characters. Shorten names to include _stat
     # field name list will be based on etref_field ETr, ETo, or ET (not ETo/ETr)
-    if 'ETr' in etref_field:
+    if 'ETR' in pmet_field.upper():
         var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
                               'Start', 'End']
 
-    elif 'ETo' in etref_field:
+    elif 'ETO' in pmet_field.upper():
         var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
                               'Start', 'End']
@@ -228,7 +235,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             'Kcb': 'mean'}
             # Add etref_field to dictionary
             a[pmet_field] = 'sum'
-            
+
             # GroupStats by Year of each column follow agg assignment above
             yearlygroup_df = daily_df.groupby('Year',
                                                 as_index=True).agg(a)
@@ -287,11 +294,24 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
         # keep_list = ['geometry','CELL_ID', 'LAT', 'LON', 'ELEV_M', 'ELEV_FT',
         #              'COUNTYNAME', 'STATENAME', 'STPO', 'HUC8',
         #              'AG_ACRES', 'CROP_{:02d}'.format(crop)]
-        keep_list = ['geometry', 'CELL_ID', 'LAT', 'LON',
-                     'AG_ACRES', 'CROP_{:02d}'.format(crop)]
 
-        # Filter ETCells using keep list
-        data = data[keep_list]
+        if station_elev_units.upper() in ['FT', 'FEET']:
+            station_elev_field = 'ELEV_FT'
+        elif station_elev_units.upper() in ['M', 'METERS']:
+            station_elev_field = 'ELEV_M'
+
+        # Elevation field is included if found in et_cell .shp
+        try:
+            keep_list = ['geometry', 'CELL_ID', 'LAT', 'LON', station_elev_field,
+                         'AG_ACRES', 'CROP_{:02d}'.format(crop)]
+            # Filter ETCells using keep list
+            data = data[keep_list]
+        except:
+            logging.info('Elevation field not found in et_cell .shp. Not including elevation in output.')
+            keep_list = ['geometry', 'CELL_ID', 'LAT', 'LON',
+                         'AG_ACRES', 'CROP_{:02d}'.format(crop)]
+            # Filter ETCells using keep list
+            data = data[keep_list]
 
         # UPDATE TO NEWER ETCELLS STATION_ID FORMAT !!!!!
         merged_data = data.merge(output_df, left_on='CELL_ID',
