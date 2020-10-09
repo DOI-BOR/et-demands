@@ -276,6 +276,8 @@ def main(ini_path, overwrite_flag=False):
     # Read ET demands crop number crosswalk
     # Link ET demands crop number (1-84) with input crop values (i.e. CDL)
     # Key is input crop number, value is crop number, ignore comment
+    # note that crosswalk list cannot contain NaN or empty entries
+    # NaN in etd_no forces data to type float and breaks str/int logic below (line 284)
     logging.info('\nReading Crop Crosswalk File\n  {}'.format(crosswalk_path))
     cross_df = pd.read_csv(crosswalk_path)
     cross_dict = dict()
@@ -453,8 +455,9 @@ def main(ini_path, overwrite_flag=False):
         for input_ftr in input_lyr:
             # input_fid = input_ftr.GetFID()
             input_value = input_ftr.GetField(input_field)
-
-            input_geom = input_ftr.GetGeometryRef()
+            #  added .Buffer(0) to clean up soil .shp intersecting geom 8/19/20
+            input_geom = input_ftr.GetGeometryRef().Buffer(0)
+            # input_geom = input_ftr.GetGeometryRef()
             proj_geom = input_geom.Clone()
             proj_geom.Transform(input_tx)
             input_poly = loads(proj_geom.ExportToWkt())
