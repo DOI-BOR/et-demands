@@ -401,7 +401,10 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
             mean_start_date, mean_end_date = "", ""
 
         #Take mean of all doy cuttings columns
-        mean_cuttings=all_cuttings.mean(skipna=True) 
+        mean_cuttings=all_cuttings.mean(skipna=True)
+        # print(mean_cuttings)
+        # print(round(mean_cuttings[4],0))
+        # sys.exit()
         
         # Append mean annual growing season data to list
 
@@ -409,12 +412,12 @@ def main(ini_path, start_date = None, end_date = None, crop_str = ''):
             [station, crop_num, crop_name,
              mean_start_doy, mean_end_doy,
              mean_start_date, mean_end_date, mean_length,
-             round(mean_cuttings[0]),
-             round(mean_cuttings[1]),
-             round(mean_cuttings[2]),
-             round(mean_cuttings[3]),
-             round(mean_cuttings[4]),
-             round(mean_cuttings[5])])
+             round(mean_cuttings[0], 0),
+             round(mean_cuttings[1], 0),
+             round(mean_cuttings[2], 0),
+             round(mean_cuttings[3], 0),
+             round(mean_cuttings[4], 0),
+             round(mean_cuttings[5], 0)])
 
         # Cleanup
 
