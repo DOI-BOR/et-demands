@@ -247,7 +247,7 @@ class CropETData:
             self.cell_cuttings_path = cell_cuttings_name
             if not os.path.isfile(self.cell_cuttings_path):
                 logging.error('ERROR:  ET Cells cuttings file {} does not'
-                              ' exist'.format(self.self.cell_cuttings_path))
+                              ' exist'.format(self.cell_cuttings_path))
                 sys.exit()
         logging.info('  ET Cell cuttings file: {}'
                      .format(self.cell_cuttings_path))
