@@ -452,8 +452,8 @@ class MetNode():
                         self.input_met_df.at[dt, 'tdew'],
                         self.elevation,
                         self.latitude,
-                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
-                        mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
+                        mnd.avg_monthly_tmax[self.wind_id][self.input_met_df['month'][dt] - 1], # TODO: add another id?  tmin_id and tmax_id or what?
+                        mnd.avg_monthly_tmin[self.wind_id][self.input_met_df['month'][dt] - 1],
                         self.TR_b0,
                         self.TR_b1,
                         self.TR_b2)
