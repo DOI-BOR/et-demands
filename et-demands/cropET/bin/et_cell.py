@@ -828,7 +828,7 @@ class ETCell():
         try:
             self.refet_df = pd.read_csv(
                 refet_path, engine='python',
-                header=data.refet['names_line'] - len(skiprows) - 1,
+                header=0, 
                 skiprows=skiprows, delimiter=data.refet['delimiter'])
         except IOError:
             logging.error(('  IOError: RefET data file could not be read ' +
@@ -1134,7 +1134,7 @@ class ETCell():
                     if i+1 != data.weather['names_line']]
         try:
             self.weather_df = pd.read_csv(weather_path, engine='python',
-                    header=data.weather['names_line'] - len(skiprows) - 1,
+                    header=0,
                     skiprows=skiprows, delimiter=data.weather['delimiter'])
         except IOError:
             logging.error(('  IOError: Weather data file could not be read ' +
@@ -1268,7 +1268,7 @@ class ETCell():
                     if i+1 != data.hist_temps['names_line']]
         try:
             self.hist_temps_df = pd.read_csv(historic_path, engine='python',
-                    header=data.hist_temps['names_line'] - len(skiprows) - 1,
+                    header=0,
                     skiprows=skiprows, delimiter=data.hist_temps['delimiter'])
         except IOError:
             logging.error(('  IOError: historic data file could not be read ' +
