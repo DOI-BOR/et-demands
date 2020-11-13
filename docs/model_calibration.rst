@@ -12,6 +12,18 @@ RefET
 
 Thornton and Running Coefficients
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Default Thornton and Running calibration coefficients are utlized if not specified by the user. The user can specify site specific coefficients via the station metadata files if desired. 
+
+Default Coefficients: 
+
+TR_b0 = 0.040286
+
+TR_b1 = 0.015158
+
+TR_b2 = -0.168231
+
+Additional infromation on Thornton and Running calibration will be added during future releases. 
+
 
 .. _model-calibration-cropet:
 
