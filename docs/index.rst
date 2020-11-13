@@ -20,10 +20,3 @@ Table of Contents:
    appendix
    huc_example
    gridmet_example
-   
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
