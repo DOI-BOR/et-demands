@@ -13,9 +13,9 @@ Example command to run refet moduel:
 Arguments for run_ret.py script are:
   -h, --help  Show the help message then exit
   -i, --ini  Initialization file path
-  -d, --debug Save debug level comments to debug.txt file
-  -m, --metid Specify a particular single Met Node ID to run
-  -v, --verbose Display information level comments
+  -d, --debug  Save debug level comments to debug.txt file
+  -m, --metid  Specify a particular single Met Node ID to run
+  -v, --verbose  Display information level comments
   -mp, --multiprocessing  num
 
 CropETPrep
