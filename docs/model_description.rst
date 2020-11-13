@@ -998,9 +998,10 @@ aridity effect.
 
 AreaET
 ------
+The AreaET module is currently under development.
 
-PostProcessing
---------------
+The AreaET module converts crop evapotranspiration and net irrigation water requirement rates estimates output by the 
+CropET module to volume and flow estaimtes based on user supplied acreage information. Aggregations of daily, monthly, annual, and growing seaon volumes and flows are output along with crop percentages and ratios for each study cell. Users can define start and end dates to analyze specific time periods.
 
 References
 -----------
