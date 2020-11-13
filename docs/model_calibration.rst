@@ -56,23 +56,24 @@ model .ini file.
 2) For a single crop, execute the crop ET model for a single ET Cell using the cell_test_list .ini paramter.
 Choose a representative single ET Cell that will act as the calibration cell.
 
-3) Execute the model run and review daily output. Growing season postprocessing script can be run to 
-generate summary data showing the start and stop dates for each year of execution, the second showing the
-average start and stop date for the entire run. Open the annual average file, titled 
-“growing_season_mean_annual.csv” and look at the “MEAN_START_DATE” and “MEAN_END_DATE” fields. 
+3) Execute the model run and review daily output. Growing season postprocessing script can be run to generate
+summary data showing the start and stop dates for each year of execution, the second showing the average start
+and stop date for the entire run. Open the annual average file, titled “growing_season_mean_annual.csv” and
+look at the “MEAN_START_DATE” and “MEAN_END_DATE” fields. 
 
-4) Adjust the parameters for start and stop in the "CropParam.txt" as needed. 
 
-a) Row 21 specifies the method used to estimate planting/greenup: 1=Growing Degree Days
-(GDD), 2= 30-day average temperature (T30), 3=User specified date, 4=Always on
+T4) Adjust the parameters for start and stop in the "CropParam.txt" or crop paramater .shp as needed.
 
-b) Row 22 specifies the number of GDD or the T30 temperature. If the type displayed in row
-21 is 3, enter the start month in row 23. If the MEAN_START_DATE (from step 3 above) is
-too early, increase the value in row 22.
+  a) Row 21 specifies the method used to estimate planting/greenup: 1=Growing Degree Days
+  (GDD), 2= 30-day average temperature (T30), 3=User specified date, 4=Always on
 
-c) Row 26 specifies the GDD required for termination. Note that this is the number of GDD
-after planting/greenup. If the MEAN_END_DATE (from step 3 above) is too early, increase
-the value in row 26.
+  b) Row 22 specifies the number of GDD or the T30 temperature. If the type displayed in row
+  21 is 3, enter the start month in row 23. If the MEAN_START_DATE (from step 3 above) is
+  too early, increase the value in row 22.
+
+  c) Row 26 specifies the GDD required for termination. Note that this is the number of GDD
+  after planting/greenup. If the MEAN_END_DATE (from step 3 above) is too early, increase
+  the value in row 26.
 
 1) Additionally, if the user specifies, an absolute maximum growing season length can be
 entered in row 29.
