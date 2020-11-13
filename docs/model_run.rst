@@ -5,7 +5,18 @@ The ETDemands model should be run from the windows command prompt (or Linux term
 
 RefET
 -----
+The RefET moduel is designed to prepare and estimate reference ET from station meterological data based the on the standardized ASCE Reference ET approach. Additional estimatation methods are support for datasets required input variables. The RefET module provides gap filling and data QA/QC and filtering. Users should refer to the RefET desciption section for more detail. Refer to the ret_template.ini included in the et-demands\refET\bin folder for additional information on formatting and control variables. 
 
+Example command to run refet moduel:
+  ``> python  run_ret.py -i my_ret.ini``
+
+Arguments for run_ret.py script are:
+  -h, --help  Show the help message then exit
+  -i, --ini  Initialization file path
+  -d, --debug Save debug level comments to debug.txt file
+  -m, --metid Specify a particular single Met Node ID to run
+  -v, --verbose Display information level comments
+  -mp, --multiprocessing  num
 
 CropETPrep
 ----------
