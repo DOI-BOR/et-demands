@@ -119,14 +119,28 @@ optional arguments:
   -c etcid_to_run, --etcid etcid_to_run
                         User specified et cell id to run (default: ALL)
   -v, --verbose         Print info level comments (default: False)
-  -mp [N], --multiprocessing [N]
-                        Number of processers to use (default: 1)
+  -mp, --multiprocessing    Number of processers to use (default: 1)
   --cal                 Display mean annual start/end dates to screen
                         (default: False)
 
 
 AreaET
 ------
+The AreaET module is currently under development.
+
+The AreaET module converts crop evapotranspiration and net irrigation water requirement rates estimates output by the CropET module to volume and flow estaimtes based on user supplied acreage information. Aggregations of daily, monthly, annual, and growing seaon volumes and flows are output along with crop percentages and ratios for each study cell. Users can define start and end dates to analyze specific time periods.
+
+The AreaET module is run similar to the CropET module using command line calls with AreaET specific .ini files. Example commands are shown below: 
+
+``> python run_aet.py -i my_aet.ini``
+
+Arguments for run_aet.py script are:
+    -h, --help  Show the help message then exit
+    -i, --ini  Initialization file path
+    -d, --debug  Save debug level comments to debug.txt file
+    -c CellID, --metid  CellID Specify a particular single ET Cell to run
+    -v, --verbose  Display information level comments
+    -mp, --multiprocessing  Number of processers to use (default: 1)
 
 
 PostProcessing
