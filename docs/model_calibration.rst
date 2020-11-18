@@ -12,15 +12,28 @@ RefET
 
 Thornton and Running Coefficients
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Default Thornton and Running calibration coefficients are utlized if not specified by the user. The user can specify site specific coefficients via the station metadata files if desired. 
+THIS SECTION IS CURRENTLY UNDER DEVELOPMET. 
 
-Default Coefficients: 
+Thorton and Running coefficients are set one of three ways within the RefET Module.
+ 1) Station Metadata File: tr_b0, tr_b1, tr_b2 columns
+ 2) ret .ini file [INMET] section: TR_b0, TR_B1, and TR_b2 varibles
+ 3) Defualt values coded within RefET python scripts
+ 
+These are current hard-coded defaults if not found by other options. Should they be set to original 'universal' TR values?
+# These match the WWCRA Klamath Values. 
+# Thorton and Running Solar Radiation Estimation Coefficients
+try: self.input_met['TR_b0'] = config.getfloat(input_met_sec, 'TR_b0')
+  except: self.input_met['TR_b0'] = 0.0307075712855
+try: self.input_met['TR_b1'] = config.getfloat(input_met_sec, 'TR_b1')
+  except: self.input_met['TR_b1'] = 0.1960418743712
+try: self.input_met['TR_b2'] = config.getfloat(input_met_sec, 'TR_b2')
+  except: self.input_met['TR_b2'] = -0.2454592897026
 
-TR_b0 = 0.040286
+Default Thornton and Running calibration coefficients are utlized if not specified by the user. 
 
-TR_b1 = 0.015158
-
-TR_b2 = -0.168231
+Thornton and Running coefficients can be optimized to specific station data using Monte Carlo uniform random search techniques.
+Allen (2009; http://www.kimberly.uidaho.edu/ETIdaho/ETIdaho_Report_April_2007_with_supplement.pdf) and Huntington (2010; http://water.nv.gov/mapping/et/Docs/Evapotranspiration_and_Net_Irrigation_Requirements_for_Nevada_Compiled.pdf) applied these technique to optimize coefficients during consumptive use studies in Idaho and Nevada.
+More recently, https://www.usbr.gov/watersmart/baseline/docs/irrigationdemand/irrigationdemands.pdf (see report pages; 36-37).
 
 Additional infromation on Thornton and Running calibration will be added during future releases. 
 
