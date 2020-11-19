@@ -301,13 +301,13 @@ class RefETConfig():
         except: self.input_met['wind_height'] = 2,0
 
         # Thorton and Running Solar Radiation Estimation Coefficients
-
+        # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.7021&rep=rep1&type=pdf
         try: self.input_met['TR_b0'] = config.getfloat(input_met_sec, 'TR_b0')
-        except: self.input_met['TR_b0'] = 0.0307075712855
+        except: self.input_met['TR_b0'] = 0.031
         try: self.input_met['TR_b1'] = config.getfloat(input_met_sec, 'TR_b1')
-        except: self.input_met['TR_b1'] = 0.1960418743712
+        except: self.input_met['TR_b1'] = 0.201
         try: self.input_met['TR_b2'] = config.getfloat(input_met_sec, 'TR_b2')
-        except: self.input_met['TR_b2'] = -0.2454592897026
+        except: self.input_met['TR_b2'] = -0.185
 
         # Data filling support files - all optional if all time series data of parameter exists
         # Files should exist in static data folder
