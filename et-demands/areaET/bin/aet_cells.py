@@ -14,6 +14,7 @@ import logging
 import math
 import os
 import sys
+import time, copy
 
 import numpy as np
 import pandas as pd
@@ -783,22 +784,49 @@ class ETCell():
                     ct_df.set_index('date', inplace = True)
 
                     # following loop is really really slow; unclear how to speed it up
+                    # for dt, ctdata in ct_df.iterrows():
+                    #     year_to_use = dt.year
+                    #     if aet_utils.date_is_between(dt, self.ann_crops_df['UserBegDate'][year_to_use], self.ann_crops_df['UserEndDate'][year_to_use]):
+                    #
+                    #         self.etcCropETs_df.at[dt, cet_col_name] = ctdata['cet']
+                    #         self.etcData_df.at[dt, 'et'] = self.etcData_df.at[dt, 'et'] + ctdata['cet'] * crop_mix_df['CropPercents'][year_to_use] * 0.001
+                    #
+                    #         if aet_utils.date_is_between(dt, crop_mix_df['UserBegDate'][year_to_use], crop_mix_df['UserEndDate'][year_to_use]):
+                    #             self.etcData_df.at[dt, 'effprcp'] = self.etcData_df.at[dt, 'effprcp'] + ctdata['effprcp']  * crop_mix_df['CropPercents'][year_to_use] * 0.001
+                    #             self.etcData_df.at[dt, 'season'] = 1
+                    #             self.etcCropIRs_df.at[dt, cir_col_name] = ctdata['cir']
+                    #     del ct_df
+                    # del crop_mix_df
 
-                    for dt, ctdata in ct_df.iterrows():
-                        year_to_use = dt.year
-                        if aet_utils.date_is_between(dt, self.ann_crops_df['UserBegDate'][year_to_use], \
-                                                  self.ann_crops_df['UserEndDate'][year_to_use]):
-                            self.etcCropETs_df.at[dt, cet_col_name] = ctdata['cet']
-                            self.etcData_df.at[dt, 'et'] = self.etcData_df.at[dt, 'et'] \
-                                + ctdata['cet'] * crop_mix_df['CropPercents'][year_to_use] * 0.001
-                            if aet_utils.date_is_between(dt, crop_mix_df['UserBegDate'][year_to_use], \
-                                    crop_mix_df['UserEndDate'][year_to_use]):
-                                self.etcData_df.at[dt, 'effprcp'] = self.etcData_df.at[dt, 'effprcp'] \
-                                    + ctdata['effprcp']  * crop_mix_df['CropPercents'][year_to_use] * 0.001
-                                self.etcData_df.at[dt, 'season'] = 1
-                                self.etcCropIRs_df.at[dt, cir_col_name] = ctdata['cir']
-                    del ct_df
-                del crop_mix_df
+                    # Reconfigure for performance
+                    dt_list = ct_df.index
+
+                    year_to_use = [dt.year for dt in dt_list]
+                    check_bool = [True if self.ann_crops_df['UserBegDate'][year_to_use[x]] <= dt_list[x] <= self.ann_crops_df['UserEndDate'][year_to_use[x]] else False
+                                  for x in range(0, len(dt_list), 1)]
+
+                    dt_list_reduced = [dt_list[x] for x in range(0, len(check_bool), 1) if check_bool[x]]
+                    year_to_use_reduced = [year_to_use[x] for x in range(0, len(check_bool), 1) if check_bool[x]]
+
+                    ctdata_list_reduced = [ct_df.at[x, 'cet'] for x in dt_list_reduced]
+                    self.etcCropETs_df.loc[dt_list_reduced, cet_col_name] = ctdata_list_reduced
+
+                    values_list = [self.etcData_df.at[dt_list_reduced[x], 'et'] + ct_df.at[dt_list_reduced[x], 'cet'] * crop_mix_df['CropPercents'][year_to_use_reduced[x]] * 0.001
+                                   for x in range(0, len(dt_list_reduced), 1)]
+                    self.etcData_df.loc[dt_list_reduced, 'et'] = values_list
+
+                    season_list = [True if crop_mix_df['UserBegDate'][year_to_use[x]] <= dt_list[x] <= crop_mix_df['UserEndDate'][year_to_use[x]] else False
+                                    for x in range(0, len(dt_list), 1)]
+                    dt_list_reduced = [dt_list[x] for x in range(0, len(check_bool), 1) if season_list[x]]
+                    year_to_use_reduced = [year_to_use[x] for x in range(0, len(check_bool), 1) if season_list[x]]
+
+                    values_list = [self.etcData_df.at[dt_list_reduced[x], 'effprcp'] + ct_df.at[dt_list_reduced[x], 'effprcp'] * crop_mix_df['CropPercents'][year_to_use_reduced[x]] * 0.001
+                                   for x in range(0, len(dt_list_reduced), 1)]
+                    self.etcData_df.loc[dt_list_reduced, 'effprcp'] = values_list
+                    self.etcData_df.loc[dt_list_reduced, 'season'] = 1
+
+                    values_list = [ct_df.at[x, 'cir'] for x in dt_list_reduced]
+                    self.etcCropIRs_df.loc[dt_list_reduced, cir_col_name] = values_list
 
             # apply no negative ir's to crop by crop ir's if toggled
 
@@ -837,19 +865,44 @@ class ETCell():
                     self.etcCropIRs_df[col_name] = np.maximum(self.etcCropIRs_df[col_name].values, 0.0)
                 del adj_daily_df, unadj_ann_df, adj_ann_df, ann_adj_ratios_df
 
-            # set up and/or post requested crop by crop output
+            # Generate a crops percentage table to back out percentages from the NIR later. This is necessary to keep
+            # the reported user volumes accurate to the total ET zone calculations. Otherwise the difference in
+            # processing can introduce an error if working directly from the crop IRs.
+            if len(cfg.output_nir_user_crops) > 0 or len(cfg.output_nir_nonuser_crops) > 0 or cfg.output_nir_open_water:
+                # Sum the etcCropIRs_df columns to obtain to obtain a total requirement
+                total_crop_daily_irs = self.etcCropIRs_df.sum(axis=1).values
 
+                # Norm the crop IR by the total to obtain the daily percentage
+                crop_nir_factors = self.etcCropIRs_df/np.transpose(np.atleast_2d(total_crop_daily_irs))
+
+                # Replace the NaNs with zeros. NaNs are generated with the total daily crop IR is zero.
+                crop_nir_factors.fillna(value=0, inplace=True)
+
+                # Update the column names to avoid future confusion
+                updated_names = [x[:-3] + 'NIR percentage' for x in self.etcCropIRs_df.columns]
+
+                updated_names_dict = {}
+                for x in range(0, len(updated_names), 1):
+                    updated_names_dict[self.etcCropIRs_df.columns[x]] = updated_names[x]
+
+                crop_nir_factors.rename(columns=updated_names_dict, inplace=True)
+
+                # Store the values into the cell
+                cells.et_cells_data[self.cell_id].crop2nir = crop_nir_factors
+
+            # set up and/or post requested crop by crop output
             if cfg.output_cet_flag:
-                if not self.setup_output_cet_data(cell_count, cfg, cells): return False
+                if not self.setup_output_cet_data(cell_count, cfg, cells):
+                    return False
             else:
                 del self.etcCropETs_df
             if cfg.output_cir_flag:
-                if not self.setup_output_cir_data(cell_count, cfg, cells): return False
+                if not self.setup_output_cir_data(cell_count, cfg, cells):
+                    return False
             else:
                 del self.etcCropIRs_df
 
             # compute running average weighted et for smoothing if toggled
-
             # cfg.et_smoothing_days = 20    # debug
             if cfg.et_smoothing_days > 1:
                 # compute running averages
@@ -887,7 +940,6 @@ class ETCell():
                 del daily_df, annual_df
 
             # compute ET cell net irrigation requirement
-
             for dt, dailydata in self.etcData_df.iterrows():
                 year_to_use = dt.year
                 if (aet_utils.date_is_between(dt, self.ann_crops_df['UserBegDate'][year_to_use], \
@@ -950,7 +1002,6 @@ class ETCell():
                 del daily_df, annual_df
 
             # compute nir disaggregation fractions
-
             daily_df = mod_dmis.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
             daily_df['nir'] = self.etcData_df['nir']
             aggregation_func = {}
@@ -962,14 +1013,18 @@ class ETCell():
             del daily_df, monthly_df
 
             # compute weighted et and ir as flow
-
             self.etcData_df['etflow'] = compute_flow(cfg.start_dt, self.etcData_df.index, self.etcData_df['et'].values, self.ann_crops_df['area'].values)
             self.etcData_df['nirflow'] = compute_flow(cfg.start_dt, self.etcData_df.index, self.etcData_df['nir'].values, self.ann_crops_df['area'].values)
 
-            # set up and/or post requested weighted output
+            # Store the computed table for later use if needed for subsequent analyses
+            if len(cfg.output_nir_user_crops) > 0 or len(cfg.output_nir_nonuser_crops) > 0 or cfg.output_nir_open_water:
+                # Set the dataframe into the object
+                cells.et_cells_data[self.cell_id].nir = self.etcData_df
 
-            if not self.setup_output_aet_data(cell_count, cfg, cells): return False
+            if not self.setup_output_aet_data(cell_count, cfg, cells):
+                return False
             return True
+
         except:
             logging.error('\n  ERROR: ' + str(sys.exc_info()[0]) + " processing ET Cell requirements for " + self.cell_id + ".")
             return False

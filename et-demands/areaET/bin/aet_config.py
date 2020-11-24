@@ -1601,6 +1601,78 @@ class AreaETConfig():
             self.output_aet['fields']['nirfrac'] = 'NIR_Frac'
             self.output_aet['units']['nirfrac'] = 'fraction'
 
+        # Output user aggregated crops across ET zones
+        self.output_nir_user_crops = []
+        try:
+            self.output_nir_user_crops = np.array(config.get(output_aet_sec, 'output_nir_user_crops')[1:-1].split(',')).astype(int)
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
+        # Output specified crops across ET zones irrspective of the user
+        self.output_nir_nonuser_crops = []
+        try:
+            self.output_nir_nonuser_crops = np.array(config.get(output_aet_sec, 'output_nir_nonuser_crops')[1:-1].split(',')).astype(int)
+
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
+        # Output user aggregated crops across ET zones
+        self.output_nir_user_open_water = []
+        try:
+            self.output_nir_user_openwater = np.array(config.get(output_aet_sec, 'output_nir_user_open_water')[1:-1].split(',')).astype(int)
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
+        # Output specified crops across ET zones irrspective of the user
+        self.output_nir_nonuser_crops = []
+        try:
+            self.output_nir_nonuser_crops = np.array(
+                config.get(output_aet_sec, 'output_nir_nonuser_crops')[1:-1].split(',')).astype(int)
+
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
+        # Output specified crops across ET zones irrspective of the user
+        self.output_nir_reference_shapefile = None
+        try:
+            self.output_nir_reference_shapefile = config.get(output_aet_sec, 'output_nir_reference_shapefile')
+
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
+        # Map the unique fields in the shapefile to those in the ET demands model
+        self.output_nir_crop_mapping = {}
+        try:
+            # Get the filename
+            file_path = config.get(output_aet_sec, 'output_nir_crop_mapping')
+
+            # Fil the file exists open it, skip the header, and add values into the dictionary
+            file = open(file_path)
+
+            line_counter = 0
+            for line in file:
+                if line_counter >= 1:
+                    # Split the line on the comma
+                    line_split = line.split(',')
+
+                    # Add first column and the key, the second column as the value
+                    self.output_nir_crop_mapping[line_split[0]] = int(line_split[1])
+
+                # Increment the counter for the next line
+                line_counter += 1
+
+            # Close the file
+            file.close()
+
+        except:
+            # No action required. Data will not be output based on the empty field.
+            pass
+
         # drop unused fields
         all_output_aet_fields = ['date', 'year', 'month', 'day', 'doy', 'refet', 'ppt', 'et', 'nir', 'etflow', 'nirflow', 'nirfrac']
         for k, v in sorted(self.output_aet['fnspec'].items()):
