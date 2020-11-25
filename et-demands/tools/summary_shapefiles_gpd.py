@@ -138,7 +138,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # variables to include in output (if not in .csv skip)
     var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
                 'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season',
-                'Start', 'End']
+                'Start', 'End', 'P_rz', 'P_eft']
     pmet_field = 'PM{}'.format(etref_field)
     var_list.insert(0, pmet_field)
     
@@ -147,17 +147,17 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     if 'ETR' in pmet_field.upper():
         var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
-                              'Start', 'End']
+                              'Start', 'End', 'P_rz', 'P_eft']
 
     elif 'ETO' in pmet_field.upper():
         var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
-                              'Start', 'End']
+                              'Start', 'End', 'P_rz', 'P_eft']
 
     else:
         var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
                    'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
-                              'Start', 'End']
+                              'Start', 'End', 'P_rz', 'P_eft']
 
 
     # Testing (should this be an input option?)
@@ -176,6 +176,10 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     if time_filter == 'doy':
         logging.info('\nFiltering data using doy inputs. Start doy: {:03d}'
             '  End doy: {:03d}'.format(start_doy, end_doy))
+    if time_filter == 'wateryear':
+        logging.info('\nSummarizing data by water year (Oct-Sept).')
+
+
     for crop in unique_crop_nums:
         print('\nProcessing Crop: {:02d}'.format(crop))
 
@@ -212,6 +216,11 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                 daily_df = daily_df[
                     (daily_df['DOY'] >= start_doy) &
                     (daily_df['DOY'] <= end_doy)]
+            if time_filter == 'wateryear':
+                daily_df['WY'] = daily_df.Year.where(daily_df.Month < 10, daily_df.Year + 1)
+                if year_list:
+                    daily_df = daily_df[daily_df['WY'].isin(year_list)]
+
 
             if daily_df.empty:
                 logging.info(' Growing Season never started. Skipping cell {}'
@@ -232,20 +241,54 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             'Start': 'min',
             'End': 'max',
             'Kc': 'mean',
-            'Kcb': 'mean'}
+            'Kcb': 'mean',
+            'P_rz': 'sum',
+            'P_eft': 'sum'}
             # Add etref_field to dictionary
             a[pmet_field] = 'sum'
 
             # GroupStats by Year of each column follow agg assignment above
-            yearlygroup_df = daily_df.groupby('Year',
+            if time_filter == 'wateryear':
+                yearlygroup_df = daily_df.groupby('WY',
+                                                  as_index=True).agg(a)
+            else:
+                yearlygroup_df = daily_df.groupby('Year',
                                                 as_index=True).agg(a)
+
+            if time_filter == 'annual' or time_filter == 'wateryear':
+                yearlygroup_df['P_rz_fraction'] = yearlygroup_df.P_rz / yearlygroup_df.PPT
+                yearlygroup_df['P_eft_fraction'] = yearlygroup_df.P_eft / yearlygroup_df.PPT
+                var_list = ['ETact', 'ETpot', 'ETbas', 'Kc', 'Kcb',
+                            'PPT', 'Irrigation', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                            'Start', 'End', 'P_rz', 'P_eft', 'P_rz_fraction', 'P_eft_fraction']
+                pmet_field = 'PM{}'.format(etref_field)
+                var_list.insert(0, pmet_field)
+                if 'ETR' in pmet_field.upper():
+                    var_fieldname_list = ['ETr', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                                          'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                                          'Start', 'End', 'P_rz', 'P_eft', 'Prz_F', 'Peft_F']
+
+                elif 'ETO' in pmet_field.upper():
+                    var_fieldname_list = ['ETo', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                                          'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                                          'Start', 'End', 'P_rz', 'P_eft', 'Prz_F', 'Peft_F']
+
+                else:
+                    var_fieldname_list = ['ET', 'ETact', 'ETpot', 'ETbas', 'Kc',
+                                          'Kcb', 'PPT', 'Irr', 'Runoff', 'DPerc', 'NIWR', 'Season',
+                                          'Start', 'End', 'P_rz', 'P_eft', 'Prz_F', 'Peft_F']
+
+
+            # print(var_list)
             # Take Mean of Yearly GroupStats
             mean_df = yearlygroup_df.mean(axis=0)
             mean_fieldnames = [v + '_mn' for v in var_fieldname_list]
 
+
             # Take Median of Yearly GroupStats
             median_df = yearlygroup_df.median(axis=0)
             median_fieldnames =[v + '_mdn' for v in var_fieldname_list]
+
 
             # Create df if it doesn't exist
             if output_df is None:
@@ -260,8 +303,12 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             output_df = output_df.astype(float)
 
             # Grab min/max year for output folder naming
-            min_year = min(daily_df['Year'])
-            max_year = max(daily_df['Year'])
+            if time_filter == 'wateryear':
+                min_year = min(daily_df['WY'])
+                max_year = max(daily_df['WY'])
+            else:
+                min_year = min(daily_df['Year'])
+                max_year = max(daily_df['Year'])
 
         # Create station ID column from index (ETCells GRIDMET ID is int)
         output_df['Station'] = output_df.index.map(int)
@@ -277,12 +324,22 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                 time_filter, start_doy, end_doy, crop)
 
         # output folder
-        output_folder_path = os.path.join(output_ws, 'summary_{}to{}'.format(
+        if time_filter == 'wateryear':
+            output_folder_path = os.path.join(output_ws, 'summary_WY{}to{}'.format(
                                                   min_year, max_year))
+        else:
+            output_folder_path = os.path.join(output_ws, 'summary_{}to{}'.format(
+                                                  min_year, max_year))
+
         if min_year == max_year:
-            output_folder_path = os.path.join(output_ws,
-                                              'summary_{}'.format(
-                                                  min_year))
+            if time_filter == 'wateryear':
+                output_folder_path = os.path.join(output_ws,
+                                                  'summary_WY{}'.format(
+                                                      min_year))
+            else:
+                output_folder_path = os.path.join(output_ws,
+                                                  'summary_{}'.format(
+                                                      min_year))
 
         if not os.path.exists(output_folder_path):
             os.makedirs(output_folder_path)
@@ -332,7 +389,7 @@ def arg_parse():
         type=lambda x: util.is_valid_file(parser, x), help='Input file')
     parser.add_argument(
         '-t', '--time_filter', default='annual', choices=['annual',
-                                    'growing_season', 'doy'], type=str,
+                                    'growing_season', 'doy', 'wateryear'], type=str,
         help='Data coverage options. If "doy", -start_doy and'
              ' -end_doy required.')
     parser.add_argument(
