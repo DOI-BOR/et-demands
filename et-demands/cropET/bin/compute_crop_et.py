@@ -291,13 +291,13 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     few = 1 - foo.fc
 
     # Limit to fraction wetted by irrigation
-
     few = min(max(few, 0.001), foo.fw_irr)
 
     # Fraction of ground that is exposed and wet by precip beyond irrigation
 
     fewp = 1 - foo.fc - few
     fewp = max(fewp, 0.001)
+
 
     # Was "totwatin_ze = watin_ze * few + watin_zep * fewp" until 5/9/07
     # (corrected)
@@ -465,11 +465,14 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # IF Ke > few * kc_max THEN Ke = few * kc_max
 
     ke_irr = kr * (kc_max - foo.kc_bas) * foo.wt_irr
+
     ke_ppt = krp * (kc_max - foo.kc_bas) * (1 - foo.wt_irr)
+
 
     # Limit to maximum rate per unit surface area
 
     ke_irr = min(max(ke_irr, 0), few * kc_max)
+
     ke_ppt = min(max(ke_ppt, 0), fewp * kc_max)
 
     ke = ke_irr + ke_ppt
@@ -926,14 +929,24 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     if foo.p_rz <= 0:
         foo.p_rz = 0
 
+
     # p_eft = prcp residing in the root zone available for transpiration
     # p_eft = p_rz - surface evaporation losses
     # p_eft = P - Runoff - DPerc - surface evaporation losses
     # e_ppt = ke_ppt*foo_day.etref (evap component of prcp only)
+
+    # if foo.irr_sim > 0:
+    #     foo.p_eft = foo_day.precip - foo.sro - e_ppt
+    # else:
+    #     foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e_ppt
+    # if foo.p_eft <= 0:
+    #     foo.p_eft = 0
+
+    # Modified to use e for surface evaporation losses instead of e_ppt (11/2/2020)
     if foo.irr_sim > 0:
-        foo.p_eft = foo_day.precip - foo.sro - e_ppt
+        foo.p_eft = foo_day.precip - foo.sro - e
     else:
-        foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e_ppt
+        foo.p_eft = foo_day.precip - foo.sro - foo.dperc - e
     if foo.p_eft <= 0:
         foo.p_eft = 0
 
@@ -944,3 +957,5 @@ def compute_crop_et(data, et_cell, crop, foo, foo_day, debug_flag=False):
     # Get setup for next time step.
     if foo.in_season:
         grow_root.grow_root(crop, foo, debug_flag)
+
+
