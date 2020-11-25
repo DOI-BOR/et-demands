@@ -185,11 +185,11 @@ def main(ini_path, time_agg, year_filter=''):
     #        df = pd.concat([df,loop_df])
         out_df = out_df.fillna(-9999)
 
-    output_ws = os.path.join(project_ws, 'Effective_PPT')
+    output_ws = os.path.join(project_ws, 'effective_ppt_stats')
     if not os.path.exists(output_ws):
         os.makedirs(output_ws)
 
-    output_path = os.path.join(output_ws, 'EffectivePPT_{}_{}_{}.csv'.format(time_agg,
+    output_path = os.path.join(output_ws, 'effective_ppt_{}_{}_{}.csv'.format(time_agg,
         year_min, year_max))
 
     # Write Output File
