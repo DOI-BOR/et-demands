@@ -390,6 +390,8 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
     gs_length_field = 'GS_Length'
     p_rz_field = 'P_rz'
     p_eft_field = 'P_eft'
+    p_rz_fraction_field = 'P_rz_fraction'
+    p_eft_fraction_field = 'P_eft_fraction'
 
     # Merge crop and weather data frames to form daily output
     if (data.cet_out['daily_output_flag'] or
@@ -426,6 +428,12 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         # a u'occurred at index DOY')
         monthly_output_df = daily_output_df.resample('MS').apply(
             monthly_resample_func)
+        # add effective ppt fractions to monthly tables
+        monthly_output_df[p_rz_fraction_field] =\
+            (monthly_output_df[p_rz_field]/monthly_output_df[precip_field]).fillna(0)
+        monthly_output_df[p_eft_fraction_field] =\
+            (monthly_output_df[p_eft_field] / monthly_output_df[precip_field]).fillna(0)
+
     if data.cet_out['annual_output_flag']:
         annual_resample_func = {
             pmet_field: np.sum, etact_field: np.sum, etpot_field: np.sum,
@@ -438,6 +446,11 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
         # a u'occurred at index DOY')
         annual_output_df = daily_output_df.resample('AS').apply(
             annual_resample_func)
+        # add effective ppt fractions to annual tables
+        annual_output_df[p_rz_fraction_field] =\
+            (annual_output_df[p_rz_field] / annual_output_df[precip_field]).fillna(0)
+        annual_output_df[p_eft_fraction_field] =\
+            (annual_output_df[p_eft_field] / annual_output_df[precip_field]).fillna(0)
 
     # Get growing season start and end DOY for each year
     # Compute growing season length for each year
@@ -595,6 +608,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                  precip_field, irrig_field,
                                                  runoff_field, dperc_field,
                                                  p_rz_field, p_eft_field,
+                                                 p_rz_fraction_field, p_eft_fraction_field,
                                                  niwr_field, season_field]
         if data.cutting_flag and crop.cutting_crop:
             monthly_output_df[cutting_field] = \
@@ -626,6 +640,7 @@ def write_crop_output(crop_count, data, et_cell, crop, foo):
                                                 irrig_field, runoff_field,
                                                 dperc_field,
                                                 p_rz_field, p_eft_field,
+                                                p_rz_fraction_field, p_eft_fraction_field,
                                                 niwr_field, season_field]
         try:
             annual_output_columns.remove('Date')
