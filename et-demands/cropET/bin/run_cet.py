@@ -10,6 +10,8 @@ import multiprocessing as mp
 import os
 import subprocess
 import sys
+import tkinter as tk
+import tkinter.filedialog
 
 def main(ini_path, bin_ws = '', verbose_flag = False,
         etcid_to_run = 'ALL', cal_flag = False,
@@ -121,9 +123,9 @@ def parse_args():
     return args
 
 def get_ini_path(workspace):
-    import Tkinter, tkFileDialog
-    root = Tkinter.Tk()
-    ini_path = tkFileDialog.askopenfilename(
+
+    root = tk.Tk()
+    ini_path = tkinter.filedialog.askopenfilename(
         initialdir=workspace, parent=root, filetypes=[('INI files', '.ini')],
         title='Select the target INI file')
     root.destroy()
@@ -145,7 +147,13 @@ if __name__ == '__main__':
     if args.ini:
         ini_path = args.ini
     else:
-        ini_path = get_ini_path(os.getcwd())
+        # ini_path = get_ini_path(os.getcwd())
+
+        # todo: upgrade this with path call
+        ini_path = 'D:/projects/et-demands/milk_case/msm_cet_dri_cdrive.ini'
+        args.bin =  'D:/projects/et-demands/et-demands/cropET/bin'
+        args.multiprocessing = 4
+
     main(ini_path, bin_ws = args.bin, verbose_flag=args.verbose,
         etcid_to_run = args.etcid, cal_flag = args.cal,
         debug_flag = args.debug, mp_procs=args.multiprocessing)

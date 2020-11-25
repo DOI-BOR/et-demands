@@ -12,8 +12,7 @@ import sys
 import tkinter as tk
 import tkinter.filedialog
 
-def main(ini_path, bin_ws = '', verbose_flag = False, etcid_to_run = 'ALL',
-      debug_flag = False, mp_procs = 1):
+def main(ini_path, bin_ws = '', verbose_flag = False, etcid_to_run = 'ALL', debug_flag = False, mp_procs = 1):
     """Wrapper for running crop ET model
 
     Arguments
@@ -52,6 +51,7 @@ def main(ini_path, bin_ws = '', verbose_flag = False, etcid_to_run = 'ALL',
         print('Source code directory path (-b) not provided')
         sys.exit()
     else:
+        # script_path = os.path.join(bin_ws, 'mod_area_et.py')
         script_path = os.path.join(bin_ws, 'mod_area_et.py')
 
     # Check input folder/path
@@ -196,6 +196,12 @@ if __name__ == '__main__':
     if args.ini:
         ini_path = args.ini
     else:
-        ini_path = get_ini_path(os.getcwd())
+        # ini_path = get_ini_path(os.getcwd())
+
+        # todo: upgrade this with path call
+        ini_path = 'D:/projects/et-demands/milk_case/msm_aet.ini'
+        args.bin = 'D:/projects/et-demands/et-demands/areaET/bin'
+        args.multiprocessing = 4
+
     main(ini_path, bin_ws = args.bin, verbose_flag = args.verbose, etcid_to_run = args.etcid,
         debug_flag = args.debug, mp_procs = args.multiprocessing)
