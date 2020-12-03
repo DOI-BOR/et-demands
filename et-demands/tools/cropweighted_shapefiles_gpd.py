@@ -168,13 +168,6 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             # Read file into df
             daily_df = pd.read_csv(file_path, skiprows=1)
 
-            # Apply Year Filter
-            if year_list:
-                daily_df = daily_df[
-                    (daily_df['Year'] >= min(year_list)) &
-                    (daily_df['Year'] <= max(year_list))]
-                # logging.info('Including Years: {}'.format(year_list))
-
             # Apply Time Filter (annual, etd growing season, doy (start/end))
             if time_filter == 'growing_season':
                 daily_df = daily_df[(daily_df['Season'] == 1)]
@@ -184,6 +177,19 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                     (daily_df['DOY'] <= end_doy)]
             if time_filter == 'water_year':
                 daily_df['WY'] = daily_df.Year.where(daily_df.Month < 10, daily_df.Year + 1)
+
+            # Apply Year Filter (apply after adding water year)
+            if year_list:
+                if time_filter == 'water_year':
+                    daily_df = daily_df[
+                        (daily_df['WY'] >= min(year_list)) &
+                        (daily_df['WY'] <= max(year_list))]
+                else:
+                    daily_df = daily_df[
+                        (daily_df['Year'] >= min(year_list)) &
+                        (daily_df['Year'] <= max(year_list))]
+                    # logging.info('Including Years: {}'.format(year_list))
+
 
             if daily_df.empty:
                 logging.info(' Growing Season never started. Skipping cell {}'
@@ -230,8 +236,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Grab min/max year for output folder naming
             # assumes all daily files cover same time period
-            min_year = min(daily_df['Year'])
-            max_year = max(daily_df['Year'])
+            # year represents CY or WY based on time_filter
+            min_year = min(year_list)
+            max_year = max(year_list)
 
         # Convert index to integers
         df.index = df.index.map(int)
