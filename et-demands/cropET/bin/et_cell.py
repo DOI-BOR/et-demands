@@ -140,7 +140,7 @@ class ETCellData():
 
         logging.info('\nReading cell crop flags from\n' + data.cell_crops_path)
         a = np.loadtxt(data.cell_crops_path,
-                       delimiter=data.cell_crops_delimiter, dtype='str')
+                       delimiter=data.cell_crops_delimiter, dtype='str', encoding='utf-8')
         crop_numbers = a[data.cell_crops_names_line - 1, 4:].astype(int)
         crop_names = a[data.cell_crops_names_line, 4:]
         a = a[data.cell_crops_names_line + 1:]
@@ -191,9 +191,9 @@ class ETCellData():
                         if i + 1 != data.cell_cuttings_names_line]
 
             df = pd.read_csv(data.cell_cuttings_path, engine='python',
-                               na_values=['NaN'],
+                                na_values=['NaN'],
                     header=data.cell_cuttings_names_line -
-                           len(skiprows) - 1,
+                            len(skiprows) - 1,
                     skiprows =skiprows, sep=data.cell_cuttings_delimiter,
                     usecols=[0, 1, 2, 3, 4])
             uc_columns = list(df.columns)
@@ -1402,11 +1402,11 @@ class ETCell():
             axis=1)
         # self.climate_df['t30'] = pd.rolling_mean(self.climate_df['tmean'],
         #  window = 30, min_periods = 1)
-        self.climate_df['t30'] = self.climate_df['tmean'].rolling(
+        self.climate_df['t30'] = self.climate_df['tmean'].shift(1).rolling(
             window=30, min_periods=1).mean()
         # self.climate_df['30t'] = pd.rolling_mean(self.climate_df['meant'],
         #  window = 30, min_periods = 1)
-        self.climate_df['30t'] = self.climate_df['meant'].rolling(
+        self.climate_df['30t'] = self.climate_df['meant'].shift(1).rolling(
             window=30, min_periods=1).mean()
 
         # Accumulate T30 over period of record
@@ -1459,6 +1459,8 @@ class ETCell():
 
         # Calculate an estimated depth of snow on ground using simple
         # melt rate function))
+        snow_accum = 0  # TODO: I'm not certain this is the right initialization
+        # so I don't know if this is a valid fix.
         if np.any(self.climate_df['snow']):
             for i, doy in self.climate_df['doy'].iteritems():
                 # Calculate an estimated depth of snow on ground using simple
@@ -1468,15 +1470,18 @@ class ETCell():
                 snow_depth = self.climate_df['snow_depth'][i]
 
                 # Assume settle rate of 2 to 1
-
+                # TODO: this is a bug.  snow_accum referenced before assignment.
                 snow_accum += snow * 0.5  # assume a settle rate of 2 to 1
 
                 # 4 mm/day melt per degree C
 
                 snow_melt = max(4 * self.climate_df['tmax'][i], 0.0)
                 snow_accum = max(snow_accum - snow_melt, 0.0)
-                snow_depth = min(snow_depth, snow_accum)
-                self.climate_df['snow_depth'][i] = snow_depth
+                # ETIdaho manual states that snow_accum replaces snow_depth if it exceeds it.
+                # Recorded snow depth seems to be poor quality though so maybe using min is best
+                # TODO: check ETIdaho vb code
+                snow_depth = max(snow_depth, snow_accum)
+                self.climate_df.at[i, 'snow_depth'] = snow_depth
         return True
 
 if __name__ == '__main__':
