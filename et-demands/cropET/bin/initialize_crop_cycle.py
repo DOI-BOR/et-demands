@@ -88,12 +88,12 @@ class InitializeCropCycle:
 
         self.doy_start_cycle = 0
         self.cutting = 0
-        self.cycle = 1
+        self.cycle = 1 # 0 in ETIdaho but probably an ETIdaho bug
         self.real_start = False
         self.irr_flag = False
         self.in_season = False  # false if outside season, true if inside
         self.dormant_setup_flag = False
-        self.crop_setup_flag = True  # flag to setup crop parameter information
+        self.crop_setup_flag = True  #TODO: False in ETIdaho # flag to setup crop parameter information
 
         # TP - Looks like its value comes from compute_crop_et(),
         # but needed for setup_dormant() below...
@@ -174,7 +174,7 @@ class InitializeCropCycle:
         self.zr_max = crop.rooting_depth_max
 
         self.depl_ze = de_initial  # (10 mm) at start of new crop at beginning of time
-        self.depl_root = de_initial  # (20 mm) at start of new crop at beginning of time
+        self.depl_root = 20  # (20 mm) at start of new crop at beginning of time
         self.zr = self.zr_min  # initialize rooting depth at beginning of time
         self.height = self.height_min
         self.stress_event = False
@@ -299,7 +299,7 @@ class InitializeCropCycle:
                 #     et_cell.climate[t30_col] > crop.t30_for_pl_or_gu_or_cgdd,
                 #     dtype = np.int8)) > 0)[0][0]) + 1)
 
-                # This logic fails when the T30 never goes below t30_for_pl_or_gu_or_cgdd
+                # TODO: This logic fails when the T30 never goes below t30_for_pl_or_gu_or_cgdd
                 # Report wrong error message
                 self.longterm_pl = int(np.where(np.diff(np.array(
                     et_cell.climate[t30_col] > crop.t30_for_pl_or_gu_or_cgdd,
@@ -347,7 +347,7 @@ class InitializeCropCycle:
 
         # zr_dormant was never assigned a value - what's its purpose - dlk 10/26/2011 ???????????????????
 
-        zr_dormant = 0.0
+        zr_dormant = 0.1  # Value in setup_dormant
 
         # setup_crop is called from crop_cycle if is_season is false and crop_setup_flag is true
         # thus only setup 1st time for crop (not each year)
@@ -466,7 +466,11 @@ class InitializeCropCycle:
             self.fc = 0.4
         elif wscc == 3:
             self.kc_bas = 0.2    # was 0.3
-            self.fc = 0.7     # was 0.6
+            self.fc = 0.7  # was 0.6
+        else:
+            # TODO: this code path shouldn't be run for water (55, 56, 57)
+            # there is probably a better place to avoid this path.
+            return None
 
         # Setup curve number for antecedent II condition for winter covers
         # Crop params dictionary uses crop number as key
