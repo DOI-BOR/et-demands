@@ -78,7 +78,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     mnd.read_avg_monthly_data(cfg)
 
     # Set up average monthly output if flagged
-
+    # TODO: what is the point of this?
     if cfg.avg_monthly_flag:
         avg_monthly_header = 'Met Node ID,Met Node Name,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'
         if "xls" in cfg.input_met['avgm_tmax_path'].lower():
@@ -121,7 +121,7 @@ def main(ini_path, log_level = logging.WARNING, mnid_to_run = 'ALL',
     met_node_count = 0
     for met_node_id, met_node in sorted(mnd.met_nodes_data.items()):
         if mnid_to_run == 'ALL' or mnid_to_run == met_node_id:
-            logging.info('  Processing node id' + met_node_id + ' with name ' + met_node.met_node_name)
+            logging.info('  Processing node id' + str(met_node_id) + ' with name ' + met_node.met_node_name)
         if met_node.TR_b0 is None: met_node.TR_b0 = cfg.input_met['TR_b0']
         if met_node.TR_b1 is None: met_node.TR_b1 = cfg.input_met['TR_b1']
         if met_node.TR_b2 is None: met_node.TR_b2 = cfg.input_met['TR_b2']
