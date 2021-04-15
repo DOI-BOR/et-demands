@@ -39,15 +39,16 @@ class RefETConfig():
         # Check that INI file can be read
 
         config = configparser.RawConfigParser()
-        try:
-            ini = config.readfp(open(ini_path))
-            if debug_flag:
-                cfg_path = os.path.join(os.getcwd(), "test_ret.cfg")
-                with open(cfg_path, 'wb') as cf: config.write(cf)
-        except:
-            logging.error('\nERROR: Config file \n' + ini_path +
-                          '\ncould not be read.  It is not an input file or does not exist.\n')
-            sys.exit()
+        # try:
+        ini = config.readfp(open(ini_path))
+        # TODO: Unclear what the config file is supposed to be for.
+        # if debug_flag:
+        #     cfg_path = os.path.join(os.getcwd(), "test_ret.cfg")
+        #     with open(cfg_path, 'wb') as cf: config.write(cf)
+        # except:
+        #     logging.error('\nERROR: Config file \n' + ini_path +
+        #                   '\ncould not be read.  It is not an input file or does not exist.\n')
+        #     sys.exit()
         project_sec = 'PROJECT'    # required
         meta_sec = 'RET_META'    # required
         input_met_sec = 'INMET'    # required
