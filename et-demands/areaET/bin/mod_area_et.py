@@ -12,9 +12,11 @@ import os
 import sys
 import shutil
 import time
+import shapefile, pickle
 
 import numpy as np
 import pandas as pd
+from itertools import repeat
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../lib')))
 import aet_utils
@@ -123,10 +125,23 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
     results = []
     if cell_mp_list:
         pool = mp.Pool(mp_procs)
-        results = pool.imap(cell_mp, cell_mp_list, chunksize = 1)
+        # results = pool.imap(cell_mp, cell_mp_list, chunksize=1)
         pool.close()
         pool.join()
         del pool, results
+
+    ### Output aggregated quantitites ###
+    if len(cfg.output_nir_user_crops) > 0:
+        # Output crops by user across ET zones
+        output_nir_user_crops(cfg, cells)
+
+    if len(cfg.output_nir_nonuser_crops) > 0:
+        # Output crops across ET zones
+        output_nir_nonuser_crops(cfg, cells)
+
+    if len(cfg.output_nir_user_openwater) > 0:
+        # Output the open water information
+        output_nir_user_openwater(cfg, cells)
 
     # post output with parameter orientation
     if cfg.output_aet_flag and cfg.output_aet['data_structure_type'].upper() != 'SF P':
@@ -617,6 +632,7 @@ def main(ini_path, log_level = logging.WARNING, etcid_to_run = 'ALL', debug_flag
     logging.warning('\nAREAET Run Completed')
     logging.info('\n{} seconds'.format(time.perf_counter()-clock_start))
 
+
 def cell_mp(tup):
     """Pool multiprocessing friendly function
 
@@ -625,6 +641,7 @@ def cell_mp(tup):
 
     """
     return cell_sp(*tup)
+
 
 def cell_sp(cell_count, cfg, cell, cells):
     """Compute area requirements for each cell
@@ -643,6 +660,7 @@ def cell_sp(cell_count, cfg, cell, cells):
         sys.exit()
     if not cell.compute_area_requirements(cell_count, cfg, cells):
         sys.exit()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -673,17 +691,430 @@ def parse_args():
         args.ini = os.path.abspath(args.ini)
     return args
 
+
 def is_valid_file(parser, arg):
     if not os.path.isfile(arg):
         parser.error('The file {} does not exist!'.format(arg))
     else:
         return arg
 
+
 def is_valid_directory(parser, arg):
     if not os.path.isdir(arg):
         parser.error('The directory {} does not exist!'.format(arg))
     else:
         return arg
+
+
+def output_nir_user_crops(cfg, cells):
+    """
+    This partitions the NIR by crop type and aggregates it to the user across all ET zones. The function outputs a time
+    series file for each water user.
+
+    Parameters
+    ----------
+    cfg: object
+        Contains all configuration information for the analysis
+    cells: object
+        Contains the individual ET zones to be processed
+
+    Returns
+    -------
+    None. Data is written to a text files.
+
+    """
+
+    ### Extract the user data from the reference shape file ###
+    # Open the shapefile
+    o_shapefile = shapefile.Reader(cfg.output_nir_reference_shapefile, 'r')
+
+    # Get the attribute table
+    sl_fields = o_shapefile.records()
+
+    # Close the shapefile
+    del o_shapefile
+
+    ### Find the total acreage of each crop type in each ET zone ###
+    # Get the unique crop types in the file
+    sl_crop_types = list(set([sl_fields[x][1] for x in range(0, len(sl_fields), 1)]))
+
+    # Get the unique et zones in the file
+    ia_et_zones = np.unique(np.array(([sl_fields[x][4] for x in range(0, len(sl_fields), 1)])).astype(int))
+
+    # Create a matrix of size et zones by crop types
+    dm_crop_acreages = np.zeros((len(ia_et_zones), len(sl_crop_types)))
+
+    # Loop and fill the matrix
+    ia_column_indices = np.array([sl_crop_types.index(sl_fields[x][1]) for x in range(0, len(sl_fields), 1)])
+    ia_row_indices = np.array([np.argwhere(ia_et_zones == int(sl_fields[x][4])).flatten()[0]
+                               for x in range(0, len(sl_fields), 1)])
+
+    for x in range(0, len(sl_fields), 1):
+        dm_crop_acreages[ia_row_indices[x], ia_column_indices[x]] += sl_fields[x][2]
+
+    ### Get the crop type NIR contribution from the ET zones ###
+    # Crack the dictionary into items and keys to make iteration easier
+    sl_cell_keys = np.array(list(cells.et_cells_data.keys())).astype(int)
+    sl_cell_items = list(cells.et_cells_data.values())
+
+    # Determine the size of the data matrix
+    i_number_of_timesteps = np.max([x.nir.shape[0] for x in sl_cell_items if hasattr(x, 'nir')])
+    da_dates = np.array([x.nir.index for x in sl_cell_items if hasattr(x, 'nir') and len(x.nir.index) == i_number_of_timesteps][0])
+
+    # Create a matrix to hold the nir for each et zone of shape et zones by crop types
+    dm_zone_nir = np.zeros((len(cells.et_cells_data), i_number_of_timesteps, len(cfg.crop_type_numbers)))
+
+    # Loop on the cells and fill the NIR requirement
+    for i_entry_zone in range(0, len(cells.et_cells_data), 1):
+        # Check if the crop nir has been set in cell
+        if hasattr(sl_cell_items[i_entry_zone], 'crop2nir'):
+            # Get the columns for the crops
+            ia_column_indices = np.argwhere(np.array(list(sl_cell_items[i_entry_zone].crop_type_flags.values())).astype('bool')).flatten()
+
+            # The correct field exists. Process the data into the
+            dm_zone_nir[i_entry_zone, :, ia_column_indices] = sl_cell_items[i_entry_zone].nir['nir'].values
+
+            # Multiply by the crop types by the crop adjustment
+            dm_zone_nir[i_entry_zone, :, ia_column_indices] *= np.transpose(sl_cell_items[i_entry_zone].crop2nir.values)
+
+    ### Convert the total NIR to per acre amounts ###
+    # Find the correct column for each of the shapefile crop types
+    ia_shapefile_crop_columns = np.zeros(len(sl_crop_types)).astype(int)
+
+    for i_entry_crop in range(0, len(sl_crop_types), 1):
+        # Get the crop type number from the cross-mapping file
+        i_crop_type = cfg.output_nir_crop_mapping[sl_crop_types[i_entry_crop]]
+
+        # Loop for the index in the crop numbers array and set into the column vect
+        ia_shapefile_crop_columns[i_entry_crop] = np.argwhere(np.array(cfg.crop_type_numbers) == i_crop_type).flatten()[0]
+
+    # Construct the rest of the indices to set to zero
+    ia_indices2mask = np.delete(np.arange(len(cfg.crop_type_numbers)), ia_shapefile_crop_columns)
+
+    for i_entry_zone in range(0, len(cells.et_cells_data), 1):
+        # Check if the crop nir has been set in cell
+        if hasattr(sl_cell_items[i_entry_zone], 'crop2nir'):
+            # Check if acreage data exists for the zone
+            if sl_cell_keys[i_entry_zone] in ia_et_zones:
+                # Align the ET demands zone index to the shape file index
+                i_shape_file_index = np.argwhere(ia_et_zones == sl_cell_keys[i_entry_zone]).flatten()[0]
+
+                # Loop and divide each column by the acreage
+                mid = 1 / dm_crop_acreages[i_shape_file_index, :]
+                mid[np.isinf(mid)] = 0
+
+                for x in range(0, len(ia_shapefile_crop_columns), 1):
+                    dm_zone_nir[i_entry_zone, :, ia_shapefile_crop_columns[x]] *= mid[x]
+
+                # Mask the remaining columns to zero
+                dm_zone_nir[i_entry_zone, :, ia_indices2mask] = 0
+
+            else:
+                # Zero out all values in the row to eliminate the contribution of the zone
+                dm_zone_nir[i_entry_zone, :, :] = 0
+
+    # Mask nans to zeros
+    dm_zone_nir[np.isinf(dm_zone_nir)] = 0
+
+    ### Sum across the users ###
+    # Get the unique users
+    sl_unique_users = list(set([sl_fields[x][3] for x in range(0, len(sl_fields), 1)]))
+
+    # Create a vector to hold the aggregated information
+    da_unique_users_nir = np.zeros((i_number_of_timesteps, len(sl_unique_users)))
+
+    # Loop on the attribute table and fill volumes
+    for i_entry_record in range(0, len(sl_fields), 1):
+
+        # Unpack values from the row
+        s_user = sl_fields[i_entry_record][3]
+        i_crop_type = cfg.output_nir_crop_mapping[sl_fields[i_entry_record][1]]
+        i_zone = sl_fields[i_entry_record][4]
+        i_acres = sl_fields[i_entry_record][2]
+
+        # Get the crop index within the ET demands tool data
+        i_crop_index = np.argwhere(np.array(cfg.crop_type_numbers) == i_crop_type).flatten()[0]
+
+        # Filter by the crop type
+        if i_crop_type in cfg.output_nir_user_crops:
+            # Get the zone index within the ET demands data
+            if i_zone in sl_cell_keys:
+                # Match the zone index
+                i_zone_index = np.argwhere(sl_cell_keys == i_zone).flatten()[0]
+
+                # Find the user index
+                i_user_index = sl_unique_users.index(s_user)
+
+                # Add to the output time series, multiplying by the acres
+                da_unique_users_nir[:, i_user_index] += dm_zone_nir[i_zone_index, :, i_crop_index] * i_acres
+
+            else:
+                print('ET Zone ' + str(i_zone) + ' from shapefile is not present in the model run.')
+
+    ### Output to the text file ###
+    if not os.path.isdir(os.path.join(cfg.project_ws, 'accumulated_user_nir')):
+        os.mkdir(os.path.join(cfg.project_ws, 'accumulated_user_nir'))
+
+    for i_entry_user in range(0, len(sl_unique_users), 1):
+        # Extract and filter the data
+        da_data = da_unique_users_nir[:, i_entry_user]
+        da_data[np.fabs(da_data) < 1e-6] = 0
+
+        # Create a pandas series
+        ds_user = pd.Series(data=da_data, index=da_dates)
+
+        # Write the series to a file
+        ds_user.to_csv(os.path.join(cfg.project_ws, 'accumulated_user_nir', sl_unique_users[i_entry_user].replace(':', '') + '.txt'),
+                       sep='\t', header=False)
+
+def output_nir_nonuser_crops(cfg, cells):
+    """
+    This partitions the NIR by crop type and aggregates by crop type across all ET zones. The function outputs a time
+    series file for each crop type.
+
+    Parameters
+    ----------
+    cfg: object
+        Contains all configuration information for the analysis
+    cells: object
+        Contains the individual ET zones to be processed
+
+    Returns
+    -------
+    None. Data is written to a text files.
+
+    """
+
+    ### Extract the user data from the reference shape file ###
+    # Open the shapefile
+    o_shapefile = shapefile.Reader(cfg.output_nir_reference_shapefile, 'r')
+
+    # Get the attribute table
+    sl_fields = o_shapefile.records()
+
+    # Close the shapefile
+    del o_shapefile
+
+    ### Find the total acreage of each crop type in each ET zone ###
+    # Get the unique crop types in the file
+    sl_crop_types = list(set([sl_fields[x][1] for x in range(0, len(sl_fields), 1)]))
+
+    # Get the unique et zones in the file
+    ia_et_zones = np.unique(np.array(([sl_fields[x][4] for x in range(0, len(sl_fields), 1)])).astype(int))
+
+    # Create a matrix of size et zones by crop types
+    dm_crop_acreages = np.zeros((len(ia_et_zones), len(sl_crop_types)))
+
+    # Loop and fill the matrix
+    ia_column_indices = np.array([sl_crop_types.index(sl_fields[x][1]) for x in range(0, len(sl_fields), 1)])
+    ia_row_indices = np.array([np.argwhere(ia_et_zones == int(sl_fields[x][4])).flatten()[0]
+                               for x in range(0, len(sl_fields), 1)])
+
+    for x in range(0, len(sl_fields), 1):
+        dm_crop_acreages[ia_row_indices[x], ia_column_indices[x]] += sl_fields[x][2]
+
+    ### Get the crop type NIR contribution from the ET zones ###
+    # Crack the dictionary into items and keys to make iteration easier
+    sl_cell_keys = np.array(list(cells.et_cells_data.keys())).astype(int)
+    sl_cell_items = list(cells.et_cells_data.values())
+
+    # Determine the size of the data matrix
+    i_number_of_timesteps = np.max([x.nir.shape[0] for x in sl_cell_items if hasattr(x, 'nir')])
+    da_dates = np.array([x.nir.index for x in sl_cell_items if hasattr(x, 'nir') and len(x.nir.index) == i_number_of_timesteps][0])
+
+    # Create a matrix to hold the nir for each et zone of shape et zones by crop types
+    dm_zone_nir = np.zeros((len(cells.et_cells_data), i_number_of_timesteps, len(cfg.crop_type_numbers)))
+
+    # Loop on the cells and fill the NIR requirement
+    for i_entry_zone in range(0, len(cells.et_cells_data), 1):
+        # Check if the crop nir has been set in cell
+        if hasattr(sl_cell_items[i_entry_zone], 'crop2nir'):
+            # Get the columns for the crops
+            ia_column_indices = np.argwhere(np.array(list(sl_cell_items[i_entry_zone].crop_type_flags.values())).astype('bool')).flatten()
+
+            # The correct field exists. Process the data into the
+            dm_zone_nir[i_entry_zone, :, ia_column_indices] = sl_cell_items[i_entry_zone].nir['nir'].values
+
+            # Multiply by the crop types by the crop adjustment
+            dm_zone_nir[i_entry_zone, :, ia_column_indices] *= np.transpose(sl_cell_items[i_entry_zone].crop2nir.values)
+
+    ### Sum across users and zones ###
+    dm_zone_summed = np.sum(dm_zone_nir, axis=0)
+
+    ### Output to the text file ###
+    if not os.path.isdir(os.path.join(cfg.project_ws, 'accumulated_crop_nir')):
+        os.mkdir(os.path.join(cfg.project_ws, 'accumulated_crop_nir'))
+
+    for i_entry_crop in range(0, len(cfg.crop_type_numbers), 1):
+
+        if cfg.crop_type_numbers[i_entry_crop] in cfg.output_nir_nonuser_crops:
+
+            da_data = dm_zone_summed[:, i_entry_crop]
+            da_data[np.fabs(da_data) < 1e-6] = 0
+
+            # Create a pandas series
+            ds_user = pd.Series(data=da_data, index=da_dates)
+
+            # Write the series to a file
+            ds_user.to_csv(os.path.join(cfg.project_ws, 'accumulated_crop_nir',  str(cfg.crop_type_numbers[i_entry_crop]) + '.txt'),
+                           sep='\t', header=False)
+
+def output_nir_user_openwater(cfg, cells):
+    """
+    This function estimates the NIR resulting from open water and aggregates it to the user. The function outputs a time
+    series file for each water user.
+
+    Parameters
+    ----------
+    cfg: object
+        Contains all configuration information for the analysis
+    cells: object
+        Contains the individual ET zones to be processed
+
+    Returns
+    -------
+    None. Data is written to a text files.
+
+    """
+    ### Extract the user data from the reference shape file ###
+    # Open the shapefile
+    o_shapefile = shapefile.Reader(cfg.output_nir_reference_shapefile, 'r')
+
+    # Get the attribute table
+    sl_fields = o_shapefile.records()
+
+    # Close the shapefile
+    del o_shapefile
+
+    ### Find the total acreage of each crop type in each ET zone ###
+    # Get the unique crop types in the file
+    sl_crop_types = list(set([sl_fields[x][1] for x in range(0, len(sl_fields), 1)]))
+
+    # Get the unique et zones in the file
+    ia_et_zones = np.unique(np.array(([sl_fields[x][4] for x in range(0, len(sl_fields), 1)])).astype(int))
+
+    # Create a matrix of size et zones by crop types
+    dm_crop_acreages = np.zeros((len(ia_et_zones), len(sl_crop_types)))
+
+    # Loop and fill the matrix
+    ia_column_indices = np.array([sl_crop_types.index(sl_fields[x][1]) for x in range(0, len(sl_fields), 1)])
+    ia_row_indices = np.array([np.argwhere(ia_et_zones == int(sl_fields[x][4])).flatten()[0]
+                               for x in range(0, len(sl_fields), 1)])
+
+    for x in range(0, len(sl_fields), 1):
+        dm_crop_acreages[ia_row_indices[x], ia_column_indices[x]] += sl_fields[x][2]
+
+    ### Get the crop type NIR contribution from the ET zones ###
+    # Crack the dictionary into items and keys to make iteration easier
+    sl_cell_keys = np.array(list(cells.et_cells_data.keys())).astype(int)
+    sl_cell_items = list(cells.et_cells_data.values())
+
+    # Determine the size of the data matrix
+    i_number_of_timesteps = np.max([x.nir.shape[0] for x in sl_cell_items if hasattr(x, 'nir')])
+    da_dates = np.array([x.nir.index for x in sl_cell_items if hasattr(x, 'nir') and len(x.nir.index) == i_number_of_timesteps][0])
+
+    # Create a matrix to hold the nir for each et zone of shape et zones by crop types
+    dm_zone_nir = np.zeros((len(cells.et_cells_data), i_number_of_timesteps))
+
+    # Loop on the cells and fill the NIR requirement
+    for i_entry_zone in range(0, len(cells.et_cells_data), 1):
+        # Check if the crop nir has been set in cell
+        if hasattr(sl_cell_items[i_entry_zone], 'crop2nir'):
+            # The correct field exists. Process the data into the
+            dm_zone_nir[i_entry_zone, :] = sl_cell_items[i_entry_zone].nir['et'].values - \
+                                           sl_cell_items[i_entry_zone].nir['ppt'].values
+
+    ### Convert the total NIR to per acre amounts ###
+    # Find the correct column for each of the shapefile crop types
+    ia_shapefile_crop_columns = np.zeros(len(sl_crop_types)).astype(int)
+    ia_crop_types = np.zeros(len(sl_crop_types))
+
+    for i_entry_crop in range(0, len(sl_crop_types), 1):
+        # Get the crop type number from the cross-mapping file
+        i_crop_type = cfg.output_nir_crop_mapping[sl_crop_types[i_entry_crop]]
+
+        # Set the crop type into the array
+        ia_crop_types[i_entry_crop] = i_crop_type
+
+        # Loop for the index in the crop numbers array and set into the column vect
+        ia_shapefile_crop_columns[i_entry_crop] = np.argwhere(np.array(cfg.crop_type_numbers) == i_crop_type).flatten()[0]
+
+    # Filter out the indices that are within the output target
+    ba_indices2keep = np.in1d(ia_crop_types, cfg.output_nir_user_openwater)
+
+    # Get the total areas
+    da_crop_acreages = np.sum(np.atleast_2d(dm_crop_acreages[:, ba_indices2keep]), axis=1)
+
+    for i_entry_zone in range(0, len(cells.et_cells_data), 1):
+        # Check if the crop nir has been set in cell
+        if hasattr(sl_cell_items[i_entry_zone], 'crop2nir'):
+            # Check if acreage data exists for the zone
+            if sl_cell_keys[i_entry_zone] in ia_et_zones:
+                # Align the ET demands zone index to the shape file index
+                i_shape_file_index = np.argwhere(ia_et_zones == sl_cell_keys[i_entry_zone]).flatten()[0]
+
+                # Loop and divide by the acreage
+                mid = 1 / da_crop_acreages[i_shape_file_index]
+                if np.isinf(mid):
+                    mid = 0
+
+                dm_zone_nir[i_entry_zone, :] *= mid
+
+            else:
+                # Zero out all values in the row to eliminate the contribution of the zone
+                dm_zone_nir[i_entry_zone, :] = 0
+
+    ### Sum across the users ###
+    # Get the unique users
+    sl_unique_users = list(set([sl_fields[x][3] for x in range(0, len(sl_fields), 1)]))
+
+    # Create a vector to hold the aggregated information
+    da_unique_users_nir = np.zeros((i_number_of_timesteps, len(sl_unique_users)))
+
+    # Loop on the attribute table and fill volumes
+    for i_entry_record in range(0, len(sl_fields), 1):
+
+        # Unpack values from the row
+        s_user = sl_fields[i_entry_record][3]
+        i_crop_type = cfg.output_nir_crop_mapping[sl_fields[i_entry_record][1]]
+        i_zone = sl_fields[i_entry_record][4]
+        i_acres = sl_fields[i_entry_record][2]
+
+        # Get the crop index within the ET demands tool data
+        i_crop_index = np.argwhere(np.array(cfg.crop_type_numbers) == i_crop_type).flatten()[0]
+
+        # Filter by the crop type
+        if i_crop_type in cfg.output_nir_user_openwater:
+            # Get the zone index within the ET demands data
+            if i_zone in sl_cell_keys:
+                # Match the zone index
+                i_zone_index = np.argwhere(sl_cell_keys == i_zone).flatten()[0]
+
+                # Find the user index
+                i_user_index = sl_unique_users.index(s_user)
+
+                # Add to the output time series, multiplying by the acres
+                da_unique_users_nir[:, i_user_index] += dm_zone_nir[i_zone_index, :] * i_acres
+
+            else:
+                print('ET Zone ' + str(i_zone) + ' from shapefile is not present in the model run.')
+
+    ### Output to the text file ###
+    if not os.path.isdir(os.path.join(cfg.project_ws, 'accumulated_user_nir')):
+        os.mkdir(os.path.join(cfg.project_ws, 'accumulated_user_nir'))
+
+    for i_entry_user in range(0, len(sl_unique_users), 1):
+        # Extract and filter the data
+        da_data = da_unique_users_nir[:, i_entry_user]
+        da_data[np.fabs(da_data) < 1e-6] = 0
+
+        # Create a pandas series
+        ds_user = pd.Series(data=da_data, index=da_dates)
+
+        # Write the series to a file
+        ds_user.to_csv(os.path.join(cfg.project_ws, 'accumulated_user_nir', sl_unique_users[i_entry_user].replace(':', '') + '_water.txt'),
+                       sep='\t', header=False)
+
 
 if __name__ == '__main__':
     args = parse_args()

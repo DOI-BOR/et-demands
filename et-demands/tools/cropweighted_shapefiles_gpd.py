@@ -135,18 +135,21 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # unique_stations = [608807]
 
     # Variables to calculate output statistics
-    var_list = ['ETact', 'NIWR']
+    var_list = ['ETact', 'NIWR', 'P_rz', 'P_eft', 'PrzF', 'PeftF']
 
     logging.info('\nCreating Crop Area Weighted Shapefiles')
     # Apply Time Filter (annual, etd growing season, doy (start/end))
     if time_filter == 'annual':
-        logging.info('\nIncluding January-December data.')
+        logging.info('\nSummarizing data based on calendar year.')
     if time_filter == 'growing_season':
         logging.info(
             '\nFiltering data using ETDemands defined growing season.')
     if time_filter == 'doy':
         logging.info('\nFiltering data using doy inputs. Start doy: {:03d} '
                      'End doy: {:03d}'.format(start_doy, end_doy))
+    if time_filter == 'water_year':
+        logging.info(
+            '\nSummarizing data based on water year.')
 
     for crop in unique_crop_nums:
         logging.info('\n Processing Crop: {:02d}'.format(crop))
@@ -165,13 +168,6 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             # Read file into df
             daily_df = pd.read_csv(file_path, skiprows=1)
 
-            # Apply Year Filter
-            if year_list:
-                daily_df = daily_df[
-                    (daily_df['Year'] >= min(year_list)) &
-                    (daily_df['Year'] <= max(year_list))]
-                # logging.info('Including Years: {}'.format(year_list))
-
             # Apply Time Filter (annual, etd growing season, doy (start/end))
             if time_filter == 'growing_season':
                 daily_df = daily_df[(daily_df['Season'] == 1)]
@@ -179,6 +175,21 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
                 daily_df = daily_df[
                     (daily_df['DOY'] >= start_doy) &
                     (daily_df['DOY'] <= end_doy)]
+            if time_filter == 'water_year':
+                daily_df['WY'] = daily_df.Year.where(daily_df.Month < 10, daily_df.Year + 1)
+
+            # Apply Year Filter (apply after adding water year)
+            if year_list:
+                if time_filter == 'water_year':
+                    daily_df = daily_df[
+                        (daily_df['WY'] >= min(year_list)) &
+                        (daily_df['WY'] <= max(year_list))]
+                else:
+                    daily_df = daily_df[
+                        (daily_df['Year'] >= min(year_list)) &
+                        (daily_df['Year'] <= max(year_list))]
+                    # logging.info('Including Years: {}'.format(year_list))
+
 
             if daily_df.empty:
                 logging.info(' Growing Season never started. Skipping cell {}'
@@ -188,10 +199,19 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
             # Dictionary to control agg of each variable
             a = {
                 'ETact': 'sum',
-                'NIWR': 'sum'}
+                'NIWR': 'sum',
+                'P_rz': 'sum',
+                'P_eft': 'sum',
+                'PPT': 'sum'}
 
             # GroupStats by Year of each column follow agg assignment above
-            yearlygroup_df = daily_df.groupby('Year', as_index=True).agg(a)
+            if time_filter == 'water_year':
+                yearlygroup_df = daily_df.groupby('WY', as_index=True).agg(a)
+            else:
+                yearlygroup_df = daily_df.groupby('Year', as_index=True).agg(a)
+
+            yearlygroup_df['PrzF'] = yearlygroup_df.P_rz / yearlygroup_df.PPT
+            yearlygroup_df['PeftF'] = yearlygroup_df.P_eft / yearlygroup_df.PPT
 
             # Take Mean of Yearly GroupStats
             mean_df = yearlygroup_df.mean(axis=0)
@@ -216,8 +236,9 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
 
             # Grab min/max year for output folder naming
             # assumes all daily files cover same time period
-            min_year = min(daily_df['Year'])
-            max_year = max(daily_df['Year'])
+            # year represents CY or WY based on time_filter
+            min_year = min(year_list)
+            max_year = max(year_list)
 
         # Convert index to integers
         df.index = df.index.map(int)
@@ -255,7 +276,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     # final_df = cells[['GRIDMET_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
     #                   'CWNIWR_md']]
     final_df = cells[['CELL_ID', 'CWETact_mn', 'CWNIWR_mn', 'CWETact_md',
-                      'CWNIWR_md']]
+                      'CWNIWR_md', 'CWPrzF_mn', 'CWPrzF_md', 'CWPeftF_mn', 'CWPeftF_md']]
 
 
     # Copy ETCELLS.shp and join cropweighted data to it
@@ -265,7 +286,7 @@ def main(ini_path, time_filter, start_doy, end_doy, year_filter=''):
     merged_data = data.merge(final_df, on='CELL_ID')
 
     # Output file name
-    out_name = "{}_cropweighted.shp".format(time_filter, crop)
+    out_name = "{}_cropweighted.shp".format(time_filter)
     if time_filter == 'doy':
         out_name = "{}_{:03d}_{:03d}_cropweighted.shp".format(
             time_filter, start_doy, end_doy)
@@ -310,7 +331,7 @@ def arg_parse():
     parser.add_argument(
         '-t', '--time_filter', default='annual', choices=['annual',
                                                           'growing_season',
-                                                          'doy'], type=str,
+                                                          'doy', 'water_year'], type=str,
         help='Data coverage options. If "doy", -start_doy and'
              ' -end_doy required.')
     parser.add_argument(
