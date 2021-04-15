@@ -1459,8 +1459,7 @@ class ETCell():
 
         # Calculate an estimated depth of snow on ground using simple
         # melt rate function))
-        snow_accum = 0  # TODO: I'm not certain this is the right initialization
-        # so I don't know if this is a valid fix.
+        snow_accum = 0
         if np.any(self.climate_df['snow']):
             for i, doy in self.climate_df['doy'].iteritems():
                 # Calculate an estimated depth of snow on ground using simple
@@ -1470,7 +1469,7 @@ class ETCell():
                 snow_depth = self.climate_df['snow_depth'][i]
 
                 # Assume settle rate of 2 to 1
-                # TODO: this is a bug.  snow_accum referenced before assignment.
+                
                 snow_accum += snow * 0.5  # assume a settle rate of 2 to 1
 
                 # 4 mm/day melt per degree C
