@@ -195,7 +195,7 @@ def arg_parse():
         '-i', '--ini', metavar='PATH',
         type=lambda x: util.is_valid_file(parser, x), help='Input file')
     parser.add_argument(
-        '-t', '--time_agg', default='monthly', choices=['annual', 'wateryear'], type=str,
+        '-t', '--time_agg', default='annual', choices=['annual', 'wateryear'], type=str,
         help='Data output options. monthly, annual, or wateryear.')
     parser.add_argument(
         '-y', '--year', default='', type=str,
