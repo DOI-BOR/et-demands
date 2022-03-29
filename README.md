@@ -6,7 +6,7 @@
 Crop ET Demands Model
 
 ## Documentation
-ET-Demands [Manual and Documentation](http://et-demands.readthedocs.io/en/master)
+ET-Demands [Manual and Documentation](https://et-demands.readthedocs.io/en/bminor_development/)
 
 ## Running tools/scripts
 Currently, scripts should be run from windows command prompt (or Linux terminal) so that configuration file can be passed as an argument directly to script.  It is possible to execute some scripts by double clicking, but this is still in development.
