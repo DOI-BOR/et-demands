@@ -402,9 +402,10 @@ class MetNode():
         # fill missing wind with average monthly values
 
         try:    # fill with average monthly values
-            for dt, month in sorted(self.input_met_df['month'].items()):
-                if pd.isnull(self.input_met_df.at[dt, 'wind']):
-                   self.input_met_df.at[dt, 'wind'] = mnd.avg_monthly_wind[self.wind_id][month - 1]
+            self.input_met_df['wind'] = self.input_met_df['wind'].where(
+                ~pd.isnull(self.input_met_df['wind']),
+                self.input_met_df['month'].apply(lambda month: mnd.avg_monthly_wind[self.wind_id][month - 1])
+            )
         except: pass
 
         # Add precip, snow and snow_depth if necessary; otherwise, fill missing values with zeros
@@ -432,16 +433,20 @@ class MetNode():
             if 'q' in self.input_met_df.columns:
                 self.input_met_df['tdew'] = ret_utils.tdew_from_ea(ret_utils.ea_from_q(
                     self.air_pressure, self.input_met_df['q'].values))
-        try:    # fill missing values with tmin minus average monthly Ko
-            for dt, month in sorted(self.input_met_df['month'].items()):
-                if pd.isnull(self.input_met_df.at[dt, 'tdew']):
-                   self.input_met_df.at[dt, 'tdew'] = self.input_met_df.at[dt, 'tmin'] - mnd.avg_monthly_Ko[self.Ko_id][month - 1]
+        try: # fill missing values with tmin minus average monthly Ko
+            self.input_met_df['tdew'] = self.input_met_df['tdew'].where(
+                ~pd.isnull(self.input_met_df['tdew']),
+                (
+                    self.input_met_df['tmin']
+                    - self.input_met_df['month'].apply(lambda month: mnd.avg_monthly_Ko[self.Ko_id][month - 1])
+                )
+            )
         except:
             logging.error('Unable to develop dew point temperature data.')
             return False
 
         # compute solar radiation for missing values
-
+        
         if 'rs' not in self.input_met_df.columns: self.input_met_df['rs'] = np.nan
         try:
             for dt, doy in sorted(self.input_met_df['doy'].items()):
@@ -452,7 +457,7 @@ class MetNode():
                         self.input_met_df.at[dt, 'tdew'],
                         self.elevation,
                         self.latitude,
-                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1],
+                        mnd.avg_monthly_tmax[self.met_node_id][self.input_met_df['month'][dt] - 1], # TODO: add another id?  tmin_id and tmax_id or what?
                         mnd.avg_monthly_tmin[self.met_node_id][self.input_met_df['month'][dt] - 1],
                         self.TR_b0,
                         self.TR_b1,
@@ -571,6 +576,7 @@ class MetNode():
             if cfg.output_retalt_flag:
                 retalt_df = ret_utils.make_ts_dataframe(cfg.time_step, cfg.ts_quantity, cfg.start_dt, cfg.end_dt)
                 for fn in cfg.refetalt_out['refet_out_fields']: retalt_df[fn] = np.nan
+            # TODO: broken logic: if retalt_flag is False then no retalt_df and the references to it below fail.
             for dt, row in self.input_met_df.iterrows():
                 HargreavesSamani = retObj.et_hargreaves_samani(dt.dayofyear, row['tmax'],
                     row['tmin'], self.latitude)
